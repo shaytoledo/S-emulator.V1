@@ -16,23 +16,15 @@ public class EexecutionContextImpl implements ExecutionContext {
     Map<String, Long> variableState;
     //Map<Variable, Long> variableState;
 
-    private static int intAfterFirstChar(String s) {
-        if (s == null || s.length() < 2) {
-            throw new IllegalArgumentException("String must have at least 2 characters");
-        }
-        String tail = s.substring(1).trim(); // Get substring after the first character and trim whitespace
-        return Integer.parseInt(tail);
-    }
 
-
-    public EexecutionContextImpl(List<Long> inputs, List<String> varsNames) {
+    public EexecutionContextImpl(List<Long> inputs) {
         // Initialize the variable state with the input values to the right variables by order
         variableState = new HashMap<>();
         if (inputs == null) {
             inputs = emptyList();
         }
         for (int i = 0; i < inputs.size(); i++) {
-            Variable v = new VariableImpl(VariableType.INPUT, intAfterFirstChar(varsNames.get(i))); // Assuming a constructor that takes a name
+            Variable v = new VariableImpl(VariableType.INPUT, i + 1); // Assuming a constructor that takes a name
             variableState.put(v.getRepresentation(), inputs.get(i));
         }
     }

@@ -36,6 +36,11 @@ public abstract class AbstractInstruction implements Instruction {
     }
 
     @Override
+    public int getMaxLevel() {
+        return 0;
+    }
+
+    @Override
     public Map<String,String> args() { return this.argsMap; }
 
     @Override
@@ -66,25 +71,4 @@ public abstract class AbstractInstruction implements Instruction {
 
 
 
-
-//    @Override
-//    public Label execute(ExecutionContext context) {
-//        throw new IllegalStateException(
-//                "Synthetic instruction '" + name + "' must be expanded before execution"
-//        );
-//    }
-//
-//    @Override
-//    public int cycles() {
-//        return 1;
-//    }
-//
-//
-//    public void setLabel(Label label) { this.label = label; }
-//
-//    public String toDisplayString() {}
-//
-//
-//
-//
 

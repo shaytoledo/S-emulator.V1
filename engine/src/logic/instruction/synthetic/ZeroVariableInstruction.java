@@ -29,4 +29,9 @@ public class ZeroVariableInstruction extends AbstractInstruction {
     public String toDisplayString() {
         return getVariable().getRepresentation() + " <- 0";
     }
+
+    @Override
+    public int getMaxLevel() {
+        return 1;
+    }
 }

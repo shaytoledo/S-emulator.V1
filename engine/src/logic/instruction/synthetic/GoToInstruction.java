@@ -33,4 +33,9 @@ public class GoToInstruction extends AbstractInstruction {
     public String toDisplayString() {
         return  "GOTO " + argsMap.getOrDefault("gotoLabel","?");
     }
+
+    @Override
+    public int getMaxLevel() {
+        return 1;
+    }
 }

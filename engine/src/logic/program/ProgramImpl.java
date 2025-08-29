@@ -160,6 +160,23 @@ public class ProgramImpl implements Program {
         return instructions;
     }
 
+
+    @Override
+    public int maxLevel() {
+        int max = 0;
+
+//        for (Instruction instruction : instructions) {
+//           max = max(max, instruction.getMaxLevel());
+//        }
+        return max;
+    }
+
+
+
+
+
+
+
     @Override
     public List<Label> getLabels() {
         return labels;

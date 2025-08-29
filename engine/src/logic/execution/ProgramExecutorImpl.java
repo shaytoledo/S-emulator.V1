@@ -19,7 +19,7 @@ public class ProgramExecutorImpl implements ProgramExecutor {
     }
 
     @Override
-    public long run(List<Long> inputs, List<String> varsNames) {
+    public long run(List<Long> inputs) {
 
         final List<Long> safeInputs;
         if (inputs == null || inputs.isEmpty()) {
@@ -31,7 +31,7 @@ public class ProgramExecutorImpl implements ProgramExecutor {
             }
         }
 
-        context = new EexecutionContextImpl(safeInputs, varsNames); // create the context with inputs.
+        context = new EexecutionContextImpl(safeInputs); // create the context with inputs.
 
         Instruction currentInstruction = program.getInstructions().isEmpty()
                 ? null
@@ -71,11 +71,6 @@ public class ProgramExecutorImpl implements ProgramExecutor {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a,b)->a, LinkedHashMap::new));
 
         return onlyXSorted;
-
-
-
-
-        //return context.getVariablesState();
     }
 
     @Override

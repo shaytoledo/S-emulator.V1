@@ -7,7 +7,7 @@ import java.util.Map;
 
 public interface ProgramExecutor {
 
-    long run(List<Long> inputs, List<String> varsNames);
+    public long run(List<Long> inputs);
     Map<String, Long> variablesState();
     long getTotalCycles();
 

@@ -9,6 +9,10 @@ import java.util.List;
 public interface Program {
 
 
+    int maxLevel();
+
+
+
     boolean validate();
 
     int calculateMaxDegree();

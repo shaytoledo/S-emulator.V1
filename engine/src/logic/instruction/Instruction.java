@@ -23,4 +23,6 @@ public interface Instruction {
     String toDisplayString();
 
     Map<String,String> args();
+
+    int getMaxLevel();
 }

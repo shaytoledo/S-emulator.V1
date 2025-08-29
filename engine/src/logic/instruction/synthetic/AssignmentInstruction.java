@@ -38,4 +38,9 @@ public class AssignmentInstruction extends AbstractInstruction {
         return getVariable().getRepresentation() + " <- " + assignedVariable.getRepresentation();
 
     }
+
+    @Override
+    public int getMaxLevel() {
+        return 0;
+    }
 }

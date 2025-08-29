@@ -1,6 +1,8 @@
 package logic.exception;
 
-public class ProgramFileNotFoundException extends java.io.FileNotFoundException {
+import java.io.FileNotFoundException;
+
+public class ProgramFileNotFoundException extends FileNotFoundException {
 
     public ProgramFileNotFoundException(String msg) {
         super(msg);
