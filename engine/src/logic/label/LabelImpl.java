@@ -4,7 +4,6 @@ public class LabelImpl implements Label{
 
     private final String label;
 
-
     public LabelImpl(String _label) {label = _label;}
 
     public LabelImpl(int number) {

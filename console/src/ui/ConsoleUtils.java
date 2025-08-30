@@ -96,24 +96,50 @@ public class ConsoleUtils {
             System.out.println("Program input variables: " + String.join(", ", inputVars));
         }
 
+
+
         System.out.print("Enter inputs (comma-separated): ");
-        String line = in.nextLine().trim();
 
         List<Long> inputs = new ArrayList<>();
 
-        if (!line.isEmpty()) {
-            String[] parts = line.split("\\s*,\\s*");
-            for (int i = 0; i < parts.length; i++) {
-                try {
-                    inputs.add(Long.parseLong(parts[i]));
-                } catch (NumberFormatException e) {
-                    System.out.println("Invalid input at position " + (i + 1) +
-                            ": '" + parts[i] + "' is not a valid number.");
+        while (true) {
+            String line = in.nextLine().trim();
+
+            if (line.contains(" ") && !line.contains(",")) {
+                System.out.println("Invalid input: please separate numbers with commas, not spaces.");
+                System.out.print("Try again: ");
+                continue;
+            }
+
+            if (!line.isEmpty()) {
+                String[] parts = line.split("\\s*,\\s*");
+                inputs.clear();
+
+                boolean valid = true;
+                for (int i = 0; i < parts.length; i++) {
+                    try {
+                        inputs.add(Long.parseLong(parts[i]));
+                    } catch (NumberFormatException e) {
+                        System.out.println("Invalid input at position " + (i + 1) +
+                                ": '" + parts[i] + "' is not a valid number.");
+                        valid = false;
+                        break;
+                    }
                 }
+
+                if (valid) {
+                    break;
+                } else {
+                    System.out.print("Try again: ");
+                }
+            } else {
+                System.out.print("Input cannot be empty, try again: ");
             }
         }
 
-        return inputs;
+       return inputs;
+
+
     }
 
     public static void printRunSummaries(List<RunSummary> summaries) {

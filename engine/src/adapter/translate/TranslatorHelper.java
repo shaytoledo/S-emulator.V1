@@ -1,6 +1,6 @@
 package adapter.translate;
 
-import adapter.xml.gen.SInstructionArgument;
+import adapter.xml.generated.SInstructionArgument;
 import logic.variable.Variable;
 import logic.variable.VariableImpl;
 import logic.variable.VariableType;

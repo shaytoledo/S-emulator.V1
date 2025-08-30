@@ -6,8 +6,7 @@ public record ProgramSummary(
         String name,
         List<String> inputs,
         List<String> labels,
-        List<String> instructions,
-        int maxDegree
+        List<InstructionView> instructions
 
         // List<InstructionView> instructions
 ) {
@@ -37,7 +36,7 @@ public record ProgramSummary(
         if (instructions == null || instructions.isEmpty()) {
             sb.append("  None");
         } else {
-            for (String instr : instructions) {
+            for (InstructionView instr : instructions) {
                 sb.append("  ").append(instr).append("\n");
             }
         }
@@ -50,8 +49,7 @@ public record ProgramSummary(
         return inputs != null ? inputs : List.of();
     }
 
-    public int getMaxDegree() {
-        return maxDegree;
-    }
+
+
 
 }

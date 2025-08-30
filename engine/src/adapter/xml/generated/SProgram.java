@@ -1,4 +1,4 @@
-package adapter.xml.gen;
+package adapter.xml.generated;
 
 import jakarta.xml.bind.annotation.*;
 

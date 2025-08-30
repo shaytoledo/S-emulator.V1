@@ -3,8 +3,10 @@ package logic.instruction;
 import logic.execution.ExecutionContext;
 import logic.label.FixedLabel;
 import logic.label.Label;
+import logic.program.VariableAndLabelMenger;
 import logic.variable.Variable;
 
+import java.util.List;
 import java.util.Map;
 
 public abstract class AbstractInstruction implements Instruction {
@@ -14,6 +16,8 @@ public abstract class AbstractInstruction implements Instruction {
     private final Variable variable;
     public final Map<String,String> argsMap;
     public boolean basic = false;
+
+    public List<Instruction> myInstructions;
 
 
     public AbstractInstruction(InstructionData instructionData, Variable variable, Map<String,String> argsMap ) {
@@ -35,13 +39,6 @@ public abstract class AbstractInstruction implements Instruction {
         this.basic = isBasic;
     }
 
-    @Override
-    public int getMaxLevel() {
-        return 0;
-    }
-
-    @Override
-    public Map<String,String> args() { return this.argsMap; }
 
     @Override
     public String getName() {
@@ -67,6 +64,7 @@ public abstract class AbstractInstruction implements Instruction {
     public boolean isBasic() {
         return basic;
     }
+
 }
 
 

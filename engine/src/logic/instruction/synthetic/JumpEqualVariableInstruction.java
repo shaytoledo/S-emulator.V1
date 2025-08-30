@@ -2,11 +2,19 @@ package logic.instruction.synthetic;
 
 import logic.execution.ExecutionContext;
 import logic.instruction.AbstractInstruction;
+import logic.instruction.Instruction;
 import logic.instruction.InstructionData;
+import logic.instruction.basic.DecreaseInstruction;
+import logic.instruction.basic.IncreaseInstruction;
+import logic.instruction.basic.JumpNotZeroInstruction;
+import logic.instruction.basic.NoOpInstruction;
 import logic.label.FixedLabel;
 import logic.label.Label;
+import logic.program.VariableAndLabelMenger;
 import logic.variable.Variable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class JumpEqualVariableInstruction extends AbstractInstruction {
@@ -39,5 +47,160 @@ public class JumpEqualVariableInstruction extends AbstractInstruction {
     @Override
     public String toDisplayString() {
         return "JE " + getVariable().getRepresentation() + " == " + argsMap.getOrDefault("variableName","?") + " -> " + argsMap.getOrDefault("JEVariableLabel","?");
+    }
+
+    @Override
+    public Map<String, String> args() {
+        return argsMap;
+    }
+
+    @Override
+    public int getMaxLevel() {
+        return 3;
+    }
+
+    @Override
+    public List<Instruction> extend(int extentionLevel, VariableAndLabelMenger vlm) {
+        List<Instruction> myInstructions = new ArrayList<>();
+
+        switch (extentionLevel) {
+            case 0:
+                return List.of(this);
+            case 1: {
+                Label label1 = vlm.newLabel();
+                Label label2 = vlm.newLabel();
+                Label label3 = vlm.newLabel();
+                Variable z1 = vlm.newZVariable();
+                Variable z2 = vlm.newZVariable();
+
+                Label jnzLabel = this.jnzLabel;
+                Variable vTag = this.other;
+                Variable v = this.getVariable();
+
+
+                Instruction instr1 = new NoOpInstruction(v, getLabel(), argsMap);
+                Instruction instr2 = new AssignmentInstruction(z1, v, argsMap);
+                Instruction instr3 = new AssignmentInstruction(z2, vTag, argsMap);
+                Instruction instr4 = new JumpZeroInstruction(z1, label3, label2, argsMap);
+                Instruction instr5 = new JumpZeroInstruction(z2, label3, argsMap);
+                Instruction instr6 = new DecreaseInstruction(z1, argsMap);
+                Instruction instr7 = new DecreaseInstruction(z2, argsMap);
+                Instruction instr8 = new GoToInstruction(z1, jnzLabel, argsMap);
+                Instruction instr9 = new JumpZeroInstruction(z2, label1, argsMap);
+                Instruction instr10 = new NoOpInstruction(v, argsMap);
+
+                myInstructions.add(this);
+                myInstructions.add(instr1);
+                myInstructions.add(instr2);
+                myInstructions.add(instr3);
+                myInstructions.add(instr4);
+                myInstructions.add(instr5);
+                myInstructions.add(instr6);
+                myInstructions.add(instr7);
+                myInstructions.add(instr8);
+                myInstructions.add(instr9);
+                myInstructions.add(instr10);
+
+                return myInstructions;
+            }
+            case 2: {
+                Label label1 = vlm.newLabel();
+                Label label2 = vlm.newLabel();
+                Label label3 = vlm.newLabel();
+                Variable z1 = vlm.newZVariable();
+                Variable z2 = vlm.newZVariable();
+
+                Label jnzLabel = this.jnzLabel;
+                Variable vTag = this.other;
+                Variable v = this.getVariable();
+
+
+                Instruction instr1 = new NoOpInstruction(v, getLabel(), argsMap);
+                Instruction instr2 = new AssignmentInstruction(z1, v, argsMap);
+                List<Instruction> assigExt1 = instr2.extend(1, vlm);
+
+                Instruction instr3 = new AssignmentInstruction(z2, vTag, argsMap);
+                List<Instruction> assigExt2 = instr3.extend(1, vlm);
+
+                Instruction instr4 = new JumpZeroInstruction(z1, label3, label2, argsMap);
+                List<Instruction> jumpZerExt1 = instr4.extend(1, vlm);
+
+                Instruction instr5 = new JumpZeroInstruction(z2, label3, argsMap);
+                List<Instruction> jumpZerExt2 = instr5.extend(1, vlm);
+
+                Instruction instr6 = new DecreaseInstruction(z1, argsMap);
+                Instruction instr7 = new DecreaseInstruction(z2, argsMap);
+                Instruction instr8 = new GoToInstruction(z1, jnzLabel, argsMap);
+                List<Instruction> gotoExt1 = instr8.extend(1, vlm);
+
+                Instruction instr9 = new JumpZeroInstruction(z2, label1, argsMap);
+                List<Instruction> jumpZerExt3 = instr9.extend(1, vlm);
+
+                Instruction instr10 = new NoOpInstruction(v, argsMap);
+
+                myInstructions.add(this);
+                myInstructions.add(instr1);
+                myInstructions.addAll(assigExt1);
+                myInstructions.addAll(assigExt2);
+                myInstructions.addAll(jumpZerExt1);
+                myInstructions.addAll(jumpZerExt2);
+                myInstructions.add(instr6);
+                myInstructions.add(instr7);
+                myInstructions.addAll(gotoExt1);
+                myInstructions.addAll(jumpZerExt3);
+                myInstructions.add(instr10);
+
+                return myInstructions;
+            }
+            default: {
+                Label label1 = vlm.newLabel();
+                Label label2 = vlm.newLabel();
+                Label label3 = vlm.newLabel();
+                Variable z1 = vlm.newZVariable();
+                Variable z2 = vlm.newZVariable();
+
+                Label jnzLabel = this.jnzLabel;
+                Variable vTag = this.other;
+                Variable v = this.getVariable();
+
+
+                Instruction instr1 = new NoOpInstruction(v, getLabel(), argsMap);
+                Instruction instr2 = new AssignmentInstruction(z1, v, argsMap);
+                List<Instruction> assigExt1 = instr2.extend(2, vlm);
+
+                Instruction instr3 = new AssignmentInstruction(z2, vTag, argsMap);
+                List<Instruction> assigExt2 = instr3.extend(2, vlm);
+
+                Instruction instr4 = new JumpZeroInstruction(z1, label3, label2, argsMap);
+                List<Instruction> jumpZerExt1 = instr4.extend(2, vlm);
+
+                Instruction instr5 = new JumpZeroInstruction(z2, label3, argsMap);
+                List<Instruction> jumpZerExt2 = instr5.extend(2, vlm);
+
+                Instruction instr6 = new DecreaseInstruction(z1, argsMap);
+                Instruction instr7 = new DecreaseInstruction(z2, argsMap);
+                Instruction instr8 = new GoToInstruction(z1, jnzLabel, argsMap);
+                List<Instruction> gotoExt1 = instr8.extend(1, vlm);
+
+                Instruction instr9 = new JumpZeroInstruction(z2, label1, argsMap);
+                List<Instruction> jumpZerExt3 = instr9.extend(2, vlm);
+
+                Instruction instr10 = new NoOpInstruction(v, argsMap);
+
+                myInstructions.add(this);
+                myInstructions.add(instr1);
+                myInstructions.addAll(assigExt1);
+                myInstructions.addAll(assigExt2);
+                myInstructions.addAll(jumpZerExt1);
+                myInstructions.addAll(jumpZerExt2);
+                myInstructions.add(instr6);
+                myInstructions.add(instr7);
+                myInstructions.addAll(gotoExt1);
+                myInstructions.addAll(jumpZerExt3);
+                myInstructions.add(instr10);
+
+                return myInstructions;
+            }
+        }
     }
 }

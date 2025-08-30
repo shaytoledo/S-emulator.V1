@@ -18,17 +18,11 @@ import java.util.List;
 public class EngineImpl implements Engine {
 
     private static Program cuurentProgram = null;
-    private int expandLevel = 0;
     private final List<RunResult> history = new ArrayList<>();
     private int runCounter = 0;
 
     public List<RunSummary> summaries = new ArrayList<>();
 
-    public void checkXML(String fileName) throws NotXMLException {
-        if (!fileName.endsWith(".xml")) {
-            throw new NotXMLException("Invalid extension (must be .xml): " + fileName);
-        }
-    }
 
     // Use EngineJaxbLoader to load the XML file and ProgramTranslator to translate it to internal representation
     @Override
@@ -36,7 +30,7 @@ public class EngineImpl implements Engine {
         List<Exception> errors = new ArrayList<>();
         try {
             try {
-            String fileName = xmlPath.getFileName().toString().toLowerCase();
+                String fileName = xmlPath.getFileName().toString().toLowerCase();
                 if (!fileName.endsWith(".xml")) {
                     throw new NotXMLException("Invalid extension (must be .xml): " + fileName);
                 }
@@ -53,13 +47,11 @@ public class EngineImpl implements Engine {
             }
 
             if (!errors.isEmpty()) {
-                return new LoadReport(false, errors, 0);
+                return new LoadReport(false, errors);
             }
 
             // Load the XML file into SProgram representation
             var sprogram = JaxbLoader.load(xmlPath);
-
-
 
 
             //Translate the loaded SProgram to internal Program representation
@@ -68,24 +60,21 @@ public class EngineImpl implements Engine {
             // If there are errors during translation, return them in the LoadReport (errors that define in the specification document)
             if (!cuurentProgram.errors.isEmpty()) {
                 // return the errors
-                return new LoadReport(false, cuurentProgram.errors, 0);
+                return new LoadReport(false, cuurentProgram.errors);
             }
 
-            history.clear();;
-            expandLevel = 0;
+            history.clear();
+            ;
             this.cuurentProgram = cuurentProgram.program;
-            expandLevel = this.cuurentProgram.maxLevel();
+            return new LoadReport(true, List.of());
 
-            return new LoadReport(true, List.of(),expandLevel);
-
-        }
-        catch (Exception e) {
-            return new LoadReport(false, List.of(e), 0);
+        } catch (Exception e) {
+            return new LoadReport(false, List.of(e));
         }
     }
 
     @Override
-    public ProgramSummary getProgramSummary() {
+    public ProgramSummary getProgramSummaryForShow() {
 
         // there isn't valid load program
         if (cuurentProgram == null) {
@@ -97,13 +86,23 @@ public class EngineImpl implements Engine {
                     cuurentProgram.getName(),
                     cuurentProgram.getVariablesPeek(),
                     cuurentProgram.getLabelsPeek(),
-                    cuurentProgram.getInstructionsPeek(),
-                    expandLevel
-
+                    cuurentProgram.getInstructionsPeek()
             );
         }
         return null;
     }
+
+
+    public static int sumCyclesExceptFirst(List<List<InstructionView>> extendInstructions) {
+        int total = 0;
+        for (List<InstructionView> chain : extendInstructions) {
+            for (int i = 1; i < chain.size(); i++) {
+                total += chain.get(i).cycles();
+            }
+        }
+        return total;
+    }
+
 
     @Override
     public RunResult run(int level, List<Long> inputs, List<String> varsNames) {
@@ -111,12 +110,17 @@ public class EngineImpl implements Engine {
 
         long y = exe.run(inputs);
 
-        var summary = new RunSummary(
+        //need to extend the program to the level
+        // calculate cycles from extend program (not from execution)
+        List<List<InstructionView>> extendCommend = expandProgramToLevelForExtend(level);
+        int totalCycels = sumCyclesExceptFirst(extendCommend);
+
+        RunSummary summary = new RunSummary(
                 ++runCounter,
                 level,
                 inputs,
                 y,
-                exe.getTotalCycles()
+                totalCycels
         );
         summaries.add(summary);
 
@@ -124,7 +128,7 @@ public class EngineImpl implements Engine {
             var res = new RunResult(
                     y,
                     exe.variablesState(),
-                    exe.getTotalCycles()
+                    totalCycels
             );
             history.add(res);
             return res;
@@ -132,14 +136,55 @@ public class EngineImpl implements Engine {
         return null;
     }
 
+    @Override
+    public int gatCycles() {
+        return cuurentProgram.calculateCycles();
+    }
 
     @Override
     public List<RunSummary> getHistory() {
         return summaries;
     }
 
-
-    // need to implement
     @Override
-    public void expandToLevel(int level) { }
+    public List<List<InstructionView>> expandProgramToLevelForExtend(int level) {
+        return cuurentProgram.expendToLevel(level);
+    }
+
+
+    // need to change
+    @Override
+    public List<InstructionView> expandProgramToLevelForRun(int level) {
+        List<InstructionView> newInstructions = new ArrayList<>();
+        List<List<InstructionView>> allInstructions = cuurentProgram.expendToLevel(level);
+
+        int counter = 1;
+
+        for (List<InstructionView> chain : allInstructions) {
+            for (int i = 1; i < chain.size(); i++) {
+                InstructionView instr = chain.get(i);
+
+                InstructionView numbered = new InstructionView(
+                        counter++,                     // מספר חדש
+                        instr.type(),
+                        instr.label(),
+                        instr.command(),
+                        instr.cycles()
+                );
+
+                newInstructions.add(numbered);
+            }
+        }
+        return newInstructions;
+    }
+
+
+
+    public int getMaxExpandLevel() {
+        if (cuurentProgram == null) {
+            throw new LoadProgramException("No program is loaded. Please load a file to display a program.");
+        }
+
+        return cuurentProgram.calculateMaxDegree()  ;
+    }
 }

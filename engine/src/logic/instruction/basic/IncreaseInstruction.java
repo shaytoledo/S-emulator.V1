@@ -2,14 +2,18 @@ package logic.instruction.basic;
 
 import logic.execution.ExecutionContext;
 import logic.instruction.AbstractInstruction;
+import logic.instruction.Instruction;
 import logic.instruction.InstructionData;
 import logic.label.FixedLabel;
 import logic.label.Label;
+import logic.program.VariableAndLabelMenger;
 import logic.variable.Variable;
 
+import java.util.List;
 import java.util.Map;
 
 public class IncreaseInstruction extends AbstractInstruction {
+
 
     public IncreaseInstruction(Variable var, Label lineLabel, Map<String,String> argsMap) {
         super(InstructionData.INCREASE, var, lineLabel, argsMap);
@@ -35,4 +39,21 @@ public class IncreaseInstruction extends AbstractInstruction {
     public String toDisplayString() {
         return getVariable().getRepresentation() + " <- " + getVariable().getRepresentation() + " + 1";
     }
+
+    @Override
+    public Map<String, String> args() {
+        return Map.of();
+    }
+
+    @Override
+    public int getMaxLevel() {
+        return 0;
+    }
+
+    @Override
+    public List<Instruction> extend(int extentionLevel, VariableAndLabelMenger vlm) {
+        return List.of(this);
+    }
+
+
 }

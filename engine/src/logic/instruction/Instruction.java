@@ -2,8 +2,10 @@ package logic.instruction;
 
 import logic.execution.ExecutionContext;
 import logic.label.Label;
+import logic.program.VariableAndLabelMenger;
 import logic.variable.Variable;
 
+import java.util.List;
 import java.util.Map;
 
 public interface Instruction {
@@ -25,4 +27,7 @@ public interface Instruction {
     Map<String,String> args();
 
     int getMaxLevel();
+
+    List<Instruction> extend(int extentionLevel, VariableAndLabelMenger vlm);
+
 }

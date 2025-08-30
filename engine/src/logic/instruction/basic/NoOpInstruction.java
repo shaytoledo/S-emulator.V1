@@ -2,11 +2,14 @@ package logic.instruction.basic;
 
 import logic.execution.ExecutionContext;
 import logic.instruction.AbstractInstruction;
+import logic.instruction.Instruction;
 import logic.instruction.InstructionData;
 import logic.label.FixedLabel;
 import logic.label.Label;
+import logic.program.VariableAndLabelMenger;
 import logic.variable.Variable;
 
+import java.util.List;
 import java.util.Map;
 
 public class NoOpInstruction extends AbstractInstruction {
@@ -31,4 +34,22 @@ public class NoOpInstruction extends AbstractInstruction {
     public String toDisplayString() {
         return getVariable().getRepresentation() + " <- " + getVariable().getRepresentation();
     }
+
+    @Override
+    public Map<String, String> args() {
+        return argsMap;
+    }
+
+    @Override
+    public int getMaxLevel() {
+        return 0;
+    }
+
+    @Override
+    public List<Instruction> extend(int extentionLevel, VariableAndLabelMenger vlm) {
+        return List.of(this);
+
+    }
+
+
 }

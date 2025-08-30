@@ -1,5 +1,6 @@
 package logic.program;
 
+import dto.InstructionView;
 import logic.instruction.Instruction;
 import logic.label.Label;
 import logic.variable.Variable;
@@ -8,12 +9,6 @@ import java.util.List;
 
 public interface Program {
 
-
-    int maxLevel();
-
-
-
-    boolean validate();
 
     int calculateMaxDegree();
 
@@ -30,15 +25,20 @@ public interface Program {
 
     List<Instruction> getInstructions();
 
-    public List<Variable> getVariables();
+    List<Variable> getVariables();
 
-    public List<Label> getLabels();
+    List<Label> getLabels();
 
-    public Label getExitLabel();
+    Label getExitLabel();
 
-    public List<String> getVariablesPeek();
+    List<String> getVariablesPeek();
 
-    public List<String> getLabelsPeek();
+    List<String> getLabelsPeek();
 
-    public List<String> getInstructionsPeek();
+    //void expendToLevelForRun(int level);
+    List<List<InstructionView>> expendToLevel(int level);
+
+
+    // for show
+    List<InstructionView> getInstructionsPeek();
 }

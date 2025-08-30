@@ -2,8 +2,8 @@ package adapter.translate;
 
 
 
-import adapter.xml.gen.SInstruction;
-import adapter.xml.gen.SProgram;
+import adapter.xml.generated.SInstruction;
+import adapter.xml.generated.SProgram;
 import logic.exception.*;
 import logic.instruction.*;
 import logic.instruction.basic.*;

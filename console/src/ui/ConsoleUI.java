@@ -7,6 +7,7 @@ import dto.*;
 import logic.exception.LoadProgramException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 public class ConsoleUI {
@@ -69,9 +70,15 @@ public class ConsoleUI {
         }
     }
 
+    private static void history() {
+        List<RunSummary> history = engine.getHistory();
+        ConsoleUtils.printRunSummaries(history);
+    }
+
+
     private static void showProgram() {
         try {
-            ProgramSummary summary = engine.getProgramSummary();
+            ProgramSummary summary = engine.getProgramSummaryForShow();
             System.out.println(summary);
         } catch (LoadProgramException e) {
             System.out.println(e.getMessage());
@@ -80,22 +87,28 @@ public class ConsoleUI {
 
     public static void runOnce() {
         try {
-            ProgramSummary summary = engine.getProgramSummary();
-
-            int maxDegree = summary.getMaxDegree();
+            int maxDegree = engine.getMaxExpandLevel();
             System.out.println("Max expansion degree available: " + maxDegree);
             System.out.print("Choose expansion degree (0.." + maxDegree + "): ");
             int degree = ConsoleUtils.readIntInRange(0, maxDegree);
 
+            ProgramSummary summary = engine.getProgramSummaryForShow();
+
             // get inputs from user
             List<Long> inputs = ConsoleUtils.readInputs(summary);
 
-            // name of inputs by order
+            // Tell the engine to run the program with the chosen degree and inputs in fit to the names of variables
             RunResult res  = engine.run(degree,inputs,summary.getInputs());
 
             System.out.println();
             System.out.println("===== Program Executed (after expansion) =====");
-            showProgram();
+
+
+
+            // func that run the program with the chosen degree and in run mode and change the instruction by the level
+            List<InstructionView> extendInstructions = engine.expandProgramToLevelForRun(degree);
+            printInstructionViews(extendInstructions);
+            //showProgram();
 
             System.out.println();
             System.out.println("===== Formal Result =====");
@@ -115,12 +128,46 @@ public class ConsoleUI {
         }
     }
 
-    private static void history() {
-        List<RunSummary> history = engine.getHistory();
-        ConsoleUtils.printRunSummaries(history);
+
+    private static void expand() {
+
+        try {
+            int maxDegree = engine.getMaxExpandLevel();
+            System.out.println("Max expansion degree available: " + maxDegree);
+            System.out.print("Choose expansion degree (0.." + maxDegree + "): ");
+            int degree = ConsoleUtils.readIntInRange(0, maxDegree);
+
+            // func that expand the program to the chosen degree
+            List<List<InstructionView>> extendInstructions = engine.expandProgramToLevelForExtend(degree);
+
+            // print the list of (list of instructions)
+            printExtendedInstructions(extendInstructions);
+
+        } catch (LoadProgramException e) {
+            System.out.println("No program is loaded. Please load a file to expand a program.");
+            return;
+        }
     }
 
-    private static void expand() { }
+    public static void printExtendedInstructions(List<List<InstructionView>> extendInstructions) {
+        for (List<InstructionView> chain : extendInstructions) {
+            List<InstructionView> reversed = new ArrayList<>(chain);
+            Collections.reverse(reversed);
+
+            String line = reversed.stream()
+                    .map(InstructionView::toString)
+                    .collect(Collectors.joining(" >>> "));
+
+            System.out.println(line);
+        }
+    }
+
+    public static void printInstructionViews(List<InstructionView> instructions) {
+        for (InstructionView instr : instructions) {
+            System.out.println(instr);
+        }
+    }
+
 
 
 }
