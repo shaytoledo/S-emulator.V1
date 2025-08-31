@@ -6,7 +6,7 @@ import logic.instruction.Instruction;
 import logic.instruction.InstructionData;
 import logic.label.FixedLabel;
 import logic.label.Label;
-import logic.program.VariableAndLabelMenger;
+import core.program.VariableAndLabelMenger;
 import logic.variable.Variable;
 
 import java.util.List;
@@ -23,7 +23,6 @@ public class NoOpInstruction extends AbstractInstruction {
         super(InstructionData.NO_OP, var, argsMap);
         basic = true;
     }
-
 
     @Override
     public Label execute(ExecutionContext context) {
@@ -50,6 +49,4 @@ public class NoOpInstruction extends AbstractInstruction {
         return List.of(this);
 
     }
-
-
 }

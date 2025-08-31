@@ -4,13 +4,11 @@ import logic.execution.ExecutionContext;
 import logic.instruction.AbstractInstruction;
 import logic.instruction.Instruction;
 import logic.instruction.InstructionData;
-import logic.instruction.basic.DecreaseInstruction;
 import logic.instruction.basic.IncreaseInstruction;
 import logic.instruction.basic.JumpNotZeroInstruction;
 import logic.instruction.basic.NoOpInstruction;
-import logic.label.FixedLabel;
 import logic.label.Label;
-import logic.program.VariableAndLabelMenger;
+import core.program.VariableAndLabelMenger;
 import logic.variable.Variable;
 
 import java.util.ArrayList;
@@ -36,11 +34,8 @@ public class GoToInstruction extends AbstractInstruction {
         return target;
     }
 
-
     @Override
     public String toDisplayString() {
-
-        //return  "GOTO " + argsMap.getOrDefault("gotoLabel","?");
         return  "GOTO " + target.getLabelRepresentation();
 
     }
@@ -65,14 +60,13 @@ public class GoToInstruction extends AbstractInstruction {
             default: {
                 Label label = vlm.newLabel();
                 Variable tempVar1 = vlm.newZVariable();
-                Variable tempVar2 = vlm.newZVariable();
 
-                Instruction instr1 = new NoOpInstruction(tempVar1, label, argsMap);
-                Instruction instr2 = new IncreaseInstruction(tempVar2, label, argsMap);
-                Instruction instr3 = new JumpNotZeroInstruction(tempVar2, getLabel(), argsMap);
+                // Instruction instr1 = new NoOpInstruction(getVariable(), getLabel(), argsMap);
+                Instruction instr2 = new IncreaseInstruction(tempVar1,getLabel(), argsMap);
+                Instruction instr3 = new JumpNotZeroInstruction(tempVar1, target, argsMap);
 
-                myInstructions.add(this);
-                myInstructions.add(instr1);
+                //myInstructions.add(this);
+                //myInstructions.add(instr1);
                 myInstructions.add(instr2);
                 myInstructions.add(instr3);
                 return myInstructions;

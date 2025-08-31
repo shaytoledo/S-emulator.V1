@@ -1,7 +1,5 @@
 package dto;
 
-import java.util.List;
-
 public record InstructionView(
         int number,
         String type,
@@ -18,7 +16,4 @@ public record InstructionView(
         String cmd = (command == null || command.isBlank()) ? "?" : command.trim();
         return "# " + number + " (" + typeFlag + ") "+ "[" + paddedLabel + "]" + " " + cmd + " (" + cycles + ")";
     }
-
-
-
 }

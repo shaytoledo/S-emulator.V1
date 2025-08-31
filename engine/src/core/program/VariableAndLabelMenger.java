@@ -1,4 +1,4 @@
-package logic.program;
+package core.program;
 
 import logic.label.Label;
 import logic.label.LabelImpl;
@@ -35,8 +35,6 @@ public class VariableAndLabelMenger {
         this.lCounter = nextIndexStartingFrom("L", usedLabels);
     }
 
-
-
     // find the largest index used with the given prefix, and return next
     static int nextIndexStartingFrom(String prefix, Set<String> used) {
         int max = 0;
@@ -50,7 +48,6 @@ public class VariableAndLabelMenger {
         }
         return max + 1;
     }
-
 
     public Variable newZVariable() {
         while (true) {

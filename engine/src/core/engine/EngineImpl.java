@@ -1,4 +1,4 @@
-package core;
+package core.engine;
 
 import dto.*;
 import adapter.translate.JaxbLoader;
@@ -7,12 +7,13 @@ import logic.exception.LoadProgramException;
 import logic.exception.NotXMLException;
 import logic.exception.ProgramFileNotFoundException;
 import logic.execution.ProgramExecutorImpl;
-import logic.program.Program;
+import core.program.Program;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 // implementation of the Engine interface (methods of the engine)
 public class EngineImpl implements Engine {
@@ -137,48 +138,110 @@ public class EngineImpl implements Engine {
     }
 
     @Override
-    public int gatCycles() {
-        return cuurentProgram.calculateCycles();
-    }
-
-    @Override
     public List<RunSummary> getHistory() {
         return summaries;
     }
 
     @Override
     public List<List<InstructionView>> expandProgramToLevelForExtend(int level) {
-        return cuurentProgram.expendToLevel(level);
+        return cuurentProgram.expendToLevelForExtend(level);
     }
 
 
-    // need to change
+
+//        // --------------------------------------------
+//        // התוצאה הסופית – רשימה של רשימות InstructionView
+//        // --------------------------------------------
+//        List<List<InstructionView>> filteredChains = new ArrayList<>();
+//
+//        // שולף את כל השרשראות המורחבות מהרמה המבוקשת
+//        List<List<InstructionView>> allInstructions = cuurentProgram.expendToLevelForRun(level);
+//
+//        // מונה רץ עבור מספור מחודש של כל ההוראות
+//        int counter = 1;
+//
+//        // --------------------------------------------
+//        // עובר על כל שרשרת הוראות
+//        // --------------------------------------------
+//        for (List<InstructionView> chain : allInstructions) {
+//            if (chain == null || chain.isEmpty()) {
+//                continue; // מדלג על שרשראות ריקות
+//            }
+//
+//            InstructionView first = chain.get(0);
+//
+//            // אם הפקודה הראשונה סינתטית (לא "B") -> מדלג על כל השרשרת
+//            if (Objects.equals(first.type(), "B")) {
+//                continue;
+//            }
+//
+//            // אם הפקודה הראשונה בסיסית:
+//            // נבנה שרשרת חדשה עם מספור מחודש לכל ההוראות שבה
+//            List<InstructionView> newChain = new ArrayList<>();
+//
+//            for (InstructionView instr : chain) {
+//                InstructionView numbered = new InstructionView(
+//                        counter++,          // מספר רץ חדש
+//                        instr.type(),
+//                        instr.label(),
+//                        instr.command(),
+//                        instr.cycles()
+//                );
+//                newChain.add(numbered);
+//            }
+//
+//            // מוסיפים את השרשרת החדשה לרשימה הסופית
+//            filteredChains.add(newChain);
+//        }
+//
+//        return filteredChains;
+
+
+//    @Override
+//    public List<List<InstructionView>> expandProgramToLevelForExtend(int level) {
+//      //  return cuurentProgram.expendToLevelForExtend(level);
+//
+//
+//    }
+
     @Override
     public List<InstructionView> expandProgramToLevelForRun(int level) {
         List<InstructionView> newInstructions = new ArrayList<>();
-        List<List<InstructionView>> allInstructions = cuurentProgram.expendToLevel(level);
-
-        int counter = 1;
-
-        for (List<InstructionView> chain : allInstructions) {
-            for (int i = 1; i < chain.size(); i++) {
-                InstructionView instr = chain.get(i);
-
-                InstructionView numbered = new InstructionView(
-                        counter++,                     // מספר חדש
-                        instr.type(),
-                        instr.label(),
-                        instr.command(),
-                        instr.cycles()
-                );
-
-                newInstructions.add(numbered);
-            }
-        }
-        return newInstructions;
+        List<List<InstructionView>> allInstructions = cuurentProgram.expendToLevelForRun(level);
+        return allInstructions.stream().flatMap(List::stream).toList();
+//        int counter = 1;
+//
+//        for (List<InstructionView> chain : allInstructions) {
+//            for (int i = 0; i < chain.size(); i++) {
+//                InstructionView instr = chain.get(i);
+//                if (Objects.equals(instr.type(), "B") && i == 0) {
+//                    InstructionView numbered = new InstructionView(
+//                            counter++,                     // מספר חדש
+//                            instr.type(),
+//                            instr.label(),
+//                            instr.command(),
+//                            instr.cycles()
+//                    );
+//                    newInstructions.add(numbered);
+//                }
+//                else if (i >= 1) {
+//                    InstructionView numbered = new InstructionView(
+//                            counter++,                     // מספר חדש
+//                            instr.type(),
+//                            instr.label(),
+//                            instr.command(),
+//                            instr.cycles()
+//                    );
+//                    newInstructions.add(numbered);
+//                }
+//                else {
+//                    // Skip this instruction (do not add to newInstructions)
+//                    continue;
+//                }
+//            }
+//        }
+//        return newInstructions;
     }
-
-
 
     public int getMaxExpandLevel() {
         if (cuurentProgram == null) {

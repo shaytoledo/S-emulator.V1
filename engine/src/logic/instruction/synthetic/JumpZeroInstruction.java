@@ -4,12 +4,11 @@ import logic.execution.ExecutionContext;
 import logic.instruction.AbstractInstruction;
 import logic.instruction.Instruction;
 import logic.instruction.InstructionData;
-import logic.instruction.basic.IncreaseInstruction;
 import logic.instruction.basic.JumpNotZeroInstruction;
 import logic.instruction.basic.NoOpInstruction;
 import logic.label.FixedLabel;
 import logic.label.Label;
-import logic.program.VariableAndLabelMenger;
+import core.program.VariableAndLabelMenger;
 import logic.variable.Variable;
 
 import java.util.ArrayList;
@@ -38,13 +37,11 @@ public class JumpZeroInstruction extends AbstractInstruction {
             return jnzLabel;
         }
         return FixedLabel.EMPTY;
-
     }
-
 
     @Override
     public String toDisplayString() {
-        return  "JZ " + getVariable().getRepresentation() + " -> " + argsMap.getOrDefault("JZLabel","?");
+        return "IF " + getVariable().getRepresentation() + " = 0 GOTO " + jnzLabel.getLabelRepresentation();
     }
 
     @Override
@@ -66,15 +63,14 @@ public class JumpZeroInstruction extends AbstractInstruction {
                 return List.of(this);
             case 1: {
                 Label label1 = vlm.newLabel();
-                Label label2 = vlm.newLabel();
+//                Label label2 = vlm.newLabel();
+//                Variable tempVar1 = vlm.newZVariable();
 
-                Variable tempVar1 = vlm.newZVariable();
+                Instruction instr1 = new JumpNotZeroInstruction(getVariable(),label1,getLabel() ,argsMap);
+                Instruction instr2 = new GoToInstruction(getVariable(), jnzLabel, argsMap);
+                Instruction instr3 = new NoOpInstruction(getVariable(), label1, argsMap);
 
-                Instruction instr1 = new NoOpInstruction(getVariable(), getLabel(), argsMap);
-                Instruction instr2 = new JumpNotZeroInstruction(getVariable(), label1, argsMap);
-                Instruction instr3 = new GoToInstruction(tempVar1, label2, argsMap);
-
-                myInstructions.add(this);
+                //myInstructions.add(this);
                 myInstructions.add(instr1);
                 myInstructions.add(instr2);
                 myInstructions.add(instr3);
@@ -82,21 +78,21 @@ public class JumpZeroInstruction extends AbstractInstruction {
             }
             default: {
                 Label label1 = vlm.newLabel();
-                Label label2 = vlm.newLabel();
+                //Label label2 = vlm.newLabel();
+                //Variable tempVar1 = vlm.newZVariable();
+                //Instruction instr1 = new NoOpInstruction(getVariable(), getLabel(), argsMap);
 
-                Variable tempVar1 = vlm.newZVariable();
+                Instruction instr1 = new JumpNotZeroInstruction(getVariable(),label1,getLabel() ,argsMap);
+                Instruction instr2 = new GoToInstruction(getVariable(), jnzLabel, argsMap);
+                List <Instruction> instrs = instr2.extend(1, vlm);
 
-                Instruction instr1 = new NoOpInstruction(getVariable(), getLabel(), argsMap);
-                Instruction instr2 = new JumpNotZeroInstruction(getVariable(), label1, argsMap);
+                Instruction instr3 = new NoOpInstruction(getVariable(), label1, argsMap);
 
-                Instruction instr3 = new GoToInstruction(tempVar1, label2, argsMap);
-                List <Instruction> instrs = instr3.extend(1, vlm);
-
-                myInstructions.add(this);
+                //myInstructions.add(this);
                 myInstructions.add(instr1);
-                myInstructions.add(instr2);
-
                 myInstructions.addAll(instrs);
+
+                myInstructions.add(instr3);
 
                 return myInstructions;
             }

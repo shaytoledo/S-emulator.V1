@@ -9,7 +9,7 @@ import logic.instruction.basic.JumpNotZeroInstruction;
 import logic.instruction.basic.NoOpInstruction;
 import logic.label.FixedLabel;
 import logic.label.Label;
-import logic.program.VariableAndLabelMenger;
+import core.program.VariableAndLabelMenger;
 import logic.variable.Variable;
 
 import java.util.ArrayList;
@@ -33,7 +33,6 @@ public class JumpEqualConstantInstruction extends AbstractInstruction {
         this.constant = constant;
     }
 
-
     @Override
     public Label execute(ExecutionContext context) {
         if (context.getVariableValue(getVariable().getRepresentation()) == constant) {;
@@ -42,10 +41,9 @@ public class JumpEqualConstantInstruction extends AbstractInstruction {
         return FixedLabel.EMPTY;
     }
 
-
     @Override
     public String toDisplayString() {
-        return "JE " + getVariable().getRepresentation() + " == " + argsMap.getOrDefault("constantValue","?") +" -> " + argsMap.getOrDefault("JEConstantLabel","?");
+        return "JE " + getVariable().getRepresentation() + " == " + constant +" -> " + target.getLabelRepresentation();
     }
 
     @Override
@@ -73,12 +71,8 @@ public class JumpEqualConstantInstruction extends AbstractInstruction {
                 Label label1 = vlm.newLabel();
 
 
-                Instruction instr1 = new NoOpInstruction(getVariable(), getLabel(), argsMap);
-                Instruction instr2 = new AssignmentInstruction(z1, v, argsMap);
-
-                myInstructions.add(this);
+                Instruction instr1 = new AssignmentInstruction(z1, v,getLabel(), argsMap);
                 myInstructions.add(instr1);
-                myInstructions.add(instr2);
 
                 for(int i = 0; i < k; i++) {
                     Instruction jz = new JumpZeroInstruction(z1, label1, argsMap);
@@ -87,17 +81,18 @@ public class JumpEqualConstantInstruction extends AbstractInstruction {
                     myInstructions.add(dec);
                 }
 
-                Instruction instr3 = new JumpNotZeroInstruction(z1, label1, argsMap);
-                Instruction instr4 = new GoToInstruction(v, target, argsMap);
-                Instruction instr5 = new NoOpInstruction(v, label1, argsMap);
-                myInstructions.add(instr3);
+                Instruction instr4 = new JumpNotZeroInstruction(z1, label1, argsMap);
+                Instruction instr5 = new GoToInstruction(v, target, argsMap);
+                Instruction instr6 = new NoOpInstruction(v, label1, argsMap);
                 myInstructions.add(instr4);
                 myInstructions.add(instr5);
+                myInstructions.add(instr6);
 
                 return myInstructions;
 
             }
             case 2: {
+
                 Variable z1 =  vlm.newZVariable();
                 Variable v = getVariable();
                 long k = constant;
@@ -105,29 +100,28 @@ public class JumpEqualConstantInstruction extends AbstractInstruction {
                 Label label1 = vlm.newLabel();
 
 
-                Instruction instr1 = new NoOpInstruction(getVariable(), getLabel(), argsMap);
-                Instruction instr2 = new AssignmentInstruction(z1, v, argsMap);
-                List<Instruction> assExte1 = instr2.extend(1, vlm);
-
-                myInstructions.add(this);
-                myInstructions.add(instr1);
+                Instruction instr1 = new AssignmentInstruction(z1, v,getLabel(), argsMap);
+                List<Instruction> assExte1 = instr1.extend(1, vlm);
                 myInstructions.addAll(assExte1);
 
-                for(int i = 0; i < k; i++) {
-                    Instruction jz = new JumpZeroInstruction(z1, label1, argsMap);
-                    Instruction dec = new DecreaseInstruction(z1, argsMap);
-                    myInstructions.add(jz);
-                    myInstructions.add(dec);
+                 for(int i = 0; i < k; i++) {
+                     Instruction instr2 = new JumpZeroInstruction(z1, target, argsMap);
+                     List<Instruction> re = instr2.extend(1, vlm);
+                     myInstructions.addAll(re);
+
+                     Instruction dec = new DecreaseInstruction(z1, argsMap);
+                     myInstructions.add(dec);
                 }
 
-                Instruction instr3 = new JumpNotZeroInstruction(z1, label1, argsMap);
-                Instruction instr4 = new GoToInstruction(v, target, argsMap);
-                List<Instruction> gotoExte1 = instr4.extend(1, vlm);
 
-                Instruction instr5 = new NoOpInstruction(v, label1, argsMap);
-                myInstructions.add(instr3);
+                Instruction instr4 = new JumpNotZeroInstruction(z1, label1, argsMap);
+                Instruction instr5 = new GoToInstruction(v, target, argsMap);
+                List<Instruction> gotoExte1 = instr5.extend(1, vlm);
+
+                Instruction instr6 = new NoOpInstruction(v, label1, argsMap);
+                myInstructions.add(instr4);
                 myInstructions.addAll(gotoExte1);
-                myInstructions.add(instr5);
+                myInstructions.add(instr6);
 
                 return myInstructions;
             }
@@ -139,30 +133,27 @@ public class JumpEqualConstantInstruction extends AbstractInstruction {
                 Label label1 = vlm.newLabel();
 
 
-                Instruction instr1 = new NoOpInstruction(getVariable(), getLabel(), argsMap);
-                Instruction instr2 = new AssignmentInstruction(z1, v, argsMap);
-                List<Instruction> assExte1 = instr2.extend(2, vlm);
-
-                myInstructions.add(this);
-                myInstructions.add(instr1);
+                Instruction instr1 = new AssignmentInstruction(z1, v,getLabel(), argsMap);
+                List<Instruction> assExte1 = instr1.extend(2, vlm);
                 myInstructions.addAll(assExte1);
 
                 for(int i = 0; i < k; i++) {
-                    Instruction jz = new JumpZeroInstruction(z1, label1, argsMap);
+                    Instruction instr2 = new JumpZeroInstruction(z1, target, argsMap);
+                    List<Instruction> re = instr2.extend(2, vlm);
+                    myInstructions.addAll(re);
+
                     Instruction dec = new DecreaseInstruction(z1, argsMap);
-                    myInstructions.add(jz);
                     myInstructions.add(dec);
                 }
 
-                Instruction instr3 = new JumpNotZeroInstruction(z1, label1, argsMap);
-                Instruction instr4 = new GoToInstruction(v, target, argsMap);
-                List<Instruction> gotoExte1 = instr4.extend(1, vlm);
+                Instruction instr4 = new JumpNotZeroInstruction(z1, label1, argsMap);
+                Instruction instr5 = new GoToInstruction(v, target, argsMap);
+                List<Instruction> gotoExte1 = instr5.extend(1, vlm);
 
-                Instruction instr5 = new NoOpInstruction(v, label1, argsMap);
-                myInstructions.add(instr3);
+                Instruction instr6 = new NoOpInstruction(v, label1, argsMap);
+                myInstructions.add(instr4);
                 myInstructions.addAll(gotoExte1);
-                myInstructions.add(instr5);
-
+                myInstructions.add(instr6);
                 return myInstructions;
             }
 

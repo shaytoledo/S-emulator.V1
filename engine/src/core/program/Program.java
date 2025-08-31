@@ -1,4 +1,4 @@
-package logic.program;
+package core.program;
 
 import dto.InstructionView;
 import logic.instruction.Instruction;
@@ -12,7 +12,7 @@ public interface Program {
 
     int calculateMaxDegree();
 
-    int calculateCycles();
+    //int calculateCycles();
 
     Instruction getNextInstructionLabel(Instruction currentInstruction);
 
@@ -36,8 +36,10 @@ public interface Program {
     List<String> getLabelsPeek();
 
     //void expendToLevelForRun(int level);
-    List<List<InstructionView>> expendToLevel(int level);
 
+    List<List<InstructionView>> expendToLevelForExtend(int level);
+
+    List<List<InstructionView>> expendToLevelForRun(int level);
 
     // for show
     List<InstructionView> getInstructionsPeek();

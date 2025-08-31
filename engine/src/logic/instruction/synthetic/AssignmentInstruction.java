@@ -10,7 +10,7 @@ import logic.instruction.basic.JumpNotZeroInstruction;
 import logic.instruction.basic.NoOpInstruction;
 import logic.label.FixedLabel;
 import logic.label.Label;
-import logic.program.VariableAndLabelMenger;
+import core.program.VariableAndLabelMenger;
 import logic.variable.Variable;
 
 import java.util.ArrayList;
@@ -31,7 +31,6 @@ public class AssignmentInstruction extends AbstractInstruction {
         this.assignedVariable = source;
     }
 
-
     @Override
     public Label execute(ExecutionContext context) {
         long assignedValue = context.getVariableValue(assignedVariable.getRepresentation());
@@ -39,10 +38,8 @@ public class AssignmentInstruction extends AbstractInstruction {
         return FixedLabel.EMPTY;
     }
 
-
     @Override
     public String toDisplayString() {
-        //return getVariable().getRepresentation() + " <- " + argsMap.getOrDefault("assignedVariable","?");
         return getVariable().getRepresentation() + " <- " + assignedVariable.getRepresentation();
 
     }
@@ -54,7 +51,7 @@ public class AssignmentInstruction extends AbstractInstruction {
 
     @Override
     public int getMaxLevel() {
-        return 1;
+        return 2;
     }
 
     public List<Instruction> extend(int extentionLevel, VariableAndLabelMenger vlm) {
@@ -70,10 +67,11 @@ public class AssignmentInstruction extends AbstractInstruction {
                 Variable v = this.getVariable();
                 Variable vTag = assignedVariable;
                 Variable z1 = vlm.newZVariable();
-                Instruction instr1 = new NoOpInstruction(v, getLabel(), argsMap);
-                Instruction instr2 = new ZeroVariableInstruction(v, argsMap);
+                //Instruction instr1 = new NoOpInstruction(v, getLabel(), argsMap);
+                Instruction instr2 = new ZeroVariableInstruction(v,getLabel(), argsMap);
                 Instruction instr3 = new JumpNotZeroInstruction(vTag,label1, argsMap);
                 Instruction instr4 = new GoToInstruction(vTag,label3, argsMap);
+
                 Instruction instr5 = new DecreaseInstruction(vTag,label1, argsMap);
                 Instruction instr6 = new IncreaseInstruction(z1, argsMap);
                 Instruction instr7 = new JumpNotZeroInstruction(vTag,label1, argsMap);
@@ -82,8 +80,8 @@ public class AssignmentInstruction extends AbstractInstruction {
                 Instruction instr10 = new IncreaseInstruction(vTag, argsMap);
                 Instruction instr11 = new JumpNotZeroInstruction(z1,label2, argsMap);
                 Instruction instr12 = new NoOpInstruction(v, label3, argsMap);
-                myInstructions.add(this);
-                myInstructions.add(instr1);
+                //myInstructions.add(this);
+                //myInstructions.add(instr1);
                 myInstructions.add(instr2);
                 myInstructions.add(instr3);
                 myInstructions.add(instr4);
@@ -104,8 +102,8 @@ public class AssignmentInstruction extends AbstractInstruction {
                 Variable v = this.getVariable();
                 Variable vTag = assignedVariable;
                 Variable z1 = vlm.newZVariable();
-                Instruction instr1 = new NoOpInstruction(v, getLabel(), argsMap);
-                Instruction instr2 = new ZeroVariableInstruction(v, argsMap);
+                //Instruction instr1 = new NoOpInstruction(v, getLabel(), argsMap);
+                Instruction instr2 = new ZeroVariableInstruction(v,getLabel(), argsMap);
                 List<Instruction> zeroExtend = instr2.extend(1, vlm);
 
                 Instruction instr3 = new JumpNotZeroInstruction(vTag,label1, argsMap);
@@ -121,8 +119,8 @@ public class AssignmentInstruction extends AbstractInstruction {
                 Instruction instr11 = new JumpNotZeroInstruction(z1,label2, argsMap);
                 Instruction instr12 = new NoOpInstruction(v, label3, argsMap);
 
-                myInstructions.add(this);
-                myInstructions.add(instr1);
+                //myInstructions.add(this);
+                //myInstructions.add(instr1);
 
                 myInstructions.addAll(zeroExtend);
 

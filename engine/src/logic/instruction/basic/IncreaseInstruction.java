@@ -6,7 +6,7 @@ import logic.instruction.Instruction;
 import logic.instruction.InstructionData;
 import logic.label.FixedLabel;
 import logic.label.Label;
-import logic.program.VariableAndLabelMenger;
+import core.program.VariableAndLabelMenger;
 import logic.variable.Variable;
 
 import java.util.List;

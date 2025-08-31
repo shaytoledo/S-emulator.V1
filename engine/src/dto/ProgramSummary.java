@@ -7,8 +7,6 @@ public record ProgramSummary(
         List<String> inputs,
         List<String> labels,
         List<InstructionView> instructions
-
-        // List<InstructionView> instructions
 ) {
     @Override
     public String toString() {
@@ -44,12 +42,8 @@ public record ProgramSummary(
         return sb.toString();
     }
 
-
     public List<String> getInputs() {
         return inputs != null ? inputs : List.of();
     }
-
-
-
 
 }

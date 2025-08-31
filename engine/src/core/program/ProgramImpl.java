@@ -1,4 +1,4 @@
-package logic.program;
+package core.program;
 
 import dto.InstructionView;
 import logic.instruction.Instruction;
@@ -175,12 +175,12 @@ public class ProgramImpl implements Program {
         return variables;
     }
 
-    @Override
-    public int calculateCycles() {
-        return instructions.stream()
-                .mapToInt(Instruction::cycles)
-                .sum();
-    }
+//    @Override
+//    public int calculateCycles() {
+//        return instructions.stream()
+//                .mapToInt(Instruction::cycles)
+//                .sum();
+//    }
 
     @Override
     public Instruction getNextInstructionLabel(Instruction currentInstruction) {
@@ -235,12 +235,6 @@ public class ProgramImpl implements Program {
         }
     }
 
-
-
-
-
-
-
     // convert labels to a String list for display in table
     @Override
     public List<String> getLabelsPeek() {
@@ -284,13 +278,70 @@ public class ProgramImpl implements Program {
 //
 //        instructions.addAll(expandedInstructions);
 //    }
+    @Override
+    public List<List<InstructionView>> expendToLevelForExtend(int level) {
+    VariableAndLabelMenger vlm = new VariableAndLabelMenger(variables, labels);
+
+    List<List<InstructionView>> result = new ArrayList<>();
+
+    for (Instruction root : instructions) {
+
+        List<List<Instruction>> paths = expandPaths(root, level, vlm);
+
+
+        for (List<Instruction> path : paths) {
+            int number = 1;
+
+            List<InstructionView> views = new ArrayList<>(path.size());
+            for (Instruction inst : path) {
+
+                views.add(toView(inst, number));
+                number++;
+            }
+            result.add(views);
+        }
+    }
+
+    return result;
+}
+
+
+
+    private List<List<Instruction>> expandPaths(Instruction inst, int level, VariableAndLabelMenger vlm) {
+        List<List<Instruction>> out = new ArrayList<>();
+
+        if (level <= 0 || inst.getMaxLevel() <= 0) {
+            out.add(List.of(inst));
+            return out;
+        }
+        List<Instruction> children = inst.extend(1, vlm);
+
+        if (children == null || children.isEmpty()) {
+            out.add(List.of(inst));
+            return out;
+        }
+
+
+        for (Instruction child : children) {
+            List<List<Instruction>> tails = expandPaths(child, level - 1, vlm);
+
+            for (List<Instruction> tail : tails) {
+                ArrayList<Instruction> path = new ArrayList<>(1 + tail.size());
+                path.add(inst);
+                path.addAll(tail);
+                out.add(path);
+            }
+        }
+
+        return out;
+    }
 
 
     // expand Instructions to the given level (with the original instructions) fit fo extend command
     // notice: this method add to the original instruction the expanded ones
     // return a list of (list of InstructionView) for display in table
     @Override
-    public List<List<InstructionView>> expendToLevel(int level) {
+    public List<List<InstructionView>> expendToLevelForRun(int level) {
         VariableAndLabelMenger vlm = new VariableAndLabelMenger(variables, labels);
         List<List<InstructionView>> result = new ArrayList<>();
 
@@ -312,7 +363,7 @@ public class ProgramImpl implements Program {
 
     private static InstructionView toView(Instruction ins, int index) {
         int number = index;
-        String type = ins.isBasic() ? "S" : "B";
+        String type = ins.isBasic() ? "B" : "S";
         String label = (ins.getLabel() == null)
                 ? ""
                 : ins.getLabel().getLabelRepresentation();
@@ -321,8 +372,6 @@ public class ProgramImpl implements Program {
 
         return new InstructionView(number, type, label, command, cycles);
     }
-
-
 
     // convert instructions to InstructionView list for display in table
     @Override

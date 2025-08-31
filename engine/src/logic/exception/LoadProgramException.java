@@ -5,7 +5,4 @@ public class LoadProgramException extends RuntimeException {
     super(message);
   }
 
-  public LoadProgramException(String message, Throwable cause) {
-    super(message, cause);
-  }
 }

@@ -7,7 +7,7 @@ import java.util.*;
 
 import static java.util.Collections.emptyList;
 
-public class ConsoleUtils {
+public class ConsoleUiHelper {
 
     private static final Scanner in = new Scanner(System.in);
 

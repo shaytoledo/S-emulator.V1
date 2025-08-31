@@ -9,7 +9,7 @@ import logic.instruction.basic.JumpNotZeroInstruction;
 import logic.instruction.basic.NoOpInstruction;
 import logic.label.FixedLabel;
 import logic.label.Label;
-import logic.program.VariableAndLabelMenger;
+import core.program.VariableAndLabelMenger;
 import logic.variable.Variable;
 
 import java.util.ArrayList;
@@ -31,7 +31,6 @@ public class ZeroVariableInstruction extends AbstractInstruction {
         context.updateVariable(getVariable().getRepresentation(), 0L);
         return FixedLabel.EMPTY;
     }
-
 
     @Override
     public String toDisplayString() {
@@ -60,7 +59,7 @@ public class ZeroVariableInstruction extends AbstractInstruction {
                 Instruction instr1 = new NoOpInstruction(getVariable(), getLabel(), argsMap);
                 Instruction instr2 = new DecreaseInstruction(getVariable(), label, argsMap);
                 Instruction instr3 = new JumpNotZeroInstruction(getVariable(), label, argsMap);
-                myInstructions.add(this);
+                //myInstructions.add(this);
                 myInstructions.add(instr1);
                 myInstructions.add(instr2);
                 myInstructions.add(instr3);

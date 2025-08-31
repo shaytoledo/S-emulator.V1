@@ -29,9 +29,9 @@ public class EexecutionContextImpl implements ExecutionContext {
         }
     }
 
-    private static String keyOf(String v) {
-        return v.toString().toLowerCase(Locale.ROOT);
-    }
+//    private static String keyOf(String v) {
+//        return v.toString().toLowerCase(Locale.ROOT);
+//    }
 
 
     @Override
@@ -48,8 +48,6 @@ public class EexecutionContextImpl implements ExecutionContext {
     public void updateVariable(String v, long value) {
         variableState.put(v, value);
     }
-
-
 
     @Override
     public Map<String, Long> getVariablesState() {

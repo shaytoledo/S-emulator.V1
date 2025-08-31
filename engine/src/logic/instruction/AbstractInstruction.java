@@ -1,9 +1,7 @@
 package logic.instruction;
 
-import logic.execution.ExecutionContext;
 import logic.label.FixedLabel;
 import logic.label.Label;
-import logic.program.VariableAndLabelMenger;
 import logic.variable.Variable;
 
 import java.util.List;
@@ -32,13 +30,11 @@ public abstract class AbstractInstruction implements Instruction {
 
     }
 
-
     public String arg(String key)    { return this.argsMap.get(key); }
 
     public void setBasic(boolean isBasic) {
         this.basic = isBasic;
     }
-
 
     @Override
     public String getName() {
@@ -64,7 +60,6 @@ public abstract class AbstractInstruction implements Instruction {
     public boolean isBasic() {
         return basic;
     }
-
 }
 
 

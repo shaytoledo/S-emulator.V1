@@ -3,7 +3,7 @@ package logic.execution;
 import logic.instruction.Instruction;
 import logic.label.FixedLabel;
 import logic.label.Label;
-import logic.program.Program;
+import core.program.Program;
 import java.util.*;
 import java.util.stream.Collectors;
 import static java.util.Collections.emptyList;
@@ -73,10 +73,10 @@ public class ProgramExecutorImpl implements ProgramExecutor {
         return onlyXSorted;
     }
 
-    @Override
-    public long getTotalCycles() {
-        return program.calculateCycles();
-    }
+//    @Override
+//    public long getTotalCycles() {
+//        return program.calculateCycles();
+//    }
 
     private static boolean isExit(Label l) {
         if (l == null) return false;
@@ -91,14 +91,4 @@ public class ProgramExecutorImpl implements ProgramExecutor {
         String rep = l.getLabelRepresentation();
         return rep != null && rep.equalsIgnoreCase("EMPTY");
     }
-
-    private static int parseIntAfterFirstChar(String s) {
-        try {
-            return Integer.parseInt(s.substring(1).trim());
-        } catch (Exception ex) {
-            return Integer.MAX_VALUE; // מפתחות לא-מספריים יידחקו לסוף
-        }
-    }
-
-
 }

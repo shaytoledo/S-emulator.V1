@@ -1,7 +1,5 @@
 package logic.variable;
 
-import logic.label.Label;
-
 import java.util.Objects;
 
 public class VariableImpl implements Variable {

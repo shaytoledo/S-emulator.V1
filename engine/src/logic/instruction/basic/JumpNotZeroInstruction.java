@@ -6,7 +6,7 @@ import logic.instruction.Instruction;
 import logic.instruction.InstructionData;
 import logic.label.FixedLabel;
 import logic.label.Label;
-import logic.program.VariableAndLabelMenger;
+import core.program.VariableAndLabelMenger;
 import logic.variable.Variable;
 
 import java.util.List;
@@ -41,8 +41,6 @@ public class JumpNotZeroInstruction extends AbstractInstruction {
 
     @Override
     public String toDisplayString() {
-       // return "IF " + getVariable().getRepresentation() + "!=0 GOTO " + argsMap.get("JNZLabel");
-
         return "IF " + getVariable().getRepresentation() + "!=0 GOTO " + jnzLabel.getLabelRepresentation();
     }
 
@@ -61,6 +59,4 @@ public class JumpNotZeroInstruction extends AbstractInstruction {
         return List.of(this);
 
     }
-
-
 }

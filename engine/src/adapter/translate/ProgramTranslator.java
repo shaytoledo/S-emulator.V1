@@ -10,8 +10,8 @@ import logic.instruction.basic.*;
 import logic.instruction.synthetic.*;
 import logic.label.Label;
 import logic.label.LabelImpl;
-import logic.program.Program;
-import logic.program.ProgramImpl;
+import core.program.Program;
+import core.program.ProgramImpl;
 import logic.variable.Variable;
 
 import java.util.*;
@@ -31,7 +31,6 @@ public final class ProgramTranslator {
             this.errors = errors;
         }
     }
-
 
     public static Result translate(SProgram sProgram) {
 
@@ -304,6 +303,4 @@ public final class ProgramTranslator {
     private static String errorMessageByLine(int line, String msg) {
         return String.format("Error in line %d: %s", line + 1, msg);
     }
-
-
 }
