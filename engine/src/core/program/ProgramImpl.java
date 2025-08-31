@@ -91,9 +91,9 @@ public class ProgramImpl implements Program {
             return this;
         }
 
-        public Builder addLabels(Label... lbls) {
-            if (lbls != null) {
-                this.labels.addAll(Arrays.asList(lbls));
+        public Builder addLabels(Label... lbs) {
+            if (lbs != null) {
+                this.labels.addAll(Arrays.asList(lbs));
             }
             return this;
         }
@@ -175,13 +175,6 @@ public class ProgramImpl implements Program {
         return variables;
     }
 
-//    @Override
-//    public int calculateCycles() {
-//        return instructions.stream()
-//                .mapToInt(Instruction::cycles)
-//                .sum();
-//    }
-
     @Override
     public Instruction getNextInstructionLabel(Instruction currentInstruction) {
         int currentIndex = instructions.indexOf(currentInstruction);
@@ -230,7 +223,7 @@ public class ProgramImpl implements Program {
     private static void addIfStartsWithX(Set<String> acc, String s) {
         if (s == null) return;
         String t = s.trim();
-        if (!t.isEmpty() && t.startsWith("x")) {
+        if (t.startsWith("x")) {
             acc.add(t);
         }
     }
@@ -259,25 +252,11 @@ public class ProgramImpl implements Program {
     }
 
 
-//    // expand Instructions to the given level (without the original instructions) fit fo run extend
-//    // notice: this method replaces the original instructions with the expanded ones
-//    @Override
-//    public void expendToLevelForRun(int level) {
-//
-//        VariableAndLabelMenger vlm = new VariableAndLabelMenger(variables, labels);
-//        List <Instruction> expandedInstructions = new ArrayList<>();
-//
-//        for (Instruction inst : instructions) {
-//            List<Instruction> curExtendInstruction = new ArrayList<>(inst.extend(level, vlm));
-//            if (!inst.isBasic()) {
-//                curExtendInstruction.remove(0);
-//            }
-//            expandedInstructions.addAll(curExtendInstruction);
-//        }
-//        this.instructions = new ArrayList<>();
-//
-//        instructions.addAll(expandedInstructions);
-//    }
+//     expand Instructions to the given level (without the original instructions) fit fo run extend
+//     notice: this method replaces the original instructions with the expanded ones
+
+
+
     @Override
     public List<List<InstructionView>> expendToLevelForExtend(int level) {
     VariableAndLabelMenger vlm = new VariableAndLabelMenger(variables, labels);
@@ -306,7 +285,7 @@ public class ProgramImpl implements Program {
 }
 
 
-
+    // recursive method to expand paths
     private List<List<Instruction>> expandPaths(Instruction inst, int level, VariableAndLabelMenger vlm) {
         List<List<Instruction>> out = new ArrayList<>();
 
@@ -335,7 +314,6 @@ public class ProgramImpl implements Program {
 
         return out;
     }
-
 
     // expand Instructions to the given level (with the original instructions) fit fo extend command
     // notice: this method add to the original instruction the expanded ones
@@ -408,130 +386,6 @@ public class ProgramImpl implements Program {
     }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//    @Override
-//    public List<InstructionView> getInstructionsPeek(int levelExtend) {
-//        List<InstructionView> instructionViews = new ArrayList<>(instructions.size());
-//
-//        int totalCycles = 0;
-//
-//        int number = 1;
-//        for (int i = 0; i < instructions.size(); i++) {
-//            Instruction inst = instructions.get(i);
-//
-//            String bigLine = "";
-//
-//
-//
-//            // contins all the variables and labels for the menger
-//            VariableAndLabelMenger vlm = new VariableAndLabelMenger(variables, labels);
-//            List<Instruction> currExtendInstruction = inst.extend(levelExtend, vlm);
-//
-//            for (int j = 0; j < currExtendInstruction.size(); j++) {
-//                Instruction curr = currExtendInstruction.get(j);
-//
-//                String type = curr.isBasic() ? "B" : "S";
-//
-//                String lbl = (curr.getLabel() != null && curr.getLabel().getLabelRepresentation() != null)
-//                        ? curr.getLabel().getLabelRepresentation()
-//                        : "";
-//
-//                String labelFormatted = String.format("[%1$-5s]", lbl);
-//
-//                String command = curr.toDisplayString();
-//
-//                command = command
-//                        .replaceAll("\\bX(\\d+)\\b", "x$1")
-//                        .replaceAll("\\bY\\b", "y");
-//
-//                int cycles = curr.cycles();
-//                totalCycles += cycles;
-//                String line = String.format("#%d (%s) %s %s (%d)", number, type, labelFormatted, command, cycles);
-//                number++;
-//
-//
-//                if (runMode) {
-//                    lines.add(line);
-//
-//                } else {
-//                    if (currExtendInstruction.size() > 2) {
-//                        bigLine = bigLine + " <<< " + line;
-//
-//                    }
-//                    else {
-//                        bigLine = line;
-//                    }
-//
-//                }
-//            }
-//
-//            if (!runMode) {
-//                lines.add(bigLine);
-//            }
-//        }
-//
-//        currTotalCycles = totalCycles;
-//        return lines;
-//    }
-
-
-
-
-//        for (int i = 0; i < instructions.size(); i++) {
-//            Instruction inst = instructions.get(i);
-//
-//
-//            int number = i + 1;
-//
-//            String type = inst.isBasic() ? "B" : "S";
-//
-//            String lbl = (inst.getLabel() != null && inst.getLabel().getLabelRepresentation() != null)
-//                    ? inst.getLabel().getLabelRepresentation()
-//                    : "";
-//            String labelFormatted = String.format("[%1$-5s]", lbl);
-//
-//
-//            String command = inst.toDisplayString();
-//
-//            command = command
-//                    .replaceAll("\\bX(\\d+)\\b", "x$1")
-//                    .replaceAll("\\bY\\b", "y");
-//
-//            int cycles = inst.cycles();
-//
-//            String line = String.format("#%d (%s) %s %s (%d)", number, type, labelFormatted, command, cycles);
-//            lines.add(line);
-//        }
-//        return lines;
-
-
-
-
     @Override
     public int calculateMaxDegree() {
         int max = 0;
@@ -545,17 +399,4 @@ public class ProgramImpl implements Program {
         }
         return max;
     }
-
-
-
-
-
-    public Variable getVariableByName(String name) {
-        return variables.stream()
-                .filter(v -> v.getRepresentation().equals(name))
-                .findFirst()
-                .orElse(null);
-    }
-
-
 }

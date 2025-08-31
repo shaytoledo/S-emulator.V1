@@ -51,7 +51,7 @@ public class DecreaseInstruction extends AbstractInstruction {
     }
 
     @Override
-     public List<Instruction> extend(int extentionLevel, VariableAndLabelMenger vlm) {
+     public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
         return List.of(this);
 
      }

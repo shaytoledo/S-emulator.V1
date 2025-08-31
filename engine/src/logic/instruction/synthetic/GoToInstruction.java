@@ -6,7 +6,6 @@ import logic.instruction.Instruction;
 import logic.instruction.InstructionData;
 import logic.instruction.basic.IncreaseInstruction;
 import logic.instruction.basic.JumpNotZeroInstruction;
-import logic.instruction.basic.NoOpInstruction;
 import logic.label.Label;
 import core.program.VariableAndLabelMenger;
 import logic.variable.Variable;
@@ -51,22 +50,19 @@ public class GoToInstruction extends AbstractInstruction {
     }
 
     @Override
-    public List<Instruction> extend(int extentionLevel, VariableAndLabelMenger vlm) {
+    public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
         List<Instruction> myInstructions = new ArrayList<>();
 
-        switch (extentionLevel) {
+        switch (extensionLevel) {
             case 0:
                 return List.of(this);
             default: {
-                Label label = vlm.newLabel();
                 Variable tempVar1 = vlm.newZVariable();
 
-                // Instruction instr1 = new NoOpInstruction(getVariable(), getLabel(), argsMap);
                 Instruction instr2 = new IncreaseInstruction(tempVar1,getLabel(), argsMap);
                 Instruction instr3 = new JumpNotZeroInstruction(tempVar1, target, argsMap);
 
-                //myInstructions.add(this);
-                //myInstructions.add(instr1);
+
                 myInstructions.add(instr2);
                 myInstructions.add(instr3);
                 return myInstructions;

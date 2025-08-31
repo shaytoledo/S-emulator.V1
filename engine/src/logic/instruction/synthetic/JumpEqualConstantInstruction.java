@@ -35,7 +35,7 @@ public class JumpEqualConstantInstruction extends AbstractInstruction {
 
     @Override
     public Label execute(ExecutionContext context) {
-        if (context.getVariableValue(getVariable().getRepresentation()) == constant) {;
+        if (context.getVariableValue(getVariable().getRepresentation()) == constant) {
             return target;
         }
         return FixedLabel.EMPTY;
@@ -57,10 +57,10 @@ public class JumpEqualConstantInstruction extends AbstractInstruction {
     }
 
     @Override
-    public List<Instruction> extend(int extentionLevel, VariableAndLabelMenger vlm) {
+    public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
         List<Instruction> myInstructions = new ArrayList<>();
 
-        switch (extentionLevel) {
+        switch (extensionLevel) {
             case 0:
                 return List.of(this);
             case 1: {

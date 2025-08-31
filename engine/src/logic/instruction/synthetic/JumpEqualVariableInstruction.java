@@ -56,10 +56,10 @@ public class JumpEqualVariableInstruction extends AbstractInstruction {
     }
 
     @Override
-    public List<Instruction> extend(int extentionLevel, VariableAndLabelMenger vlm) {
+    public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
         List<Instruction> myInstructions = new ArrayList<>();
 
-        switch (extentionLevel) {
+        switch (extensionLevel) {
             case 0:
                 return List.of(this);
             case 1: {
@@ -74,7 +74,6 @@ public class JumpEqualVariableInstruction extends AbstractInstruction {
                 Variable v = this.getVariable();
 
 
-                //Instruction instr1 = new NoOpInstruction(v, getLabel(), argsMap);
                 Instruction instr2 = new AssignmentInstruction(z1, v,getLabel(), argsMap);
                 Instruction instr3 = new AssignmentInstruction(z2, vTag, argsMap);
                 Instruction instr4 = new JumpZeroInstruction(z1, label3, label2, argsMap);
@@ -85,8 +84,7 @@ public class JumpEqualVariableInstruction extends AbstractInstruction {
                 Instruction instr9 = new JumpZeroInstruction(z2, label1, argsMap);
                 Instruction instr10 = new NoOpInstruction(v, argsMap);
 
-                //myInstructions.add(this);
-                //myInstructions.add(instr1);
+
                 myInstructions.add(instr2);
                 myInstructions.add(instr3);
                 myInstructions.add(instr4);
@@ -111,12 +109,11 @@ public class JumpEqualVariableInstruction extends AbstractInstruction {
                 Variable v = this.getVariable();
 
 
-                //Instruction instr1 = new NoOpInstruction(v, getLabel(), argsMap);
                 Instruction instr2 = new AssignmentInstruction(z1, v,getLabel(), argsMap);
-                List<Instruction> assigExt1 = instr2.extend(1, vlm);
+                List<Instruction> assignExt1 = instr2.extend(1, vlm);
 
                 Instruction instr3 = new AssignmentInstruction(z2, vTag, argsMap);
-                List<Instruction> assigExt2 = instr3.extend(1, vlm);
+                List<Instruction> assignExt2 = instr3.extend(1, vlm);
 
                 Instruction instr4 = new JumpZeroInstruction(z1, label3, label2, argsMap);
                 List<Instruction> jumpZerExt1 = instr4.extend(1, vlm);
@@ -134,10 +131,9 @@ public class JumpEqualVariableInstruction extends AbstractInstruction {
 
                 Instruction instr10 = new NoOpInstruction(v, argsMap);
 
-                //myInstructions.add(this);
-                //myInstructions.add(instr1);
-                myInstructions.addAll(assigExt1);
-                myInstructions.addAll(assigExt2);
+
+                myInstructions.addAll(assignExt1);
+                myInstructions.addAll(assignExt2);
                 myInstructions.addAll(jumpZerExt1);
                 myInstructions.addAll(jumpZerExt2);
                 myInstructions.add(instr6);
@@ -160,12 +156,11 @@ public class JumpEqualVariableInstruction extends AbstractInstruction {
                 Variable v = this.getVariable();
 
 
-                //Instruction instr1 = new NoOpInstruction(v, getLabel(), argsMap);
                 Instruction instr2 = new AssignmentInstruction(z1, v,getLabel(), argsMap);
-                List<Instruction> assigExt1 = instr2.extend(2, vlm);
+                List<Instruction> assignExt1 = instr2.extend(2, vlm);
 
                 Instruction instr3 = new AssignmentInstruction(z2, vTag, argsMap);
-                List<Instruction> assigExt2 = instr3.extend(2, vlm);
+                List<Instruction> assignExt2 = instr3.extend(2, vlm);
 
                 Instruction instr4 = new JumpZeroInstruction(z1, label3, label2, argsMap);
                 List<Instruction> jumpZerExt1 = instr4.extend(2, vlm);
@@ -183,10 +178,8 @@ public class JumpEqualVariableInstruction extends AbstractInstruction {
 
                 Instruction instr10 = new NoOpInstruction(v, argsMap);
 
-                //myInstructions.add(this);
-                //myInstructions.add(instr1);
-                myInstructions.addAll(assigExt1);
-                myInstructions.addAll(assigExt2);
+                myInstructions.addAll(assignExt1);
+                myInstructions.addAll(assignExt2);
                 myInstructions.addAll(jumpZerExt1);
                 myInstructions.addAll(jumpZerExt2);
                 myInstructions.add(instr6);

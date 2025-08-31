@@ -55,22 +55,19 @@ public class JumpZeroInstruction extends AbstractInstruction {
     }
 
     @Override
-    public List<Instruction> extend(int extentionLevel, VariableAndLabelMenger vlm) {
+    public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
         List<Instruction> myInstructions = new ArrayList<>();
 
-        switch (extentionLevel) {
+        switch (extensionLevel) {
             case 0:
                 return List.of(this);
             case 1: {
                 Label label1 = vlm.newLabel();
-//                Label label2 = vlm.newLabel();
-//                Variable tempVar1 = vlm.newZVariable();
 
                 Instruction instr1 = new JumpNotZeroInstruction(getVariable(),label1,getLabel() ,argsMap);
                 Instruction instr2 = new GoToInstruction(getVariable(), jnzLabel, argsMap);
                 Instruction instr3 = new NoOpInstruction(getVariable(), label1, argsMap);
 
-                //myInstructions.add(this);
                 myInstructions.add(instr1);
                 myInstructions.add(instr2);
                 myInstructions.add(instr3);
@@ -78,19 +75,15 @@ public class JumpZeroInstruction extends AbstractInstruction {
             }
             default: {
                 Label label1 = vlm.newLabel();
-                //Label label2 = vlm.newLabel();
-                //Variable tempVar1 = vlm.newZVariable();
-                //Instruction instr1 = new NoOpInstruction(getVariable(), getLabel(), argsMap);
 
                 Instruction instr1 = new JumpNotZeroInstruction(getVariable(),label1,getLabel() ,argsMap);
                 Instruction instr2 = new GoToInstruction(getVariable(), jnzLabel, argsMap);
-                List <Instruction> instrs = instr2.extend(1, vlm);
+                List <Instruction> instr = instr2.extend(1, vlm);
 
                 Instruction instr3 = new NoOpInstruction(getVariable(), label1, argsMap);
 
-                //myInstructions.add(this);
                 myInstructions.add(instr1);
-                myInstructions.addAll(instrs);
+                myInstructions.addAll(instr);
 
                 myInstructions.add(instr3);
 

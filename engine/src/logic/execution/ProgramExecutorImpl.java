@@ -31,11 +31,11 @@ public class ProgramExecutorImpl implements ProgramExecutor {
             }
         }
 
-        context = new EexecutionContextImpl(safeInputs); // create the context with inputs.
+        context = new ExecutionContextImpl(safeInputs); // create the context with inputs.
 
         Instruction currentInstruction = program.getInstructions().isEmpty()
                 ? null
-                : program.getInstructions().get(0);
+                : program.getInstructions().getFirst();
 
         if (currentInstruction == null) {
             return context.getVariableValue("y");
@@ -72,11 +72,6 @@ public class ProgramExecutorImpl implements ProgramExecutor {
 
         return onlyXSorted;
     }
-
-//    @Override
-//    public long getTotalCycles() {
-//        return program.calculateCycles();
-//    }
 
     private static boolean isExit(Label l) {
         if (l == null) return false;

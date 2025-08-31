@@ -5,7 +5,6 @@ import logic.instruction.AbstractInstruction;
 import logic.instruction.Instruction;
 import logic.instruction.InstructionData;
 import logic.instruction.basic.IncreaseInstruction;
-import logic.instruction.basic.NoOpInstruction;
 import logic.label.FixedLabel;
 import logic.label.Label;
 import core.program.VariableAndLabelMenger;
@@ -51,26 +50,16 @@ public class ConstantAssignmentInstruction extends AbstractInstruction {
     }
 
     @Override
-    public List<Instruction> extend(int extentionLevel, VariableAndLabelMenger vlm) {
+    public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
         List<Instruction> myInstructions = new ArrayList<>();
 
-        switch (extentionLevel) {
+        switch (extensionLevel) {
             case 0:
                 return List.of(this);
             case 1: {
                 Variable v = getVariable();
-                //Variable z1 = vlm.newZVariable();
-                long k = constant;
-
-                //Instruction instr1 = new NoOpInstruction(v, getLabel(), argsMap);
-                //myInstructions.add(this);
                 Instruction inst1 = new ZeroVariableInstruction(v,getLabel(), argsMap);
                 myInstructions.add(inst1);
-
-//                for(int i = 0; i < k ; i++) {
-//                    Instruction instr2 = new IncreaseInstruction(v, argsMap);
-//                    myInstructions.add(instr2);
-//                }
                 Instruction instr2 = new IncreaseInstruction(v, argsMap);
                 myInstructions.add(instr2);
 
@@ -79,19 +68,11 @@ public class ConstantAssignmentInstruction extends AbstractInstruction {
             }
             default:
                 Variable v = getVariable();
-                //Variable z1 = vlm.newZVariable();
-                long k = constant;
 
-                //Instruction instr1 = new NoOpInstruction(v, getLabel(), argsMap);
-                //myInstructions.add(this);
                 Instruction inst1 = new ZeroVariableInstruction(v,getLabel(), argsMap);
-                List<Instruction> zeroExtend = inst1.extend(extentionLevel - 1, vlm);
+                List<Instruction> zeroExtend = inst1.extend(extensionLevel - 1, vlm);
                 myInstructions.addAll(zeroExtend);
 
-//                for(int i = 0; i < k ; i++) {
-//                    Instruction instr2 = new IncreaseInstruction(v, argsMap);
-//                    myInstructions.add(instr2);
-//                }
                 Instruction instr2 = new IncreaseInstruction(v, argsMap);
                 myInstructions.add(instr2);
                 return myInstructions;

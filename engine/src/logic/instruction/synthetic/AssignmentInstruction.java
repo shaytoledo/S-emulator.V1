@@ -54,10 +54,10 @@ public class AssignmentInstruction extends AbstractInstruction {
         return 2;
     }
 
-    public List<Instruction> extend(int extentionLevel, VariableAndLabelMenger vlm) {
+    public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
         List<Instruction> myInstructions = new ArrayList<>();
 
-        switch (extentionLevel) {
+        switch (extensionLevel) {
             case 0:
                 return List.of(this);
             case 1: {
@@ -67,7 +67,6 @@ public class AssignmentInstruction extends AbstractInstruction {
                 Variable v = this.getVariable();
                 Variable vTag = assignedVariable;
                 Variable z1 = vlm.newZVariable();
-                //Instruction instr1 = new NoOpInstruction(v, getLabel(), argsMap);
                 Instruction instr2 = new ZeroVariableInstruction(v,getLabel(), argsMap);
                 Instruction instr3 = new JumpNotZeroInstruction(vTag,label1, argsMap);
                 Instruction instr4 = new GoToInstruction(vTag,label3, argsMap);
@@ -80,8 +79,7 @@ public class AssignmentInstruction extends AbstractInstruction {
                 Instruction instr10 = new IncreaseInstruction(vTag, argsMap);
                 Instruction instr11 = new JumpNotZeroInstruction(z1,label2, argsMap);
                 Instruction instr12 = new NoOpInstruction(v, label3, argsMap);
-                //myInstructions.add(this);
-                //myInstructions.add(instr1);
+
                 myInstructions.add(instr2);
                 myInstructions.add(instr3);
                 myInstructions.add(instr4);
@@ -118,9 +116,6 @@ public class AssignmentInstruction extends AbstractInstruction {
                 Instruction instr10 = new IncreaseInstruction(vTag, argsMap);
                 Instruction instr11 = new JumpNotZeroInstruction(z1,label2, argsMap);
                 Instruction instr12 = new NoOpInstruction(v, label3, argsMap);
-
-                //myInstructions.add(this);
-                //myInstructions.add(instr1);
 
                 myInstructions.addAll(zeroExtend);
 

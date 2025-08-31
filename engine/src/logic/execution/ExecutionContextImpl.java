@@ -6,18 +6,17 @@ import logic.variable.VariableType;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import static java.util.Collections.emptyList;
 
-public class EexecutionContextImpl implements ExecutionContext {
+public class ExecutionContextImpl implements ExecutionContext {
 
     Map<String, Long> variableState;
     //Map<Variable, Long> variableState;
 
 
-    public EexecutionContextImpl(List<Long> inputs) {
+    public ExecutionContextImpl(List<Long> inputs) {
         // Initialize the variable state with the input values to the right variables by order
         variableState = new HashMap<>();
         if (inputs == null) {

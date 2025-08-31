@@ -7,7 +7,6 @@ import dto.*;
 import logic.exception.LoadProgramException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 
 
 public class ConsoleUI {
@@ -142,15 +141,14 @@ public class ConsoleUI {
 
         } catch (LoadProgramException e) {
             System.out.println("No program is loaded. Please load a file to expand a program.");
-            return;
         }
     }
 
 
 
     /**
-     * Prints instruction chains according to the following rules:
-     * - Each chain is printed on a single line, with instructions separated by " >>> ".
+     * Prints instruction chains, according to the following rules:
+     * - Each chain is printed on a single line, with instructions separated by ">>> ".
      * - Lines are numbered sequentially (1, 2, 3, ...).
      * - Skips an entire chain if it contains at least one duplicate instruction
      *   (ignoring the internal numbering field in InstructionView).
@@ -182,7 +180,7 @@ public class ConsoleUI {
             Set<String> seenInChain = new HashSet<>();
             boolean hasDuplicateInside = false;
 
-            if (reversed.size() > 1) { // No need to check for duplicates if chain has only one instruction
+            if (reversed.size() > 1) { // No need to check for duplicates if a chain has only one instruction
                 for (InstructionView iv : reversed) {
                     if (iv == null) continue;
                     String key = canonicalKey(iv); // ignores internal numbering
@@ -225,19 +223,6 @@ public class ConsoleUI {
         // Use a rare separator character to avoid accidental collisions
         return type + "\u001F" + label + "\u001F" + command + "\u001F" + cycles;
     }
-
-//    public static void printExtendedInstructions(List<List<InstructionView>> extendInstructions) {
-//        for (List<InstructionView> chain : extendInstructions) {
-//            List<InstructionView> reversed = new ArrayList<>(chain);
-//            Collections.reverse(reversed);
-//
-//            String line = reversed.stream()
-//                    .map(InstructionView::toString)
-//                    .collect(Collectors.joining(" >>> "));
-//
-//            System.out.println(line);
-//        }
-//    }
 
     public static void printInstructionViews(List<InstructionView> instructions) {
         for (InstructionView instr : instructions) {

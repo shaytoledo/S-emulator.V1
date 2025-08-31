@@ -13,15 +13,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+
 
 // implementation of the Engine interface (methods of the engine)
 public class EngineImpl implements Engine {
 
     private static Program cuurentProgram = null;
-    private final List<RunResult> history = new ArrayList<>();
     private int runCounter = 0;
-
     public List<RunSummary> summaries = new ArrayList<>();
 
 
@@ -39,7 +37,6 @@ public class EngineImpl implements Engine {
                 errors.add(e);
             }
             try {
-                String fileName = xmlPath.getFileName().toString().toLowerCase();
                 if (!Files.exists(xmlPath) || !Files.isRegularFile(xmlPath)) {
                     throw new ProgramFileNotFoundException("File does not exist: " + xmlPath);
                 }
@@ -56,17 +53,16 @@ public class EngineImpl implements Engine {
 
 
             //Translate the loaded SProgram to internal Program representation
-            var cuurentProgram = ProgramTranslator.translate(sprogram);
+            var currentProgram = ProgramTranslator.translate(sprogram);
 
             // If there are errors during translation, return them in the LoadReport (errors that define in the specification document)
-            if (!cuurentProgram.errors.isEmpty()) {
+            if (!currentProgram.errors.isEmpty()) {
                 // return the errors
-                return new LoadReport(false, cuurentProgram.errors);
+                return new LoadReport(false, currentProgram.errors);
             }
 
-            history.clear();
-            ;
-            this.cuurentProgram = cuurentProgram.program;
+            summaries.clear();
+            EngineImpl.cuurentProgram = currentProgram.program;
             return new LoadReport(true, List.of());
 
         } catch (Exception e) {
@@ -93,17 +89,15 @@ public class EngineImpl implements Engine {
         return null;
     }
 
-
     public static int sumCyclesExceptFirst(List<List<InstructionView>> extendInstructions) {
         int total = 0;
         for (List<InstructionView> chain : extendInstructions) {
-            for (int i = 1; i < chain.size(); i++) {
-                total += chain.get(i).cycles();
-            }
+            int place = chain.size() - 1;
+            total += chain.get(place).cycles();
+
         }
         return total;
     }
-
 
     @Override
     public RunResult run(int level, List<Long> inputs, List<String> varsNames) {
@@ -112,16 +106,16 @@ public class EngineImpl implements Engine {
         long y = exe.run(inputs);
 
         //need to extend the program to the level
-        // calculate cycles from extend program (not from execution)
+        // calculate cycles from the extent program (not from execution)
         List<List<InstructionView>> extendCommend = expandProgramToLevelForExtend(level);
-        int totalCycels = sumCyclesExceptFirst(extendCommend);
+        int totalCycles = sumCyclesExceptFirst(extendCommend);
 
         RunSummary summary = new RunSummary(
                 ++runCounter,
                 level,
                 inputs,
                 y,
-                totalCycels
+                totalCycles
         );
         summaries.add(summary);
 
@@ -129,9 +123,8 @@ public class EngineImpl implements Engine {
             var res = new RunResult(
                     y,
                     exe.variablesState(),
-                    totalCycels
+                    totalCycles
             );
-            history.add(res);
             return res;
         }
         return null;
@@ -147,100 +140,10 @@ public class EngineImpl implements Engine {
         return cuurentProgram.expendToLevelForExtend(level);
     }
 
-
-
-//        // --------------------------------------------
-//        // התוצאה הסופית – רשימה של רשימות InstructionView
-//        // --------------------------------------------
-//        List<List<InstructionView>> filteredChains = new ArrayList<>();
-//
-//        // שולף את כל השרשראות המורחבות מהרמה המבוקשת
-//        List<List<InstructionView>> allInstructions = cuurentProgram.expendToLevelForRun(level);
-//
-//        // מונה רץ עבור מספור מחודש של כל ההוראות
-//        int counter = 1;
-//
-//        // --------------------------------------------
-//        // עובר על כל שרשרת הוראות
-//        // --------------------------------------------
-//        for (List<InstructionView> chain : allInstructions) {
-//            if (chain == null || chain.isEmpty()) {
-//                continue; // מדלג על שרשראות ריקות
-//            }
-//
-//            InstructionView first = chain.get(0);
-//
-//            // אם הפקודה הראשונה סינתטית (לא "B") -> מדלג על כל השרשרת
-//            if (Objects.equals(first.type(), "B")) {
-//                continue;
-//            }
-//
-//            // אם הפקודה הראשונה בסיסית:
-//            // נבנה שרשרת חדשה עם מספור מחודש לכל ההוראות שבה
-//            List<InstructionView> newChain = new ArrayList<>();
-//
-//            for (InstructionView instr : chain) {
-//                InstructionView numbered = new InstructionView(
-//                        counter++,          // מספר רץ חדש
-//                        instr.type(),
-//                        instr.label(),
-//                        instr.command(),
-//                        instr.cycles()
-//                );
-//                newChain.add(numbered);
-//            }
-//
-//            // מוסיפים את השרשרת החדשה לרשימה הסופית
-//            filteredChains.add(newChain);
-//        }
-//
-//        return filteredChains;
-
-
-//    @Override
-//    public List<List<InstructionView>> expandProgramToLevelForExtend(int level) {
-//      //  return cuurentProgram.expendToLevelForExtend(level);
-//
-//
-//    }
-
     @Override
     public List<InstructionView> expandProgramToLevelForRun(int level) {
-        List<InstructionView> newInstructions = new ArrayList<>();
         List<List<InstructionView>> allInstructions = cuurentProgram.expendToLevelForRun(level);
         return allInstructions.stream().flatMap(List::stream).toList();
-//        int counter = 1;
-//
-//        for (List<InstructionView> chain : allInstructions) {
-//            for (int i = 0; i < chain.size(); i++) {
-//                InstructionView instr = chain.get(i);
-//                if (Objects.equals(instr.type(), "B") && i == 0) {
-//                    InstructionView numbered = new InstructionView(
-//                            counter++,                     // מספר חדש
-//                            instr.type(),
-//                            instr.label(),
-//                            instr.command(),
-//                            instr.cycles()
-//                    );
-//                    newInstructions.add(numbered);
-//                }
-//                else if (i >= 1) {
-//                    InstructionView numbered = new InstructionView(
-//                            counter++,                     // מספר חדש
-//                            instr.type(),
-//                            instr.label(),
-//                            instr.command(),
-//                            instr.cycles()
-//                    );
-//                    newInstructions.add(numbered);
-//                }
-//                else {
-//                    // Skip this instruction (do not add to newInstructions)
-//                    continue;
-//                }
-//            }
-//        }
-//        return newInstructions;
     }
 
     public int getMaxExpandLevel() {

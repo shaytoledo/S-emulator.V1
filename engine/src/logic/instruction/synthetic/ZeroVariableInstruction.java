@@ -48,10 +48,10 @@ public class ZeroVariableInstruction extends AbstractInstruction {
     }
 
     @Override
-    public List<Instruction> extend(int extentionLevel, VariableAndLabelMenger vlm) {
+    public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
         List<Instruction> myInstructions = new ArrayList<>();
 
-        switch (extentionLevel) {
+        switch (extensionLevel) {
             case 0:
                 return List.of(this);
             default: {
@@ -59,7 +59,6 @@ public class ZeroVariableInstruction extends AbstractInstruction {
                 Instruction instr1 = new NoOpInstruction(getVariable(), getLabel(), argsMap);
                 Instruction instr2 = new DecreaseInstruction(getVariable(), label, argsMap);
                 Instruction instr3 = new JumpNotZeroInstruction(getVariable(), label, argsMap);
-                //myInstructions.add(this);
                 myInstructions.add(instr1);
                 myInstructions.add(instr2);
                 myInstructions.add(instr3);

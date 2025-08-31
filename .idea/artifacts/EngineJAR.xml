@@ -1,0 +1,15 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="EngineJAR">
+    <output-path>$PROJECT_DIR$/out/artifacts/EngineJAR</output-path>
+    <root id="archive" name="EngineJAR.jar">
+      <element id="module-output" name="engine" />
+      <element id="file-copy" path="$PROJECT_DIR$/engine/src/adapter/xml/jaxb/angus-activation.jar" />
+      <element id="file-copy" path="$PROJECT_DIR$/engine/src/adapter/xml/jaxb/jakarta.activation-api.jar" />
+      <element id="file-copy" path="$PROJECT_DIR$/engine/src/adapter/xml/jaxb/jakarta.xml.bind-api.jar" />
+      <element id="file-copy" path="$PROJECT_DIR$/engine/src/adapter/xml/jaxb/jaxb-core.jar" />
+      <element id="file-copy" path="$PROJECT_DIR$/engine/src/adapter/xml/jaxb/jaxb-impl.jar" />
+      <element id="file-copy" path="$PROJECT_DIR$/engine/src/adapter/xml/jaxb/jaxb-jxc.jar" />
+      <element id="file-copy" path="$PROJECT_DIR$/engine/src/adapter/xml/jaxb/jaxb-xjc.jar" />
+    </root>
+  </artifact>
+</component>
