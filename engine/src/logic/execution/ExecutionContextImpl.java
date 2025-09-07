@@ -12,25 +12,25 @@ import static java.util.Collections.emptyList;
 
 public class ExecutionContextImpl implements ExecutionContext {
 
-    Map<String, Long> variableState;
-    //Map<Variable, Long> variableState;
+    //Map<String, Long> variableState;
+    Map<Variable, Long> variableState;
 
 
     public ExecutionContextImpl(List<Long> inputs) {
         // Initialize the variable state with the input values to the right variables by order
-        variableState = new HashMap<>();
+        variableState = new HashMap<Variable, Long>();
         if (inputs == null) {
             inputs = emptyList();
         }
         for (int i = 0; i < inputs.size(); i++) {
             Variable v = new VariableImpl(VariableType.INPUT, i + 1); // Assuming a constructor that takes a name
-            variableState.put(v.getRepresentation(), inputs.get(i));
+            variableState.put(v, inputs.get(i));
         }
     }
 
 
     @Override
-    public long getVariableValue(String v) {
+    public long getVariableValue(Variable v) {
         Long val = variableState.get(v);
         if (val == null) {
             variableState.put(v, 0L); // init-on-read
@@ -40,12 +40,12 @@ public class ExecutionContextImpl implements ExecutionContext {
     }
 
     @Override
-    public void updateVariable(String v, long value) {
+    public void updateVariable(Variable v, long value) {
         variableState.put(v, value);
     }
 
     @Override
-    public Map<String, Long> getVariablesState() {
+    public Map<Variable, Long> getVariablesState() {
         return variableState;
     }
 }

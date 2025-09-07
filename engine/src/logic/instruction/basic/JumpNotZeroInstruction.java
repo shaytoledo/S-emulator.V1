@@ -30,7 +30,7 @@ public class JumpNotZeroInstruction extends AbstractInstruction {
 
     @Override
     public Label execute(ExecutionContext context) {
-        long variableValue = context.getVariableValue(getVariable().getRepresentation());
+        long variableValue = context.getVariableValue(getVariable());
 
         if (variableValue != 0) {
             return jnzLabel;

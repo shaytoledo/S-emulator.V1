@@ -30,7 +30,7 @@ public class ConstantAssignmentInstruction extends AbstractInstruction {
 
     @Override
     public Label execute(ExecutionContext context) {
-        context.updateVariable(getVariable().getRepresentation(), constant);
+        context.updateVariable(getVariable(), constant);
         return FixedLabel.EMPTY;
     }
 

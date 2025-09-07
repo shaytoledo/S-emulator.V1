@@ -4,6 +4,10 @@ import logic.instruction.Instruction;
 import logic.label.FixedLabel;
 import logic.label.Label;
 import core.program.Program;
+import logic.variable.Variable;
+import logic.variable.VariableImpl;
+import logic.variable.VariableType;
+
 import java.util.*;
 import java.util.stream.Collectors;
 import static java.util.Collections.emptyList;
@@ -32,13 +36,15 @@ public class ProgramExecutorImpl implements ProgramExecutor {
         }
 
         context = new ExecutionContextImpl(safeInputs); // create the context with inputs.
+        Variable res = new VariableImpl(VariableType.RESULT, 1);
+        context.updateVariable(res, 0); // initialize the result variable to 0.
 
         Instruction currentInstruction = program.getInstructions().isEmpty()
                 ? null
                 : program.getInstructions().getFirst();
 
         if (currentInstruction == null) {
-            return context.getVariableValue("y");
+            return context.getVariableValue(res);
         }
 
         Label nextLabel;
@@ -57,7 +63,7 @@ public class ProgramExecutorImpl implements ProgramExecutor {
         } while (!isExit(nextLabel));
 
 
-        return context.getVariableValue("y");
+        return context.getVariableValue(res);
 
 
     }
@@ -66,10 +72,13 @@ public class ProgramExecutorImpl implements ProgramExecutor {
     public Map<String, Long> variablesState() {
 
         Map<String, Long> onlyXSorted = context.getVariablesState().entrySet().stream()
-                .filter(e -> e.getKey() != null && e.getKey().startsWith("x"))
-                .sorted(Comparator.comparingInt(e -> Integer.parseInt(e.getKey().substring(1))))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a,b)->a, LinkedHashMap::new));
-
+                .filter(e -> e.getKey() != null && e.getKey().getRepresentation().startsWith("x"))
+                .sorted(Comparator.comparingInt(e -> Integer.parseInt(e.getKey().getRepresentation().substring(1))))
+                .collect(Collectors.toMap(e -> e.getKey().getRepresentation(),
+                        Map.Entry::getValue,
+                        (a, b) -> a,
+                        LinkedHashMap::new
+                ));
         return onlyXSorted;
     }
 

@@ -1,5 +1,7 @@
 package logic.execution;
 
+import logic.variable.Variable;
+
 import java.util.List;
 import java.util.Map;
 

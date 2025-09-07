@@ -36,8 +36,8 @@ public class AssignmentInstruction extends AbstractInstruction {
     }
     @Override
     public Label execute(ExecutionContext context) {
-        long assignedValue = context.getVariableValue(assignedVariable.getRepresentation());
-        context.updateVariable(getVariable().getRepresentation(), assignedValue);
+        long assignedValue = context.getVariableValue(assignedVariable);
+        context.updateVariable(getVariable(), assignedValue);
         return FixedLabel.EMPTY;
     }
 

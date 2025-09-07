@@ -28,9 +28,9 @@ public class IncreaseInstruction extends AbstractInstruction {
     @Override
     public Label execute(ExecutionContext context) {
 
-        long variableValue = context.getVariableValue(getVariable().getRepresentation());
+        long variableValue = context.getVariableValue(getVariable());
         variableValue++;
-        context.updateVariable(getVariable().getRepresentation(), variableValue);
+        context.updateVariable(getVariable(), variableValue);
 
         return FixedLabel.EMPTY;
     }

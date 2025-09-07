@@ -28,9 +28,9 @@ public class DecreaseInstruction extends AbstractInstruction {
     @Override
     public Label execute(ExecutionContext context) {
 
-        long variableValue = context.getVariableValue(getVariable().getRepresentation());
+        long variableValue = context.getVariableValue(getVariable());
         variableValue = Math.max(0, variableValue - 1);
-        context.updateVariable(getVariable().getRepresentation(), variableValue);
+        context.updateVariable(getVariable(), variableValue);
 
         return FixedLabel.EMPTY;
     }

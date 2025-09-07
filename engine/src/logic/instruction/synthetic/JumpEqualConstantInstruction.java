@@ -35,7 +35,7 @@ public class JumpEqualConstantInstruction extends AbstractInstruction {
 
     @Override
     public Label execute(ExecutionContext context) {
-        if (context.getVariableValue(getVariable().getRepresentation()) == constant) {
+        if (context.getVariableValue(getVariable()) == constant) {
             return target;
         }
         return FixedLabel.EMPTY;

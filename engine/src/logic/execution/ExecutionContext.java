@@ -6,10 +6,7 @@ import java.util.Map;
 
 public interface ExecutionContext {
 
-    public long getVariableValue(String v);
-    public void updateVariable(String v, long value);
-    //Map<Variable, Long> getVariablesState();
-    public Map<String, Long> getVariablesState();
-
-
+    public long getVariableValue(Variable v);
+    public void updateVariable(Variable v, long value);
+    Map<Variable, Long> getVariablesState();
     }

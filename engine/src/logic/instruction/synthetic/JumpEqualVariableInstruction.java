@@ -38,7 +38,7 @@ public class JumpEqualVariableInstruction extends AbstractInstruction {
 
     @Override
     public Label execute(ExecutionContext context) {
-        if (context.getVariableValue(getVariable().getRepresentation()) == context.getVariableValue(other.getRepresentation())) {
+        if (context.getVariableValue(getVariable()) == context.getVariableValue(other)) {
             return jnzLabel;
         }
         return FixedLabel.EMPTY;
