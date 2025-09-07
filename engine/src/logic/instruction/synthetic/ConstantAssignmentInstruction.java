@@ -18,13 +18,13 @@ public class ConstantAssignmentInstruction extends AbstractInstruction {
 
     private final long constant;
 
-    public ConstantAssignmentInstruction(Variable target, long constant, Map<String,String> argsMap) {
-        super(InstructionData.CONSTANT_ASSIGNMENT, target, argsMap);
+    public ConstantAssignmentInstruction(Variable target, long constant) {
+        super(InstructionData.CONSTANT_ASSIGNMENT, target);
         this.constant = constant;
     }
 
-    public ConstantAssignmentInstruction(Variable target, long constant, Label label, Map<String,String> argsMap) {
-        super(InstructionData.CONSTANT_ASSIGNMENT, target, label, argsMap);
+    public ConstantAssignmentInstruction(Variable target, long constant, Label label) {
+        super(InstructionData.CONSTANT_ASSIGNMENT, target, label);
         this.constant = constant;
     }
 
@@ -36,12 +36,7 @@ public class ConstantAssignmentInstruction extends AbstractInstruction {
 
     @Override
     public String toDisplayString() {
-        return getVariable().getRepresentation() + " <- " + argsMap.getOrDefault("constantValue","?");
-    }
-
-    @Override
-    public Map<String, String> args() {
-        return argsMap;
+        return getVariable().getRepresentation() + " <- " + constant;
     }
 
     @Override
@@ -58,9 +53,9 @@ public class ConstantAssignmentInstruction extends AbstractInstruction {
                 return List.of(this);
             case 1: {
                 Variable v = getVariable();
-                Instruction inst1 = new ZeroVariableInstruction(v,getLabel(), argsMap);
+                Instruction inst1 = new ZeroVariableInstruction(v,getLabel());
                 myInstructions.add(inst1);
-                Instruction instr2 = new IncreaseInstruction(v, argsMap);
+                Instruction instr2 = new IncreaseInstruction(v);
                 myInstructions.add(instr2);
 
                 return myInstructions;
@@ -69,11 +64,11 @@ public class ConstantAssignmentInstruction extends AbstractInstruction {
             default:
                 Variable v = getVariable();
 
-                Instruction inst1 = new ZeroVariableInstruction(v,getLabel(), argsMap);
+                Instruction inst1 = new ZeroVariableInstruction(v,getLabel());
                 List<Instruction> zeroExtend = inst1.extend(extensionLevel - 1, vlm);
                 myInstructions.addAll(zeroExtend);
 
-                Instruction instr2 = new IncreaseInstruction(v, argsMap);
+                Instruction instr2 = new IncreaseInstruction(v);
                 myInstructions.add(instr2);
                 return myInstructions;
         }

@@ -19,13 +19,13 @@ public class JumpZeroInstruction extends AbstractInstruction {
 
     private final Label jnzLabel;
 
-    public JumpZeroInstruction(Variable var, Label target, Map<String,String> argsMap) {
-        super(InstructionData.JUMP_ZERO, var, argsMap);
+    public JumpZeroInstruction(Variable var, Label target) {
+        super(InstructionData.JUMP_ZERO, var);
         this.jnzLabel = target;
     }
 
-    public JumpZeroInstruction(Variable var, Label target, Label lineLabel, Map<String,String> argsMap) {
-        super(InstructionData.JUMP_ZERO, var, lineLabel, argsMap);
+    public JumpZeroInstruction(Variable var, Label target, Label lineLabel) {
+        super(InstructionData.JUMP_ZERO, var, lineLabel);
         this.jnzLabel = target;
     }
 
@@ -44,10 +44,7 @@ public class JumpZeroInstruction extends AbstractInstruction {
         return "IF " + getVariable().getRepresentation() + " = 0 GOTO " + jnzLabel.getLabelRepresentation();
     }
 
-    @Override
-    public Map<String, String> args() {
-        return argsMap;
-    }
+
 
     @Override
     public int getMaxLevel() {
@@ -64,9 +61,9 @@ public class JumpZeroInstruction extends AbstractInstruction {
             case 1: {
                 Label label1 = vlm.newLabel();
 
-                Instruction instr1 = new JumpNotZeroInstruction(getVariable(),label1,getLabel() ,argsMap);
-                Instruction instr2 = new GoToInstruction(getVariable(), jnzLabel, argsMap);
-                Instruction instr3 = new NoOpInstruction(getVariable(), label1, argsMap);
+                Instruction instr1 = new JumpNotZeroInstruction(getVariable(),label1,getLabel());
+                Instruction instr2 = new GoToInstruction(getVariable(), jnzLabel);
+                Instruction instr3 = new NoOpInstruction(getVariable(), label1);
 
                 myInstructions.add(instr1);
                 myInstructions.add(instr2);
@@ -76,11 +73,11 @@ public class JumpZeroInstruction extends AbstractInstruction {
             default: {
                 Label label1 = vlm.newLabel();
 
-                Instruction instr1 = new JumpNotZeroInstruction(getVariable(),label1,getLabel() ,argsMap);
-                Instruction instr2 = new GoToInstruction(getVariable(), jnzLabel, argsMap);
+                Instruction instr1 = new JumpNotZeroInstruction(getVariable(),label1,getLabel());
+                Instruction instr2 = new GoToInstruction(getVariable(), jnzLabel);
                 List <Instruction> instr = instr2.extend(1, vlm);
 
-                Instruction instr3 = new NoOpInstruction(getVariable(), label1, argsMap);
+                Instruction instr3 = new NoOpInstruction(getVariable(), label1);
 
                 myInstructions.add(instr1);
                 myInstructions.addAll(instr);

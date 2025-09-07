@@ -14,13 +14,13 @@ import java.util.Map;
 
 public class NoOpInstruction extends AbstractInstruction {
 
-    public NoOpInstruction(Variable var, Label lineLabel, Map<String,String> argsMap) {
-        super(InstructionData.NO_OP, var, lineLabel, argsMap);
+    public NoOpInstruction(Variable var, Label lineLabel) {
+        super(InstructionData.NO_OP, var, lineLabel);
         basic = true;
     }
 
-    public NoOpInstruction(Variable var, Map<String,String> argsMap) {
-        super(InstructionData.NO_OP, var, argsMap);
+    public NoOpInstruction(Variable var) {
+        super(InstructionData.NO_OP, var);
         basic = true;
     }
 
@@ -35,11 +35,6 @@ public class NoOpInstruction extends AbstractInstruction {
     }
 
     @Override
-    public Map<String, String> args() {
-        return argsMap;
-    }
-
-    @Override
     public int getMaxLevel() {
         return 0;
     }
@@ -47,6 +42,5 @@ public class NoOpInstruction extends AbstractInstruction {
     @Override
     public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
         return List.of(this);
-
     }
 }

@@ -16,14 +16,14 @@ public class JumpNotZeroInstruction extends AbstractInstruction {
 
     private final Label jnzLabel;
 
-    public JumpNotZeroInstruction(Variable var, Label target, Label lineLabel, Map<String,String> argsMap) {
-        super(InstructionData.JUMP_NOT_ZERO, var, lineLabel, argsMap);
+    public JumpNotZeroInstruction(Variable var, Label target, Label lineLabel) {
+        super(InstructionData.JUMP_NOT_ZERO, var, lineLabel);
         this.jnzLabel = target;
         basic = true;
     }
 
-    public JumpNotZeroInstruction(Variable var, Label target, Map<String,String> argsMap) {
-        super(InstructionData.JUMP_NOT_ZERO, var, argsMap);
+    public JumpNotZeroInstruction(Variable var, Label target) {
+        super(InstructionData.JUMP_NOT_ZERO, var);
         this.jnzLabel = target;
         basic = true;
     }
@@ -43,12 +43,7 @@ public class JumpNotZeroInstruction extends AbstractInstruction {
     public String toDisplayString() {
         return "IF " + getVariable().getRepresentation() + "!=0 GOTO " + jnzLabel.getLabelRepresentation();
     }
-
-    @Override
-    public Map<String, String> args() {
-        return argsMap;
-    }
-
+    
     @Override
     public int getMaxLevel() {
         return 0;

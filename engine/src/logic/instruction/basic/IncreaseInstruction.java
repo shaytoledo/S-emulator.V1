@@ -15,13 +15,13 @@ import java.util.Map;
 public class IncreaseInstruction extends AbstractInstruction {
 
 
-    public IncreaseInstruction(Variable var, Label lineLabel, Map<String,String> argsMap) {
-        super(InstructionData.INCREASE, var, lineLabel, argsMap);
+    public IncreaseInstruction(Variable var, Label lineLabel) {
+        super(InstructionData.INCREASE, var, lineLabel);
         basic = true;
     }
 
-    public IncreaseInstruction(Variable var, Map<String,String> argsMap) {
-        super(InstructionData.INCREASE, var, argsMap);
+    public IncreaseInstruction(Variable var) {
+        super(InstructionData.INCREASE, var);
         basic = true;
     }
 
@@ -38,11 +38,6 @@ public class IncreaseInstruction extends AbstractInstruction {
     @Override
     public String toDisplayString() {
         return getVariable().getRepresentation() + " <- " + getVariable().getRepresentation() + " + 1";
-    }
-
-    @Override
-    public Map<String, String> args() {
-        return Map.of();
     }
 
     @Override

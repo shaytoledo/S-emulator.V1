@@ -28,10 +28,6 @@ public class ExecutionContextImpl implements ExecutionContext {
         }
     }
 
-//    private static String keyOf(String v) {
-//        return v.toString().toLowerCase(Locale.ROOT);
-//    }
-
 
     @Override
     public long getVariableValue(String v) {

@@ -2,6 +2,8 @@ package core.program;
 
 import dto.InstructionView;
 import logic.instruction.Instruction;
+import logic.instruction.synthetic.AssignmentInstruction;
+import logic.instruction.synthetic.JumpEqualVariableInstruction;
 import logic.label.Label;
 import logic.variable.Variable;
 
@@ -209,11 +211,10 @@ public class ProgramImpl implements Program {
             Variable v = instr.getVariable();
             addIfStartsWithX(variables, v != null ? v.getRepresentation() : null);
 
-            Map<String, String> args = instr.args();
-            if (args != null && !args.isEmpty()) {
-                for (String val : args.values()) {
-                    addIfStartsWithX(variables, val);
-                }
+            if (instr instanceof AssignmentInstruction) {
+                addIfStartsWithX(variables, ((AssignmentInstruction) instr).getAssignedVariable().getRepresentation());
+            } else if (instr instanceof JumpEqualVariableInstruction) {
+                addIfStartsWithX(variables, ((JumpEqualVariableInstruction) instr).getOther().getRepresentation());
             }
         }
 

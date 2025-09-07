@@ -21,14 +21,14 @@ public class JumpEqualConstantInstruction extends AbstractInstruction {
     private final Label target;
     private final long constant;
 
-    public JumpEqualConstantInstruction(Variable var, Label target, long constant, Map<String,String> argsMap) {
-        super(InstructionData.JUMP_EQUAL_CONSTANT, var, argsMap);
+    public JumpEqualConstantInstruction(Variable var, Label target, long constant) {
+        super(InstructionData.JUMP_EQUAL_CONSTANT, var);
         this.target = target;
         this.constant = constant;
     }
 
-    public JumpEqualConstantInstruction(Variable var, Label target, long constant, Label lineLabel, Map<String,String> argsMap) {
-        super(InstructionData.JUMP_EQUAL_CONSTANT, var, lineLabel, argsMap);
+    public JumpEqualConstantInstruction(Variable var, Label target, long constant, Label lineLabel) {
+        super(InstructionData.JUMP_EQUAL_CONSTANT, var, lineLabel);
         this.target = target;
         this.constant = constant;
     }
@@ -44,11 +44,6 @@ public class JumpEqualConstantInstruction extends AbstractInstruction {
     @Override
     public String toDisplayString() {
         return "JE " + getVariable().getRepresentation() + " == " + constant +" -> " + target.getLabelRepresentation();
-    }
-
-    @Override
-    public Map<String, String> args() {
-        return argsMap;
     }
 
     @Override
@@ -71,19 +66,19 @@ public class JumpEqualConstantInstruction extends AbstractInstruction {
                 Label label1 = vlm.newLabel();
 
 
-                Instruction instr1 = new AssignmentInstruction(z1, v,getLabel(), argsMap);
+                Instruction instr1 = new AssignmentInstruction(z1, v,getLabel());
                 myInstructions.add(instr1);
 
                 for(int i = 0; i < k; i++) {
-                    Instruction jz = new JumpZeroInstruction(z1, label1, argsMap);
-                    Instruction dec = new DecreaseInstruction(z1, argsMap);
+                    Instruction jz = new JumpZeroInstruction(z1, label1);
+                    Instruction dec = new DecreaseInstruction(z1);
                     myInstructions.add(jz);
                     myInstructions.add(dec);
                 }
 
-                Instruction instr4 = new JumpNotZeroInstruction(z1, label1, argsMap);
-                Instruction instr5 = new GoToInstruction(v, target, argsMap);
-                Instruction instr6 = new NoOpInstruction(v, label1, argsMap);
+                Instruction instr4 = new JumpNotZeroInstruction(z1, label1);
+                Instruction instr5 = new GoToInstruction(v, target);
+                Instruction instr6 = new NoOpInstruction(v, label1);
                 myInstructions.add(instr4);
                 myInstructions.add(instr5);
                 myInstructions.add(instr6);
@@ -100,25 +95,25 @@ public class JumpEqualConstantInstruction extends AbstractInstruction {
                 Label label1 = vlm.newLabel();
 
 
-                Instruction instr1 = new AssignmentInstruction(z1, v,getLabel(), argsMap);
+                Instruction instr1 = new AssignmentInstruction(z1, v,getLabel());
                 List<Instruction> assExte1 = instr1.extend(1, vlm);
                 myInstructions.addAll(assExte1);
 
                  for(int i = 0; i < k; i++) {
-                     Instruction instr2 = new JumpZeroInstruction(z1, target, argsMap);
+                     Instruction instr2 = new JumpZeroInstruction(z1, target);
                      List<Instruction> re = instr2.extend(1, vlm);
                      myInstructions.addAll(re);
 
-                     Instruction dec = new DecreaseInstruction(z1, argsMap);
+                     Instruction dec = new DecreaseInstruction(z1);
                      myInstructions.add(dec);
                 }
 
 
-                Instruction instr4 = new JumpNotZeroInstruction(z1, label1, argsMap);
-                Instruction instr5 = new GoToInstruction(v, target, argsMap);
+                Instruction instr4 = new JumpNotZeroInstruction(z1, label1);
+                Instruction instr5 = new GoToInstruction(v, target);
                 List<Instruction> gotoExte1 = instr5.extend(1, vlm);
 
-                Instruction instr6 = new NoOpInstruction(v, label1, argsMap);
+                Instruction instr6 = new NoOpInstruction(v, label1);
                 myInstructions.add(instr4);
                 myInstructions.addAll(gotoExte1);
                 myInstructions.add(instr6);
@@ -133,24 +128,24 @@ public class JumpEqualConstantInstruction extends AbstractInstruction {
                 Label label1 = vlm.newLabel();
 
 
-                Instruction instr1 = new AssignmentInstruction(z1, v,getLabel(), argsMap);
+                Instruction instr1 = new AssignmentInstruction(z1, v,getLabel());
                 List<Instruction> assExte1 = instr1.extend(2, vlm);
                 myInstructions.addAll(assExte1);
 
                 for(int i = 0; i < k; i++) {
-                    Instruction instr2 = new JumpZeroInstruction(z1, target, argsMap);
+                    Instruction instr2 = new JumpZeroInstruction(z1, target);
                     List<Instruction> re = instr2.extend(2, vlm);
                     myInstructions.addAll(re);
 
-                    Instruction dec = new DecreaseInstruction(z1, argsMap);
+                    Instruction dec = new DecreaseInstruction(z1);
                     myInstructions.add(dec);
                 }
 
-                Instruction instr4 = new JumpNotZeroInstruction(z1, label1, argsMap);
-                Instruction instr5 = new GoToInstruction(v, target, argsMap);
+                Instruction instr4 = new JumpNotZeroInstruction(z1, label1);
+                Instruction instr5 = new GoToInstruction(v, target);
                 List<Instruction> gotoExte1 = instr5.extend(1, vlm);
 
-                Instruction instr6 = new NoOpInstruction(v, label1, argsMap);
+                Instruction instr6 = new NoOpInstruction(v, label1);
                 myInstructions.add(instr4);
                 myInstructions.addAll(gotoExte1);
                 myInstructions.add(instr6);

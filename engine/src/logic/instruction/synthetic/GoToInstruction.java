@@ -18,13 +18,13 @@ public class GoToInstruction extends AbstractInstruction {
 
     private final Label target;
 
-    public GoToInstruction(Variable var, Label target, Map<String,String> argsMap) {
-        super(InstructionData.GOTO_LABEL, var, argsMap);
+    public GoToInstruction(Variable var, Label target) {
+        super(InstructionData.GOTO_LABEL, var);
         this.target = target;
     }
 
-    public GoToInstruction(Variable var, Label target, Label lineLabel, Map<String,String> argsMap) {
-        super(InstructionData.GOTO_LABEL, var, lineLabel, argsMap);
+    public GoToInstruction(Variable var, Label target, Label lineLabel) {
+        super(InstructionData.GOTO_LABEL, var, lineLabel);
         this.target = target;
     }
 
@@ -37,11 +37,6 @@ public class GoToInstruction extends AbstractInstruction {
     public String toDisplayString() {
         return  "GOTO " + target.getLabelRepresentation();
 
-    }
-
-    @Override
-    public Map<String, String> args() {
-        return argsMap;
     }
 
     @Override
@@ -59,8 +54,8 @@ public class GoToInstruction extends AbstractInstruction {
             default: {
                 Variable tempVar1 = vlm.newZVariable();
 
-                Instruction instr2 = new IncreaseInstruction(tempVar1,getLabel(), argsMap);
-                Instruction instr3 = new JumpNotZeroInstruction(tempVar1, target, argsMap);
+                Instruction instr2 = new IncreaseInstruction(tempVar1,getLabel());
+                Instruction instr3 = new JumpNotZeroInstruction(tempVar1, target);
 
 
                 myInstructions.add(instr2);

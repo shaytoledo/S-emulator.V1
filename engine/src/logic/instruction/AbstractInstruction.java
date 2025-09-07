@@ -12,25 +12,21 @@ public abstract class AbstractInstruction implements Instruction {
     private final InstructionData instructionData;
     private final Label label;
     private final Variable variable;
-    public final Map<String,String> argsMap;
     public boolean basic = false;
 
     public List<Instruction> myInstructions;
 
 
-    public AbstractInstruction(InstructionData instructionData, Variable variable, Map<String,String> argsMap ) {
-        this(instructionData, variable, FixedLabel.EMPTY, argsMap);
+    public AbstractInstruction(InstructionData instructionData, Variable variable ) {
+        this(instructionData, variable, FixedLabel.EMPTY);
     }
 
-    public AbstractInstruction(InstructionData instructionData, Variable variable, Label label,  Map<String,String> argsMap) {
+    public AbstractInstruction(InstructionData instructionData, Variable variable, Label label) {
         this.instructionData = instructionData;
         this.label = label;
         this.variable = variable;
-        this.argsMap = Map.copyOf(argsMap);
 
     }
-
-    public String arg(String key)    { return this.argsMap.get(key); }
 
     public void setBasic(boolean isBasic) {
         this.basic = isBasic;

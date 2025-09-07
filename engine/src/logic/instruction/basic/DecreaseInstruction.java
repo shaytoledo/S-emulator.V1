@@ -14,13 +14,13 @@ import java.util.Map;
 
 public class DecreaseInstruction extends AbstractInstruction {
 
-    public DecreaseInstruction(Variable var, Label lineLabel, Map<String,String> argsMap) {
-        super(InstructionData.DECREASE, var, lineLabel, argsMap);
+    public DecreaseInstruction(Variable var, Label lineLabel) {
+        super(InstructionData.DECREASE, var, lineLabel);
         basic = true;
     }
 
-    public DecreaseInstruction(Variable var, Map<String,String> argsMap) {
-        super(InstructionData.DECREASE, var, argsMap);
+    public DecreaseInstruction(Variable var) {
+        super(InstructionData.DECREASE, var);
         basic = true;
     }
 
@@ -38,11 +38,6 @@ public class DecreaseInstruction extends AbstractInstruction {
     @Override
     public String toDisplayString() {
         return getVariable().getRepresentation() + " <- " + getVariable().getRepresentation() + " - 1";
-    }
-
-    @Override
-    public Map<String, String> args() {
-        return argsMap;
     }
 
     @Override
