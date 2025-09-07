@@ -61,7 +61,3 @@ public abstract class AbstractInstruction implements Instruction {
         return basic;
     }
 }
-
-
-
-
