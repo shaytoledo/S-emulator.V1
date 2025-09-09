@@ -1,0 +1,4 @@
+.load-label {
+    -fx-text-fill: purple;   /* צבע הטקסט */
+    -fx-font-weight: bold;   /* הופך את הפונט לבולד */
+}

@@ -3,14 +3,14 @@
     <output-path>$PROJECT_DIR$/out/artifacts/EngineJAR</output-path>
     <root id="archive" name="engine.jar">
       <element id="module-output" name="engine" />
-      <element id="module-output" name="console" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/engine/src/adapter/xml/jaxb/jaxb-xjc.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/engine/src/adapter/xml/jaxb/jakarta.xml.bind-api.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/engine/src/adapter/xml/jaxb/jaxb-core.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/engine/src/adapter/xml/jaxb/angus-activation.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/engine/src/adapter/xml/jaxb/jaxb-impl.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/engine/src/adapter/xml/jaxb/jaxb-jxc.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/engine/src/adapter/xml/jaxb/jakarta.activation-api.jar" path-in-jar="/" />
+      <element id="module-output" name="gui" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/resources/jaxb/jaxb-xjc.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/resources/jaxb/jakarta.xml.bind-api.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/resources/jaxb/jaxb-core.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/resources/jaxb/angus-activation.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/resources/jaxb/jaxb-impl.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/resources/jaxb/jaxb-jxc.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/resources/jaxb/jakarta.activation-api.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>
