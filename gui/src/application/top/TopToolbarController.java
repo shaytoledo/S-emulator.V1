@@ -31,7 +31,6 @@ public class TopToolbarController {
 
     @FXML
     void LoadListener(ActionEvent event) {
-        System.out.println("Load clicked");
 
     }
 
@@ -41,3 +40,4 @@ public class TopToolbarController {
     }
 
 }
+
