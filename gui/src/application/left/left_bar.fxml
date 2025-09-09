@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<VBox alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" spacing="7.0"
+      xmlns="http://javafx.com/javafx/24.0.1"
+      xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <Label alignment="CENTER" text="Instructions Table" VBox.vgrow="ALWAYS">
+         <font>
+            <Font name="System Bold" size="16.0" />
+         </font>
+         <VBox.margin>
+            <Insets top="11.0" />
+         </VBox.margin>
+      </Label>
+      <TableView prefHeight="213.0" prefWidth="382.0">
+         <columns>
+            <TableColumn prefWidth="46.666748046875" text="Number" />
+            <TableColumn prefWidth="37.33331298828125" text="B\S" />
+            <TableColumn prefWidth="54.66668701171875" text="Number" />
+            <TableColumn prefWidth="179.3333740234375" text="Instruction" />
+            <TableColumn prefWidth="58.6666259765625" resizable="false" text="Cycles" />
+         </columns>
+      </TableView>
+      <TextField text="Summary Line">
+         <padding>
+            <Insets left="10.0" right="10.0" />
+         </padding>
+         <VBox.margin>
+            <Insets left="10.0" right="10.0" />
+         </VBox.margin>
+      </TextField>
+      <ListView minHeight="170.0" minWidth="350.0" prefHeight="200.0" prefWidth="382.0" VBox.vgrow="ALWAYS">
+         <padding>
+            <Insets bottom="5.0" />
+         </padding>
+         <VBox.margin>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </VBox.margin>
+      </ListView>
+   </children>
+   <padding>
+      <Insets top="7.0" />
+   </padding>
+</VBox>
