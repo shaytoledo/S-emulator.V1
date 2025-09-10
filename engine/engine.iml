@@ -20,5 +20,6 @@
         <jarDirectory url="file://$MODULE_DIR$/../resources/jaxb" recursive="false" type="SOURCES" />
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="control" />
   </component>
 </module>

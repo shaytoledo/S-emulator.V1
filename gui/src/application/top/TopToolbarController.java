@@ -30,14 +30,19 @@ public class TopToolbarController {
     private ComboBox<?> ProgramOrFunctionSelector;
 
     @FXML
+    private TextField expendLevel;
+
+    @FXML
     void LoadListener(ActionEvent event) {
+        String filePath = CurrentlyLoadedFilePath.getText();
+
 
     }
 
     @FXML
     void filePathListener(ActionEvent event) {
 
+
     }
 
 }
-

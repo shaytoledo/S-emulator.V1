@@ -9,5 +9,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="module" module-name="engine" exported="" />
     <orderEntry type="library" exported="" name="lib" level="project" />
+    <orderEntry type="module" module-name="control" />
   </component>
 </module>

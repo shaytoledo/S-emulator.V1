@@ -35,7 +35,7 @@
                   <ComboBox fx:id="ProgramOrFunctionSelector" maxHeight="35.0" maxWidth="180.0" minHeight="26.0" minWidth="120.0" prefHeight="26.0" prefWidth="150.0" promptText="Program\Function selector" HBox.hgrow="ALWAYS" />
                   <Button fx:id="Collapse" maxHeight="35.0" maxWidth="90.0" minHeight="26.0" minWidth="65.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="65.0" text="Collapse" HBox.hgrow="ALWAYS" />
                   <TextField fx:id="CurrentFromMaximumDegree" editable="false" maxHeight="35.0" maxWidth="110.0" minHeight="26.0" minWidth="70.0" prefHeight="40.0" prefWidth="70.0" text="Current / Maximum degree" HBox.hgrow="ALWAYS" />
-                  <TextField maxHeight="35.0" maxWidth="50.0" minHeight="26.0" minWidth="30.0" prefHeight="26.0" prefWidth="40.0" text="number" />
+                  <TextField fx:id="expendLevel" maxHeight="35.0" maxWidth="50.0" minHeight="26.0" minWidth="30.0" prefHeight="26.0" prefWidth="40.0" text="number" />
                   <Button fx:id="Expand" maxHeight="35.0" maxWidth="80.0" minHeight="26.0" minWidth="65.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="65.0" text="Expand" HBox.hgrow="ALWAYS" />
                   <ComboBox fx:id="HighlightSelection" maxHeight="35.0" maxWidth="120.0" minHeight="26.0" minWidth="70.0" prefHeight="26.0" prefWidth="70.0" promptText="Highlight selection" HBox.hgrow="ALWAYS" />
                </children>
