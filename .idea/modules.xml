@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/S-Emulator1.iml" filepath="$PROJECT_DIR$/S-Emulator1.iml" />
-      <module fileurl="file://$PROJECT_DIR$/control/control.iml" filepath="$PROJECT_DIR$/control/control.iml" />
       <module fileurl="file://$PROJECT_DIR$/engine/engine.iml" filepath="$PROJECT_DIR$/engine/engine.iml" />
       <module fileurl="file://$PROJECT_DIR$/gui/gui.iml" filepath="$PROJECT_DIR$/gui/gui.iml" />
     </modules>

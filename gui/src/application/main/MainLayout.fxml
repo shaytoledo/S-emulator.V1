@@ -25,11 +25,11 @@
                 <RowConstraints maxHeight="1.7976931348623157E308" vgrow="ALWAYS" />
               </rowConstraints>
                <children>
-                  <fx:include maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="500.0" minWidth="230.0" prefHeight="550.0" prefWidth="400.0" source="../left/left_bar.fxml" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS" />
-                  <fx:include maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="500.0" minWidth="230.0" prefHeight="550.0" prefWidth="400.0" source="../right/right_bar.fxml" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.vgrow="NEVER" />
+                  <fx:include fx:id="left" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="500.0" minWidth="230.0" prefHeight="550.0" prefWidth="400.0" source="../left/LeftToolbar.fxml" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS" />
+                  <fx:include fx:id="right" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="500.0" minWidth="230.0" prefHeight="550.0" prefWidth="400.0" source="../right/RightToolbar.fxml" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.vgrow="NEVER" />
                </children>
             </GridPane>
-            <fx:include minHeight="-Infinity" minWidth="-Infinity" prefHeight="70.0" prefWidth="460.0" source="../top/top_bar.fxml" />
+            <fx:include fx:id="top" minHeight="-Infinity" minWidth="-Infinity" prefHeight="70.0" prefWidth="460.0" source="../top/TopToolbar.fxml" />
          </children>
       </GridPane>
    </content>
