@@ -5,6 +5,7 @@ import application.right.RightToolbarController;
 import application.top.TopToolbarController;
 import core.engine.Engine;
 import core.engine.EngineImpl;
+import javafx.beans.property.IntegerProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.GridPane;
@@ -14,11 +15,9 @@ public class MainLayoutController {
 
     @FXML private GridPane bottomGrid;
     @FXML private GridPane rootGrid;
-
     @FXML private ScrollPane top;
     @FXML private VBox left;
     @FXML private VBox right;
-
 
     @FXML private TopToolbarController topController;     // from fx:id="top"
     @FXML private LeftToolbarController leftController;   // from fx:id="left"
@@ -38,12 +37,24 @@ public class MainLayoutController {
             topController.setMainLayoutController(this);
             leftController.setMainLayoutController(this);
             rightController.setMainLayoutController(this);
-            //System.out.println("CHECK1");
         }
     }
 
 
-    public void trytry() {
-        System.out.println("CHECK2");
+    public void showProgram() {
+        topController.showProgram();
+        leftController.showProgram();
+        rightController.showProgram();
+
+    }
+
+    public void clearAll() {
+        leftController.clearAll();
+        rightController.clearAll();
+        topController.clearAll();
+    }
+
+    public int getCurrentLevel() {
+        return topController.getCurrentLevel();
     }
 }
