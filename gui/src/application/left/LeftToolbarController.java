@@ -6,16 +6,14 @@ import dto.ProgramSummary;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.fxml.FXML;
-import javafx.scene.control.Label;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
 import logic.exception.LoadProgramException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static java.util.Collections.reverse;
 
@@ -28,7 +26,7 @@ public class LeftToolbarController {
     @FXML private TableColumn<InstructionView, Integer> colNumber;
     @FXML private TableColumn<InstructionView, String> colInstruction;
     @FXML private TableColumn<InstructionView, String> colLabel;
-    @FXML private TableView<InstructionView> instructionsTable;
+    @FXML public TableView<InstructionView> instructionsTable;
     @FXML private TableColumn<InstructionView, String> colHistoryBS;
     @FXML private TableColumn<InstructionView, Integer> colHistoryCycles;
     @FXML private TableColumn<InstructionView, Integer> colHistoryNumber;
@@ -133,4 +131,30 @@ public class LeftToolbarController {
             }
         }
     }
+
+    public void boldRows(Set<Integer> indices) {
+        instructionsTable.setRowFactory(tv -> new TableRow<InstructionView>() {
+            @Override
+            protected void updateItem(InstructionView item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setStyle("");
+                } else {
+                    if (indices.contains(getIndex())) {
+                        setStyle("-fx-background-color: palegoldenrod; -fx-font-weight: bold;");
+                    } else {
+                        setStyle("");
+                    }
+                }
+            }
+        });
+
+        if (!indices.isEmpty()) {
+            instructionsTable.scrollTo(indices.iterator().next());
+        }
+
+        instructionsTable.refresh();
+    }
+
+
 }

@@ -51,6 +51,18 @@ public class JumpEqualConstantInstruction extends AbstractInstruction {
         return 3;
     }
 
+    public List<String> getAllInfo() {
+        List<String> list = new ArrayList<>();
+        if (getLabel() != null) {
+            list.add(getLabel().getLabelRepresentation());
+        }
+        if (getVariable() != null) {
+            list.add(getVariable().getRepresentation());
+        }
+        list.add(target.getLabelRepresentation());
+        return list;
+    }
+
     @Override
     public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
         List<Instruction> myInstructions = new ArrayList<>();

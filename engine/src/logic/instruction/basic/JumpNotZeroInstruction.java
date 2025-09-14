@@ -9,6 +9,7 @@ import logic.label.Label;
 import core.program.VariableAndLabelMenger;
 import logic.variable.Variable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -53,5 +54,18 @@ public class JumpNotZeroInstruction extends AbstractInstruction {
     public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
         return List.of(this);
 
+    }
+
+    @Override
+    public List<String> getAllInfo() {
+        List<String> list = new ArrayList<>();
+        if (getLabel() != null) {
+            list.add(getLabel().getLabelRepresentation());
+        }
+        if (getVariable() != null) {
+            list.add(getVariable().getRepresentation());
+        }
+        list.add(jnzLabel.getLabelRepresentation());
+        return list;
     }
 }

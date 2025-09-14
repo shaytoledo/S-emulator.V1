@@ -18,6 +18,8 @@ public class ProgramImpl implements Program {
     private final List<Label> labels;
     private final Label exitLabel;
 
+    public VariableAndLabelMenger vlm;
+
 
     public static final class Builder {
         private String name;
@@ -256,33 +258,49 @@ public class ProgramImpl implements Program {
 //     expand Instructions to the given level (without the original instructions) fit fo run extend
 //     notice: this method replaces the original instructions with the expanded ones
 
+    @Override
+    public List<List<String>> getInfo(int level) {
+        List<List<String>> info = new ArrayList<>();
+        vlm = new VariableAndLabelMenger(variables, labels);
 
+        for (Instruction root : instructions) {
+            List<List<Instruction>> paths = expandPaths(root, level, vlm);
+
+            for (List<Instruction> path : paths) {
+                // each instruction in the extend // need to get the label and variable
+                Instruction first = path.get(0); // לוקחים את ההוראה הראשונה
+
+                List<String> currInfo = first.getAllInfo();
+                info.add(currInfo);
+            }
+        }
+        return info;
+    }
 
     @Override
     public List<List<InstructionView>> expendToLevelForExtend(int level) {
-    VariableAndLabelMenger vlm = new VariableAndLabelMenger(variables, labels);
 
-    List<List<InstructionView>> result = new ArrayList<>();
+        vlm = new VariableAndLabelMenger(variables, labels);
+        List<List<InstructionView>> result = new ArrayList<>();
 
-    for (Instruction root : instructions) {
+        for (Instruction root : instructions) {
 
-        List<List<Instruction>> paths = expandPaths(root, level, vlm);
+            List<List<Instruction>> paths = expandPaths(root, level, vlm);
 
 
-        for (List<Instruction> path : paths) {
-            int number = 1;
+            for (List<Instruction> path : paths) {
+                int number = 1;
 
-            List<InstructionView> views = new ArrayList<>(path.size());
-            for (Instruction inst : path) {
+                List<InstructionView> views = new ArrayList<>(path.size());
+                for (Instruction inst : path) {
 
-                views.add(toView(inst, number));
-                number++;
+                    views.add(toView(inst, number));
+                    number++;
+                }
+                result.add(views);
             }
-            result.add(views);
         }
-    }
-
-    return result;
+        return result;
 }
 
 
@@ -386,6 +404,11 @@ public class ProgramImpl implements Program {
         return instructionViews;
     }
 
+    @Override
+    public VariableAndLabelMenger getvlm() {
+        return vlm;
+    }
+
 
     @Override
     public int calculateMaxDegree() {
@@ -400,4 +423,5 @@ public class ProgramImpl implements Program {
         }
         return max;
     }
+
 }

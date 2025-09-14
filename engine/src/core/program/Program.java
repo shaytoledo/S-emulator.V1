@@ -43,4 +43,9 @@ public interface Program {
 
     // for show
     List<InstructionView> getInstructionsPeek();
-}
+
+    VariableAndLabelMenger getvlm();
+
+    List<List<String>> getInfo(int level);
+
+    }

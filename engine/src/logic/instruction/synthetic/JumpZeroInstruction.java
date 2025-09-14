@@ -30,6 +30,19 @@ public class JumpZeroInstruction extends AbstractInstruction {
     }
 
     @Override
+    public List<String> getAllInfo() {
+        List<String> list = new ArrayList<>();
+        if (getLabel() != null) {
+            list.add(getLabel().getLabelRepresentation());
+        }
+        if (getVariable() != null) {
+            list.add(getVariable().getRepresentation());
+        }
+        list.add(jnzLabel.getLabelRepresentation());
+        return list;
+    }
+
+    @Override
     public Label execute(ExecutionContext context) {
         long variableValue = context.getVariableValue(getVariable());
 

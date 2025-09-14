@@ -19,5 +19,6 @@ public interface Instruction {
     String toDisplayString();
     int getMaxLevel();
     List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm);
+    List<String> getAllInfo();
 
 }

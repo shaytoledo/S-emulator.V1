@@ -51,6 +51,18 @@ public class AssignmentInstruction extends AbstractInstruction {
         return 2;
     }
 
+    public List<String> getAllInfo() {
+        List<String> list = new ArrayList<>();
+        if (getLabel() != null) {
+            list.add(getLabel().getLabelRepresentation());
+        }
+        if (getVariable() != null) {
+            list.add(getVariable().getRepresentation());
+        }
+        list.add(assignedVariable.getRepresentation());
+        return list;
+    }
+
     @Override
     public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
         List<Instruction> myInstructions = new ArrayList<>();

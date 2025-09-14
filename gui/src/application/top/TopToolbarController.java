@@ -1,6 +1,8 @@
 package application.top;
 
 import application.main.MainLayoutController;
+import core.program.VariableAndLabelMenger;
+import dto.InstructionView;
 import dto.LoadReport;
 import javafx.animation.PauseTransition;
 import javafx.beans.Observable;
@@ -17,7 +19,7 @@ import javafx.stage.Stage;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static javafx.util.Duration.seconds;
@@ -27,17 +29,21 @@ public class TopToolbarController {
 
     MainLayoutController mainLayoutController;
 
+    // Won't be used
+    @FXML private Button showProgram;
+    @FXML private Button Expand;
     @FXML private Button Collapse;
     @FXML private Label CurrentFromMaximumDegree;
-    @FXML private TextField CurrentlyLoadedFilePath;
-    @FXML private Button Expand;
-    @FXML private ComboBox<?> HighlightSelection;
-    @FXML private Button LoadFileButton;
+
+    // Need to be implemented
+    @FXML private ComboBox<String> HighlightSelection;
     @FXML private ComboBox<?> ProgramOrFunctionSelector;
+
+    @FXML private TextField CurrentlyLoadedFilePath;
+    @FXML private Button LoadFileButton;
     @FXML private TextField expendLevel;
     @FXML private ProgressBar progressBar;
     @FXML private Label statusLabel;
-    @FXML private Button showProgram;
 
     private File lastDir = new File(System.getProperty("user.home"));
     private int currentLevel = 0;
@@ -48,6 +54,7 @@ public class TopToolbarController {
     }
 
     public void clearAll() {
+        HighlightSelection.getItems().clear();
         expendLevel.setText("");
         currentLevel = 0;
     }
@@ -217,9 +224,95 @@ public class TopToolbarController {
     public void showProgram() {
         int maxDegree = mainLayoutController.engine.getMaxExpandLevel();
         expendLevel.setText(currentLevel+ "/" +maxDegree);
+        updateHighlighting();
     }
 
     public int  getCurrentLevel() {
         return currentLevel;
     }
+
+    private void updateHighlighting() {
+        /// all the variable and label in the expended program, now need to know where is each label and variable
+        /// X Y Z
+        VariableAndLabelMenger vlm = mainLayoutController.engine.getVlm();
+        List<String> allVariables = vlm.getAll();
+
+        List<String> xVariables = allVariables.stream()
+                .filter(Objects::nonNull)
+                .filter(s -> s.regionMatches(true, 0, "x", 0, 1))
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .toList();
+
+        // L*
+        List<String> lLabels = allVariables.stream()
+                .filter(Objects::nonNull)
+                .filter(s -> s.regionMatches(true, 0, "l", 0, 1))
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .toList();
+
+        List<String> options = new ArrayList<>(xVariables);
+        options.addAll(lLabels);
+
+        HighlightSelection.getItems().setAll(options);
+        HighlightSelection.setPromptText("Choose variable/label…");
+        HighlightSelection.getSelectionModel().clearSelection();
+    }
+
+//    @FXML
+//    void selectionListener(ActionEvent event) {
+//        String selected = HighlightSelection.getSelectionModel().getSelectedItem();
+//        List <List<String>> variableAndLabelsForEachInstruction = mainLayoutController.engine.getInfoForEachInstruction(mainLayoutController.getCurrentLevel());
+//
+//        List<Integer> indices = new ArrayList<>();
+//        int index = 0;
+//        for (List<String> varsAndLabels : variableAndLabelsForEachInstruction) {
+//            if (varsAndLabels.contains(selected)) {
+//                indices.add(index);
+//            }
+//            index++;
+//        }
+//
+//        final Set<Integer> highlighted = new HashSet<>(indices);
+//
+//        mainLayoutController.getLeft().instructionsTable.setRowFactory(tv -> new TableRow<>() {
+//            @Override
+//            protected void updateItem(Object item, boolean empty) {
+//                super.updateItem(item, empty);
+//                if (empty || item == null) {
+//                    setStyle("");
+//                } else {
+//                    setStyle(highlighted.contains(getIndex())
+//                            ? "-fx-background-color: palegoldenrod;"   // צהוב עדין
+//                            : "");
+//                }
+//            }
+//        });
+//
+//        mainLayoutController.getLeft().instructionTable.refresh()
+//
+//    }
+
+    @FXML
+    void selectionListener(ActionEvent event) {
+        Set<Integer> indices = getHighlightedIndices();
+        mainLayoutController.getLeft().boldRows(indices);
+
+    }
+
+    public Set<Integer> getHighlightedIndices() {
+        String selected = HighlightSelection.getSelectionModel().getSelectedItem();
+        List<List<String>> all = mainLayoutController.engine.getInfoForEachInstruction(mainLayoutController.getCurrentLevel());
+
+
+        List<Integer> indices = new ArrayList<>();
+        int index = 0;
+        for (List<String> varsAndLabels : all) {
+            if (varsAndLabels.contains(selected)) {
+                indices.add(index);
+            }
+            index++;
+        }
+        return new HashSet<>(indices);
+    }
+
 }

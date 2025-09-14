@@ -44,6 +44,18 @@ public class ZeroVariableInstruction extends AbstractInstruction {
     }
 
     @Override
+    public List<String> getAllInfo() {
+        List<String> list = new ArrayList<>();
+        if (getLabel() != null) {
+            list.add(getLabel().getLabelRepresentation());
+        }
+        if (getVariable() != null) {
+            list.add(getVariable().getRepresentation());
+        }
+        return list;
+    }
+
+    @Override
     public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
         List<Instruction> myInstructions = new ArrayList<>();
 

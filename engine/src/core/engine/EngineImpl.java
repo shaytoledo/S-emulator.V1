@@ -1,5 +1,6 @@
 package core.engine;
 
+import core.program.VariableAndLabelMenger;
 import dto.*;
 import adapter.translate.JaxbLoader;
 import adapter.translate.ProgramTranslator;
@@ -100,7 +101,7 @@ public class EngineImpl implements Engine {
     }
 
     @Override
-    public RunResult run(int level, List<Long> inputs, List<String> varsNames) {
+    public RunResult run(int level, List<Long> inputs) {
         ProgramExecutorImpl exe = new ProgramExecutorImpl(cuurentProgram); //, level, inputs);
 
         long y = exe.run(inputs);
@@ -153,4 +154,20 @@ public class EngineImpl implements Engine {
 
         return cuurentProgram.calculateMaxDegree()  ;
     }
+
+    public VariableAndLabelMenger getVlm(){
+        return cuurentProgram.getvlm();
+    }
+
+
+
+
+
+
+
+    @Override
+    public List<List<String>> getInfoForEachInstruction(int level) {
+        return cuurentProgram.getInfo(level);
+    }
+
 }

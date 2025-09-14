@@ -5,11 +5,14 @@ import application.right.RightToolbarController;
 import application.top.TopToolbarController;
 import core.engine.Engine;
 import core.engine.EngineImpl;
+import core.program.VariableAndLabelMenger;
 import javafx.beans.property.IntegerProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
+
+import java.util.List;
 
 public class MainLayoutController {
 
@@ -42,9 +45,9 @@ public class MainLayoutController {
 
 
     public void showProgram() {
-        topController.showProgram();
         leftController.showProgram();
         rightController.showProgram();
+        topController.showProgram();
 
     }
 

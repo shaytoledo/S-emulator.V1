@@ -9,6 +9,7 @@ import logic.label.Label;
 import core.program.VariableAndLabelMenger;
 import logic.variable.Variable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -50,5 +51,16 @@ public class IncreaseInstruction extends AbstractInstruction {
         return List.of(this);
     }
 
+    @Override
+    public List<String> getAllInfo() {
+        List<String> list = new ArrayList<>();
+        if (getLabel() != null) {
+            list.add(getLabel().getLabelRepresentation());
+        }
+        if (getVariable() != null) {
+            list.add(getVariable().getRepresentation());
+        }
+        return list;
+    }
 
 }

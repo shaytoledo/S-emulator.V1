@@ -96,7 +96,7 @@ public class ConsoleUI {
             List<Long> inputs = ConsoleUiHelper.readInputs(summary);
 
             // Tell the engine to run the program with the chosen degree and inputs in fit to the names of variables
-            RunResult res  = engine.run(degree,inputs,summary.getInputs());
+            RunResult res  = engine.run(degree,inputs);
 
             System.out.println();
             System.out.println("===== Program Executed (after expansion) =====");
