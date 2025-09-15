@@ -3,7 +3,6 @@ package core.program;
 import dto.InstructionView;
 import logic.instruction.Instruction;
 import logic.label.Label;
-import logic.variable.Variable;
 
 import java.util.List;
 
@@ -11,41 +10,15 @@ public interface Program {
 
 
     int calculateMaxDegree();
-
-    //int calculateCycles();
-
     Instruction getNextInstructionLabel(Instruction currentInstruction);
-
     Instruction getInstructionByLabel(Label nextLabel);
-
-
     String getName();
-
-    void addInstruction(Instruction instruction);
-
     List<Instruction> getInstructions();
-
-    List<Variable> getVariables();
-
-    List<Label> getLabels();
-
-    Label getExitLabel();
-
     List<String> getVariablesPeek();
-
     List<String> getLabelsPeek();
-
-    //void expendToLevelForRun(int level);
-
     List<List<InstructionView>> expendToLevelForExtend(int level);
-
-    List<List<InstructionView>> expendToLevelForRun(int level);
-
-    // for show
+    List<InstructionView> instructionViewsAfterExtendRunShow(int level);
     List<InstructionView> getInstructionsPeek();
-
     VariableAndLabelMenger getvlm();
-
     List<List<String>> getInfo(int level);
-
     }

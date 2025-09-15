@@ -2,6 +2,7 @@ package core.engine;
 
 import core.program.VariableAndLabelMenger;
 import dto.*;
+
 import java.nio.file.Path;
 import java.util.List;
 
@@ -17,7 +18,6 @@ public interface Engine {
     List<RunSummary> getHistory();
     int getMaxExpandLevel();
     VariableAndLabelMenger getVlm();
-
     List<List<String>> getInfoForEachInstruction(int level);
 }
 

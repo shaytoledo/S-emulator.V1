@@ -1,5 +1,6 @@
 package logic.instruction.synthetic;
 
+import core.program.VariableAndLabelMenger;
 import logic.execution.ExecutionContext;
 import logic.instruction.AbstractInstruction;
 import logic.instruction.Instruction;
@@ -9,12 +10,10 @@ import logic.instruction.basic.JumpNotZeroInstruction;
 import logic.instruction.basic.NoOpInstruction;
 import logic.label.FixedLabel;
 import logic.label.Label;
-import core.program.VariableAndLabelMenger;
 import logic.variable.Variable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class ZeroVariableInstruction extends AbstractInstruction {
 

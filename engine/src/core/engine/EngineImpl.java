@@ -1,14 +1,14 @@
 package core.engine;
 
-import core.program.VariableAndLabelMenger;
-import dto.*;
 import adapter.translate.JaxbLoader;
 import adapter.translate.ProgramTranslator;
+import core.program.Program;
+import core.program.VariableAndLabelMenger;
+import dto.*;
 import logic.exception.LoadProgramException;
 import logic.exception.NotXMLException;
 import logic.exception.ProgramFileNotFoundException;
 import logic.execution.ProgramExecutorImpl;
-import core.program.Program;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -73,12 +73,14 @@ public class EngineImpl implements Engine {
 
     @Override
     public ProgramSummary getProgramSummaryForShow() {
-
+        List<InstructionView> instructionViews = cuurentProgram
+                .instructionViewsAfterExtendRunShow(0);
         // there isn't valid load program
         if (cuurentProgram == null) {
             throw new LoadProgramException("No program is loaded. Please load a file to display a program.");
         }
 
+        //note gets the extend info
         if (cuurentProgram != null) {
             return new ProgramSummary(
                     cuurentProgram.getName(),
@@ -90,42 +92,20 @@ public class EngineImpl implements Engine {
         return null;
     }
 
-    public static int sumCyclesExceptFirst(List<List<InstructionView>> extendInstructions) {
-        int total = 0;
-        for (List<InstructionView> chain : extendInstructions) {
-            int place = chain.size() - 1;
-            total += chain.get(place).cycles();
-
-        }
-        return total;
-    }
-
     @Override
     public RunResult run(int level, List<Long> inputs) {
-        ProgramExecutorImpl exe = new ProgramExecutorImpl(cuurentProgram); //, level, inputs);
 
+        List<InstructionView> instructionViews = cuurentProgram
+                .instructionViewsAfterExtendRunShow(level);
+        ProgramExecutorImpl exe = new ProgramExecutorImpl(cuurentProgram);
         long y = exe.run(inputs);
+        int cycles = exe.cycleCount;
 
-        //need to extend the program to the level
-        // calculate cycles from the extent program (not from execution)
-        List<List<InstructionView>> extendCommend = expandProgramToLevelForExtend(level);
-        int totalCycles = sumCyclesExceptFirst(extendCommend);
-
-        RunSummary summary = new RunSummary(
-                ++runCounter,
-                level,
-                inputs,
-                y,
-                totalCycles
-        );
+        RunSummary summary = new RunSummary(++runCounter, level, inputs, y, cycles);
         summaries.add(summary);
 
         if (exe != null) {
-            var res = new RunResult(
-                    y,
-                    exe.variablesState(),
-                    totalCycles
-            );
+            var res = new RunResult(y, exe.variablesState(), cycles);
             return res;
         }
         return null;
@@ -143,8 +123,8 @@ public class EngineImpl implements Engine {
 
     @Override
     public List<InstructionView> expandProgramToLevelForRun(int level) {
-        List<List<InstructionView>> allInstructions = cuurentProgram.expendToLevelForRun(level);
-        return allInstructions.stream().flatMap(List::stream).toList();
+        List<InstructionView> allInstructions = cuurentProgram.instructionViewsAfterExtendRunShow(level);
+        return allInstructions;
     }
 
     public int getMaxExpandLevel() {
@@ -159,15 +139,8 @@ public class EngineImpl implements Engine {
         return cuurentProgram.getvlm();
     }
 
-
-
-
-
-
-
     @Override
     public List<List<String>> getInfoForEachInstruction(int level) {
         return cuurentProgram.getInfo(level);
     }
-
 }

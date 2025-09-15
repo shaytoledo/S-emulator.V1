@@ -12,7 +12,6 @@ import static java.util.Collections.emptyList;
 
 public class ExecutionContextImpl implements ExecutionContext {
 
-    //Map<String, Long> variableState;
     Map<Variable, Long> variableState;
 
 
@@ -27,7 +26,6 @@ public class ExecutionContextImpl implements ExecutionContext {
             variableState.put(v, inputs.get(i));
         }
     }
-
 
     @Override
     public long getVariableValue(Variable v) {

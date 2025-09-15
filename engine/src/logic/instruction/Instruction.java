@@ -1,12 +1,11 @@
 package logic.instruction;
 
+import core.program.VariableAndLabelMenger;
 import logic.execution.ExecutionContext;
 import logic.label.Label;
-import core.program.VariableAndLabelMenger;
 import logic.variable.Variable;
 
 import java.util.List;
-import java.util.Map;
 
 public interface Instruction {
 

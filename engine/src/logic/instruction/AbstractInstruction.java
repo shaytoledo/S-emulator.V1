@@ -5,7 +5,6 @@ import logic.label.Label;
 import logic.variable.Variable;
 
 import java.util.List;
-import java.util.Map;
 
 public abstract class AbstractInstruction implements Instruction {
 

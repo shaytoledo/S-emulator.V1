@@ -14,7 +14,7 @@ public class AppController extends Application {
                 getClass().getResource("/application/main/MainLayout.fxml")
         );
         stage.setTitle("S-emulator");
-        stage.setScene(new Scene(root, 800, 660));
+        stage.setScene(new Scene(root, 920, 660));
         stage.show();
     }
 

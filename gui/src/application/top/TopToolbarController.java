@@ -30,7 +30,6 @@ public class TopToolbarController {
     MainLayoutController mainLayoutController;
 
     // Won't be used
-    @FXML private Button showProgram;
     @FXML private Button Expand;
     @FXML private Button Collapse;
     @FXML private Label CurrentFromMaximumDegree;
@@ -39,6 +38,8 @@ public class TopToolbarController {
     @FXML private ComboBox<String> HighlightSelection;
     @FXML private ComboBox<?> ProgramOrFunctionSelector;
 
+    @FXML private TextField howMuchToCollapse;
+    @FXML private TextField howMuchToExpand;
     @FXML private TextField CurrentlyLoadedFilePath;
     @FXML private Button LoadFileButton;
     @FXML private TextField expendLevel;
@@ -47,6 +48,8 @@ public class TopToolbarController {
 
     private File lastDir = new File(System.getProperty("user.home"));
     private int currentLevel = 0;
+    private PauseTransition clearStatusLater;
+
 
 
     public void setMainLayoutController(MainLayoutController mainLayoutController) {
@@ -59,7 +62,6 @@ public class TopToolbarController {
         currentLevel = 0;
     }
 
-    /** Functions to load by the engine the file and to show the progressbar of the load thread **/
     @FXML
     void LoadListener(ActionEvent event) throws InterruptedException {
         FileChooser fc = new FileChooser();
@@ -76,25 +78,39 @@ public class TopToolbarController {
         if (file != null) {
             mainLayoutController.clearAll();
             lastDir = file.getParentFile();
-        }
-        else {
+        } else {
             return;
         }
+
+        // Safely reset the status label before (re)binding it in startLoadFileProgress
+        if (clearStatusLater != null) { // cancel any previous clear-timer
+            clearStatusLater.stop();
+            clearStatusLater = null;
+        }
+        statusLabel.textProperty().unbind();  // IMPORTANT: unbind before setText
         statusLabel.setText("");
 
         startLoadFileProgress(file);
     }
+
+    /** Functions to load by the engine the file and to show the progressbar of the load thread **/
     private void startLoadFileProgress(File file) {
+        // Cancel any previous "clear status" timer to avoid late setText("") on a bound label
+        if (clearStatusLater != null) {
+            clearStatusLater.stop();
+            clearStatusLater = null;
+        }
+
         Task<LoadReport> task = createLoadTask(file);
 
-        // bind UI
+        // Bind UI to task state
         progressBar.progressProperty().bind(task.progressProperty());
         statusLabel.textProperty().bind(task.messageProperty());
         progressBar.visibleProperty().bind(task.runningProperty());
         LoadFileButton.disableProperty().bind(task.runningProperty());
 
         task.setOnSucceeded(ev -> {
-            // unbind
+            // Always unbind before setting values manually
             progressBar.progressProperty().unbind();
             statusLabel.textProperty().unbind();
             progressBar.visibleProperty().unbind();
@@ -103,22 +119,36 @@ public class TopToolbarController {
             LoadReport report = task.getValue();
 
             if (report != null && report.errors() != null && !report.errors().isEmpty()) {
+                // Now safe to set text because we unbound above
                 statusLabel.setText("errors (" + report.errors().size() + ")");
                 showErrorsPopup(report.errors());
                 mainLayoutController.showProgram();
             } else {
                 statusLabel.setText("Finished");
                 currentLevel = 0;
-                CurrentlyLoadedFilePath.setText(file.getName());
+                CurrentlyLoadedFilePath.setText(file.getAbsolutePath());
                 mainLayoutController.clearAll();
             }
-            // hide "Finished" after 5s
-            PauseTransition hide = new PauseTransition(seconds(5));
-            hide.setOnFinished(e  -> statusLabel.setText(""));
-            hide.play();
+
+            // Schedule a safe clear of the status label
+            clearStatusLater = new PauseTransition(seconds(5));
+            clearStatusLater.setOnFinished(e -> {
+                // Only clear if label is not currently bound (e.g., a new task may have started)
+                if (!statusLabel.textProperty().isBound()) {
+                    statusLabel.setText("");
+                }
+            });
+            clearStatusLater.play();
+
+            // Show the program if a file is loaded
+            String path = CurrentlyLoadedFilePath.getText();
+            if (path != null && !path.isEmpty() && !path.equals("Currently Loaded File")) {
+                mainLayoutController.showProgram();
+            }
         });
 
         task.setOnFailed(ev -> {
+            // Unbind UI first
             progressBar.progressProperty().unbind();
             statusLabel.textProperty().unbind();
             progressBar.visibleProperty().unbind();
@@ -127,10 +157,18 @@ public class TopToolbarController {
             Throwable ex = task.getException();
             statusLabel.setText("ERROR: " + (ex != null ? ex.getMessage() : "Unknown"));
             if (ex != null) ex.printStackTrace();
+
+            // Also clear the status after a short delay, safely
+            clearStatusLater = new PauseTransition(seconds(5));
+            clearStatusLater.setOnFinished(e -> {
+                if (!statusLabel.textProperty().isBound()) {
+                    statusLabel.setText("");
+                }
+            });
+            clearStatusLater.play();
         });
 
         new Thread(task, "load-program-task").start();
-
     }
 
     private Task<LoadReport> createLoadTask(File file) {
@@ -193,31 +231,60 @@ public class TopToolbarController {
         return sw.toString();
     }
 
-
-    @FXML
-    void showListener(ActionEvent event) {
-        if (CurrentlyLoadedFilePath.getText().equals("Currently Loaded File") || CurrentlyLoadedFilePath.getText().isEmpty()) {
-            return;
-        } else {
-            mainLayoutController.showProgram();
-        }
-    }
-
     @FXML
     void collapseListener(ActionEvent event) {
-        if (currentLevel > 0) {
-            currentLevel--;
-            mainLayoutController.showProgram();
-            mainLayoutController.getLeft().clearHistory();
+        if (currentLevel > 0 ) {
+            try {
+                if (currentLevel - Integer.parseInt(howMuchToCollapse.getText()) > mainLayoutController.engine.getMaxExpandLevel() ||
+                        currentLevel - Integer.parseInt(howMuchToCollapse.getText()) < 0) {
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle("Invalid Collapse");
+                    alert.setHeaderText(null);
+                    alert.setContentText("The collapse value minus the current level exceeds the minimum expand level.");
+                    alert.showAndWait();
+                } else {
+                    currentLevel -= Integer.parseInt(howMuchToCollapse.getText());
+                    mainLayoutController.showProgram();
+                    mainLayoutController.getLeft().clearHistory();
+                }
+                howMuchToCollapse.setText("1");
+
+            } catch (Exception e) {
+                howMuchToCollapse.setText("1");
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Invalid Collapse Value");
+                alert.setHeaderText(null);
+                alert.setContentText("The collapse value must be a number.");
+                alert.showAndWait();
+            }
         }
     }
 
     @FXML
     void extendListener(ActionEvent event) {
         if (currentLevel < mainLayoutController.engine.getMaxExpandLevel()) {
-            currentLevel++;
-            mainLayoutController.showProgram();
-            mainLayoutController.getLeft().clearHistory();
+            try {
+                if (Integer.parseInt(howMuchToExpand.getText()) + currentLevel > mainLayoutController.engine.getMaxExpandLevel()) {
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle("Invalid Extend");
+                    alert.setHeaderText(null);
+                    alert.setContentText("The Extend value plus the current level exceeds the maximum expand level.");
+                    alert.showAndWait();
+                } else {
+                    currentLevel += Integer.parseInt(howMuchToExpand.getText());
+                    mainLayoutController.showProgram();
+                    mainLayoutController.getLeft().clearHistory();
+                }
+                howMuchToExpand.setText("1");
+
+            } catch (Exception e) {
+                howMuchToExpand.setText("1");
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Invalid Extend Value");
+                alert.setHeaderText(null);
+                alert.setContentText("The collapse value must be a number.");
+                alert.showAndWait();
+            }
         }
     }
 
@@ -243,6 +310,19 @@ public class TopToolbarController {
                 .sorted(String.CASE_INSENSITIVE_ORDER)
                 .toList();
 
+        List<String> zVariables = allVariables.stream()
+                .filter(Objects::nonNull)
+                .filter(s -> s.regionMatches(true, 0, "z", 0, 1))
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .toList();
+
+        List<String> yVariables = allVariables.stream()
+                .filter(Objects::nonNull)
+                .filter(s -> s.regionMatches(true, 0, "y", 0, 1))
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .toList();
+
+
         // L*
         List<String> lLabels = allVariables.stream()
                 .filter(Objects::nonNull)
@@ -250,7 +330,9 @@ public class TopToolbarController {
                 .sorted(String.CASE_INSENSITIVE_ORDER)
                 .toList();
 
-        List<String> options = new ArrayList<>(xVariables);
+        List<String> options = new ArrayList<>(yVariables);
+        options.addAll(xVariables);
+        options.addAll(zVariables);
         options.addAll(lLabels);
 
         HighlightSelection.getItems().setAll(options);
@@ -258,51 +340,15 @@ public class TopToolbarController {
         HighlightSelection.getSelectionModel().clearSelection();
     }
 
-//    @FXML
-//    void selectionListener(ActionEvent event) {
-//        String selected = HighlightSelection.getSelectionModel().getSelectedItem();
-//        List <List<String>> variableAndLabelsForEachInstruction = mainLayoutController.engine.getInfoForEachInstruction(mainLayoutController.getCurrentLevel());
-//
-//        List<Integer> indices = new ArrayList<>();
-//        int index = 0;
-//        for (List<String> varsAndLabels : variableAndLabelsForEachInstruction) {
-//            if (varsAndLabels.contains(selected)) {
-//                indices.add(index);
-//            }
-//            index++;
-//        }
-//
-//        final Set<Integer> highlighted = new HashSet<>(indices);
-//
-//        mainLayoutController.getLeft().instructionsTable.setRowFactory(tv -> new TableRow<>() {
-//            @Override
-//            protected void updateItem(Object item, boolean empty) {
-//                super.updateItem(item, empty);
-//                if (empty || item == null) {
-//                    setStyle("");
-//                } else {
-//                    setStyle(highlighted.contains(getIndex())
-//                            ? "-fx-background-color: palegoldenrod;"   // צהוב עדין
-//                            : "");
-//                }
-//            }
-//        });
-//
-//        mainLayoutController.getLeft().instructionTable.refresh()
-//
-//    }
-
     @FXML
     void selectionListener(ActionEvent event) {
         Set<Integer> indices = getHighlightedIndices();
         mainLayoutController.getLeft().boldRows(indices);
-
     }
 
     public Set<Integer> getHighlightedIndices() {
         String selected = HighlightSelection.getSelectionModel().getSelectedItem();
         List<List<String>> all = mainLayoutController.engine.getInfoForEachInstruction(mainLayoutController.getCurrentLevel());
-
 
         List<Integer> indices = new ArrayList<>();
         int index = 0;
@@ -314,5 +360,4 @@ public class TopToolbarController {
         }
         return new HashSet<>(indices);
     }
-
 }

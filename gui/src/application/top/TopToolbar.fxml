@@ -27,8 +27,7 @@
             <HBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="20.0" minWidth="400.0" prefHeight="32.0" prefWidth="673.0" spacing="10.0">
                <children>
                   <Button fx:id="LoadFileButton" maxHeight="35.0" maxWidth="90.0" minHeight="26.0" minWidth="80.0" mnemonicParsing="false" onAction="#LoadListener" prefHeight="26.0" prefWidth="80.0" styleClass="load-label" text="Load File" HBox.hgrow="ALWAYS" />
-                  <TextField fx:id="CurrentlyLoadedFilePath" editable="false" maxHeight="35.0" maxWidth="300.0" minHeight="26.0" minWidth="150.0" prefHeight="26.0" prefWidth="250.0" text="Currently Loaded File" HBox.hgrow="ALWAYS" />
-                  <Button fx:id="showProgram" maxHeight="26.0" maxWidth="120.0" minHeight="26.0" minWidth="100.0" mnemonicParsing="false" onAction="#showListener" prefHeight="26.0" prefWidth="110.0" text="show program" />
+                  <TextField fx:id="CurrentlyLoadedFilePath" editable="false" maxHeight="35.0" maxWidth="500.0" minHeight="26.0" minWidth="400.0" prefHeight="26.0" prefWidth="440.0" text="Currently Loaded File" HBox.hgrow="ALWAYS" />
                   <ProgressBar fx:id="progressBar" prefHeight="18.0" prefWidth="145.0" progress="0.0" visible="false" />
                   <Label fx:id="statusLabel" minWidth="70.0" prefWidth="70.0" />
                </children>
@@ -40,12 +39,14 @@
                <children>
                   <ComboBox fx:id="ProgramOrFunctionSelector" maxHeight="35.0" maxWidth="180.0" minHeight="26.0" minWidth="120.0" prefHeight="26.0" prefWidth="150.0" promptText="Program\Function selector" HBox.hgrow="ALWAYS" />
                   <Button fx:id="Collapse" maxHeight="35.0" maxWidth="90.0" minHeight="26.0" minWidth="65.0" mnemonicParsing="false" onAction="#collapseListener" prefHeight="26.0" prefWidth="65.0" text="Collapse" HBox.hgrow="ALWAYS" />
-                  <Label fx:id="CurrentFromMaximumDegree" maxHeight="35.0" maxWidth="115.0" minHeight="26.0" minWidth="75.0" prefHeight="26.0" prefWidth="75.0" text="Current / Maximum degree:" HBox.hgrow="ALWAYS">
+                  <TextField fx:id="howMuchToCollapse" maxHeight="35.0" maxWidth="50.0" minHeight="26.0" minWidth="30.0" prefHeight="26.0" prefWidth="40.0" style="-fx-alignment: CENTER;" text="1" />
+                  <Label fx:id="CurrentFromMaximumDegree" maxHeight="35.0" maxWidth="115.0" minHeight="26.0" minWidth="75.0" prefHeight="26.0" prefWidth="75.0" style="-fx-alignment: CENTER;" text="Current / Maximum degree:" HBox.hgrow="ALWAYS">
                      <font>
                         <Font size="9.0" />
                      </font>
                   </Label>
                   <TextField fx:id="expendLevel" maxHeight="35.0" maxWidth="50.0" minHeight="26.0" minWidth="30.0" prefHeight="26.0" prefWidth="40.0" />
+                  <TextField fx:id="howMuchToExpand" maxHeight="35.0" maxWidth="50.0" minHeight="26.0" minWidth="30.0" prefHeight="26.0" prefWidth="40.0" style="-fx-alignment: CENTER;" text="1" />
                   <Button fx:id="Expand" maxHeight="35.0" maxWidth="80.0" minHeight="26.0" minWidth="65.0" mnemonicParsing="false" onAction="#extendListener" prefHeight="26.0" prefWidth="65.0" text="Expand" HBox.hgrow="ALWAYS" />
                   <ComboBox fx:id="HighlightSelection" maxHeight="35.0" maxWidth="120.0" minHeight="26.0" minWidth="70.0" onAction="#selectionListener" prefHeight="26.0" prefWidth="70.0" promptText="Highlight selection" HBox.hgrow="ALWAYS" />
                </children>

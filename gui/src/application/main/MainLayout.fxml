@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.RowConstraints?>
 
-<ScrollPane fitToHeight="true" fitToWidth="true" minHeight="-Infinity" minWidth="-Infinity" pannable="true" prefHeight="660.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.main.MainLayoutController">
+<ScrollPane fitToHeight="true" fitToWidth="true" minHeight="-Infinity" minWidth="-Infinity" pannable="true" prefHeight="660.0" prefWidth="920.0" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.main.MainLayoutController">
    <content>
       <GridPane fx:id="rootGrid" minHeight="-Infinity" minWidth="-Infinity" prefHeight="620.0" prefWidth="800.0">
         <columnConstraints>
