@@ -30,12 +30,12 @@ public class TopToolbarController {
     MainLayoutController mainLayoutController;
 
     // Won't be used
-    @FXML private Button Expand;
-    @FXML private Button Collapse;
+    @FXML public Button Expand;
+    @FXML public Button Collapse;
     @FXML private Label CurrentFromMaximumDegree;
 
     // Need to be implemented
-    @FXML private ComboBox<String> HighlightSelection;
+    @FXML public ComboBox<String> HighlightSelection;
     @FXML private ComboBox<?> ProgramOrFunctionSelector;
 
     @FXML private TextField howMuchToCollapse;

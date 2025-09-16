@@ -156,5 +156,18 @@ public class LeftToolbarController {
         instructionsTable.refresh();
     }
 
+    // Clear all highlights from instructionsTable
+    public void clearHighlights() {
+        instructionsTable.setRowFactory(tv -> new TableRow<InstructionView>() {
+            @Override
+            protected void updateItem(InstructionView item, boolean empty) {
+                super.updateItem(item, empty);
+                setStyle(""); // reset to default
+            }
+        });
+        instructionsTable.refresh();
+    }
+
+
 
 }

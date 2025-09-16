@@ -21,6 +21,7 @@ public class ProgramExecutorImpl implements ProgramExecutor {
     private Program program;
     private ExecutionContext context;
     public int cycleCount = 0;
+    public int debugIndexCounter = 0;
 
 
     public ProgramExecutorImpl(Program program) {
@@ -83,17 +84,6 @@ public class ProgramExecutorImpl implements ProgramExecutor {
                         e -> e.getKey().getRepresentation(),Map.Entry::getValue,
                         (a, b) -> a, LinkedHashMap::new
                 ));
-
-
-
-//        Map<String, Long> onlyXSorted = context.getVariablesState().entrySet().stream()
-//                .filter(e -> e.getKey() != null && e.getKey().getRepresentation().startsWith("x"))
-//                .sorted(Comparator.comparingInt(e -> Integer.parseInt(e.getKey().getRepresentation().substring(1))))
-//                .collect(Collectors.toMap(e -> e.getKey().getRepresentation(),
-//                        Map.Entry::getValue,
-//                        (a, b) -> a,
-//                        LinkedHashMap::new
-//                ));
         return allVariables;
     }
 
@@ -125,4 +115,84 @@ public class ProgramExecutorImpl implements ProgramExecutor {
         }
     }
 
+    public void init(List<Long> inputs) {
+        // safe inputs
+        List<Long> safeInputs;
+        if (inputs == null || inputs.isEmpty()) {
+            safeInputs = emptyList();
+        } else {
+            safeInputs = new ArrayList<>(inputs.size());
+            for (Long v : inputs) {
+                safeInputs.add(v != null ? v : 0L);
+            }
+        }
+        context = new ExecutionContextImpl(inputs); // create the context with inputs.
+
+        Variable res = new VariableImpl(VariableType.RESULT, 1);
+        context.updateVariable(res, 0); // initialize the result variable to 0.
+
+        enterAllVariabalesInContext();
+    }
+
+    public int runOneStep() {
+        // get the first instruction
+        Instruction currentInstruction = program.getInstructions().get(debugIndexCounter);
+
+        Label nextLabel;
+
+        // get the instruction next label if take you there
+        nextLabel = currentInstruction.execute(context);
+
+        // sum cycles
+        cycleCount += currentInstruction.cycles();
+
+        // if not take you there, go to the next instruction
+        if (isEmpty(nextLabel)) {
+            currentInstruction = program.getNextInstructionLabel(currentInstruction);
+            debugIndexCounter = program.getInstructions().indexOf(currentInstruction);
+            // return the next index of the next instruction
+            return debugIndexCounter;
+
+            // if take you there and there is no exit, go to that instruction
+        } else if (!isExit(nextLabel)) {
+            currentInstruction = program.getInstructionByLabel(nextLabel);
+            debugIndexCounter = program.getInstructions().indexOf(currentInstruction);
+            // return the index of the instruction that it took you to
+            return debugIndexCounter;
+        }
+        else { // if (isExit(nextLabel))
+            // -1 signifies the end of the program
+            debugIndexCounter = -1;
+            return debugIndexCounter;
+        }
+    }
+
+    public void resume() {
+        Instruction currentInstruction = program.getInstructions().get(debugIndexCounter);
+
+        // if null, return result
+        if (currentInstruction == null) {
+            return;
+        }
+
+        Label nextLabel;
+        do {
+            nextLabel = currentInstruction.execute(context);
+            // sum cycles
+            cycleCount += currentInstruction.cycles();
+
+            if (isEmpty(nextLabel)) {
+                currentInstruction = program.getNextInstructionLabel(currentInstruction);
+                if (currentInstruction == null) {
+                    nextLabel = FixedLabel.EXIT;
+                }
+            } else if (!isExit(nextLabel)) {
+                currentInstruction = program.getInstructionByLabel(nextLabel);
+
+            }
+        } while (!isExit(nextLabel));
+
+        // end of program
+        return;
+    }
 }

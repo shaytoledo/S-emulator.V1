@@ -78,13 +78,6 @@ public class ProgramImpl implements Program {
 
         return new ArrayList<>(variables);
     }
-//    private static void addIfStartsWithXOrZOry(Set<String> variables, String curr) {
-//        if (curr == null) return;
-//        String t = curr.trim().toLowerCase();
-//        if (t.startsWith("x") || t.startsWith("z") || t.startsWith("y")) {
-//            variables.add(t);
-//        }
-//    }
 
     private static void addIfStartsWithX(Set<String> variables, String curr) {
         if (curr == null) return;
@@ -113,28 +106,6 @@ public class ProgramImpl implements Program {
                 .toList();
 
         return uniqueInfo;
-
-
-
-
-//        return labels.stream()
-//                .map(Label::getLabelRepresentation)
-//                .filter(Objects::nonNull)
-//                .map(String::toUpperCase)
-//                .distinct()
-//                .sorted((a, b) -> {
-//                    if (a.equals("EXIT")) return 1; // EXIT in the end
-//                    if (b.equals("EXIT")) return -1;
-//                    try {
-//                        return Integer.compare(
-//                                Integer.parseInt(a.substring(1)),
-//                                Integer.parseInt(b.substring(1))
-//                        );
-//                    } catch (NumberFormatException e) {
-//                        return a.compareTo(b);
-//                    }
-//                })
-//                .toList();
     }
 
     // extend Instructions to the given level (with the original instructions)

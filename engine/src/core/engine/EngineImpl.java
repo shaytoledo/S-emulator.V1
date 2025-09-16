@@ -5,6 +5,7 @@ import adapter.translate.ProgramTranslator;
 import core.program.Program;
 import core.program.VariableAndLabelMenger;
 import dto.*;
+import javafx.util.Pair;
 import logic.exception.LoadProgramException;
 import logic.exception.NotXMLException;
 import logic.exception.ProgramFileNotFoundException;
@@ -14,12 +15,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 
 // implementation of the Engine interface (methods of the engine)
 public class EngineImpl implements Engine {
 
     private static Program cuurentProgram = null;
+    ProgramExecutorImpl exe;
     private int runCounter = 0;
     public List<RunSummary> summaries = new ArrayList<>();
 
@@ -97,7 +100,7 @@ public class EngineImpl implements Engine {
 
         List<InstructionView> instructionViews = cuurentProgram
                 .instructionViewsAfterExtendRunShow(level);
-        ProgramExecutorImpl exe = new ProgramExecutorImpl(cuurentProgram);
+        exe = new ProgramExecutorImpl(cuurentProgram);
         long y = exe.run(inputs);
         int cycles = exe.cycleCount;
 
@@ -143,4 +146,60 @@ public class EngineImpl implements Engine {
     public List<List<String>> getInfoForEachInstruction(int level) {
         return cuurentProgram.getInfo(level);
     }
+
+    @Override
+    public  Pair<Map<String, Long>,Integer> startDebug(int level, List<Long> inputs) {
+        // expend the program to the specified level
+        List<InstructionView> instructionViews = cuurentProgram
+                .instructionViewsAfterExtendRunShow(level);
+
+        //create the executor
+        exe = new ProgramExecutorImpl(cuurentProgram);
+
+        // intialize all the variables iin context
+        exe.init(inputs);
+
+        // get the state of all variables
+        Map<String, Long> variablesState = exe.variablesState();
+        Pair<Map<String, Long>,Integer> info = new Pair<>(variablesState, exe.debugIndexCounter);
+        return info;
+    }
+
+    @Override
+    public Pair<Map<String, Long>,Integer> oneStepInDebug() {
+        //run one step
+        int index = exe.runOneStep();
+
+        if (index == -1) {
+            // program finished in one step
+            Pair<Map<String, Long>,Integer> info = new Pair<>(null, index);
+            return info;
+        }
+
+        int cycles = exe.cycleCount;
+
+        // get the state of all variables
+        Map<String, Long> variablesState = exe.variablesState();
+        Pair<Map<String, Long>,Integer> info = new Pair<>(variablesState, index);
+
+        return info;
+    }
+
+    @Override
+    public void endDebug() {
+        exe = null;
+    }
+
+    @Override
+    public Map<String, Long> resumeDebug() {
+        exe.resume();
+        return exe.variablesState();
+    }
+
+    @Override
+    public int getCycels() {
+        return exe.cycleCount;
+    }
+
+
 }

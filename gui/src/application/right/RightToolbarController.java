@@ -12,6 +12,7 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.util.Pair;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -51,6 +52,9 @@ public class RightToolbarController {
     @FXML private TableColumn<RunSummary, String> output;
     @FXML private TableColumn<RunSummary, String> cycles;
 
+    // Previous state snapshot
+    private Map<String, Long> previousVariableState = new HashMap<>();
+
 
     private final Map<String, Long> inputsMap = new LinkedHashMap<>();
 
@@ -69,39 +73,235 @@ public class RightToolbarController {
 
     @FXML
     void historyOrStatisticsListener(ActionEvent event) {
-
-    }
-
-    @FXML
-    void reRunListener(ActionEvent event) {
-
-    }
-
-    @FXML
-    void resumeDebugListener(ActionEvent event) {
-
     }
 
     @FXML
     void showHistoryListener(ActionEvent event) {
+    }
 
+    @FXML
+    void reRunListener(ActionEvent event) {
+    }
+
+
+
+    @FXML
+    void resumeDebugListener(ActionEvent event) {
+        Map<String, Long> variableState  = mainLayoutController.engine.resumeDebug();
+
+        // cycles counter update
+        CyclesCounter.setText(String.valueOf(mainLayoutController.engine.getCycels()));
+
+        fillVariableStateTable(variableState);
+        inputTable.setEditable(true);
+        mainLayoutController.engine.endDebug();
+        mainLayoutController.getTop().Expand.setDisable(false);
+        mainLayoutController.getTop().Collapse.setDisable(false);
+        // unbold all the table lines
+        mainLayoutController.getLeft().clearHighlights();
     }
 
     @FXML
     void startDebugListener(ActionEvent event) {
+        mainLayoutController.getTop().HighlightSelection.getItems().clear();
 
+        inputTable.setEditable(false);
+        mainLayoutController.getTop().Expand.setDisable(true);
+        mainLayoutController.getTop().Collapse.setDisable(true);
+
+        Pair<Map<String, Long>,Integer> variableState = mainLayoutController.engine.startDebug(
+                mainLayoutController.getCurrentLevel(),
+                getCurrVariableState()
+        );
+        if (variableState.getKey() == null) {
+            endOfDebug();
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("(:");
+            alert.setHeaderText(null);
+            alert.setContentText("The Program finished immediately.");
+            alert.showAndWait();
+        } else {
+            // bold 0 index line in table
+            Set<Integer> index = new HashSet<>();
+            index.add(0);
+            mainLayoutController.getLeft().boldRows(index);
+           // fillVariableStateTable(variableState.getKey());
+            CyclesCounter.setText("0");
+        }
     }
 
     @FXML
     void stepOverDebugListener(ActionEvent event) {
+        Pair<Map<String, Long>,Integer> variableState = mainLayoutController.engine.oneStepInDebug();
 
+        if (variableState.getValue() == -1 ) {
+            endOfDebug();
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("(:");
+            alert.setHeaderText(null);
+            alert.setContentText("The Program finished.");
+            alert.showAndWait();
+
+        } else {
+            // unbold all the table lines
+            mainLayoutController.getLeft().clearHighlights();
+            // bold index line in table
+            Set<Integer> index = new HashSet<>();
+            index.add(variableState.getValue());
+            mainLayoutController.getLeft().boldRows(index);
+            fillVariableStateTable(variableState.getKey());
+
+            // cycles counter update
+            CyclesCounter.setText(String.valueOf(mainLayoutController.engine.getCycels()));
+        }
+    }
+
+    private void endOfDebug() {
+        inputTable.setEditable(true);
+        variableTable.getItems().clear();
+
+        // zero debugIndexCounter because the program executer is null now until the next execution
+        mainLayoutController.engine.endDebug();
+        mainLayoutController.getTop().Expand.setDisable(false);
+        mainLayoutController.getTop().Collapse.setDisable(false);
+        // unbold all the table lines
+        mainLayoutController.getLeft().clearHighlights();
+        CyclesCounter.setText("");
     }
 
     @FXML
     void stopDebugListener(ActionEvent event) {
-
+        endOfDebug();
     }
 
+    // Key for storing the last displayed state in the table's properties
+    private static final String DISPLAYED_STATE_KEY = "displayedStateMap";
+
+    // Fills the variable table with the given state and highlights changed values (debug-only usage)
+    private void fillVariableStateTable(Map<String, Long> newStateInput) {
+        // Ensure UI update on FX thread
+        if (!javafx.application.Platform.isFxApplicationThread()) {
+            javafx.application.Platform.runLater(() -> fillVariableStateTable(newStateInput));
+            return;
+        }
+
+        // --- Build final local copies so they are safe to capture in lambdas ---
+        @SuppressWarnings("unchecked")
+        Map<String, Long> oldRaw = (Map<String, Long>) variableTable.getProperties().get(DISPLAYED_STATE_KEY);
+        final Map<String, Long> oldState = (oldRaw == null)
+                ? Collections.emptyMap()
+                : new HashMap<>(oldRaw); // defensive copy
+
+        final Map<String, Long> newState = (newStateInput == null)
+                ? Collections.emptyMap()
+                : new HashMap<>(newStateInput); // defensive copy
+
+        // --- Build and sort keys: y first, then x1..xn, z1..zn, then alphabetical ---
+        List<String> keys = new ArrayList<>(newState.keySet());
+        keys.sort((a, b) -> {
+            String la = a == null ? "" : a.toLowerCase();
+            String lb = b == null ? "" : b.toLowerCase();
+
+            if (la.equals("y") && !lb.equals("y")) return -1;
+            if (lb.equals("y") && !la.equals("y")) return 1;
+
+            boolean ax = la.startsWith("x");
+            boolean bx = lb.startsWith("x");
+            if (ax && bx) return Integer.compare(numAfterPrefix(la, 'x'), numAfterPrefix(lb, 'x'));
+            if (ax) return -1;
+            if (bx) return 1;
+
+            boolean az = la.startsWith("z");
+            boolean bz = lb.startsWith("z");
+            if (az && bz) return Integer.compare(numAfterPrefix(la, 'z'), numAfterPrefix(lb, 'z'));
+            if (az) return -1;
+            if (bz) return 1;
+
+            return la.compareTo(lb);
+        });
+
+        // --- Name column (plain text) with highlight if changed ---
+        variableState.setCellValueFactory(cd -> new ReadOnlyStringWrapper(cd.getValue()));
+        variableState.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setText(null);
+                    setStyle("");
+                    return;
+                }
+                setText(item);
+
+                // Determine row variable name
+                String varName = (getTableRow() != null) ? (String) getTableRow().getItem() : null;
+                if (varName == null) {
+                    setStyle("");
+                    return;
+                }
+
+                Long was = oldState.get(varName);
+                Long now = newState.get(varName);
+                if (was != null && !Objects.equals(was, now)) {
+                    setStyle("-fx-alignment: CENTER; -fx-font-weight: bold; -fx-text-fill: red;");
+                } else {
+                    setStyle("-fx-alignment: CENTER;");
+                }
+            }
+        });
+
+        // --- Value column (with highlight if changed) ---
+        valueState.setCellValueFactory(cd -> {
+            Long v = newState.get(cd.getValue());
+            return new ReadOnlyStringWrapper(v == null ? "" : String.valueOf(v));
+        });
+        valueState.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setText(null);
+                    setStyle("");
+                    return;
+                }
+                setText(item);
+
+                String varName = (getTableRow() != null) ? (String) getTableRow().getItem() : null;
+                if (varName == null) {
+                    setStyle("");
+                    return;
+                }
+
+                Long was = oldState.get(varName);
+                Long now = newState.get(varName);
+                if (was != null && !Objects.equals(was, now)) {
+                    setStyle("-fx-alignment: CENTER; -fx-font-weight: bold; -fx-text-fill: red;");
+
+                } else {
+                    setStyle("-fx-alignment: CENTER;");
+                }
+            }
+        });
+
+        // --- Update rows and refresh ---
+        variableTable.getItems().setAll(keys);
+        variableTable.refresh();
+
+        // --- Persist the "currently displayed" state for the next comparison ---
+        variableTable.getProperties().put(DISPLAYED_STATE_KEY, new HashMap<>(newState));
+    }
+
+    // Helper method: extract numeric suffix after a given prefix (x, z, etc.)
+    private static int numAfterPrefix(String s, char prefix) {
+        if (s == null || s.length() < 2 || Character.toLowerCase(s.charAt(0)) != Character.toLowerCase(prefix)) {
+            return Integer.MAX_VALUE; // place non-matching names at the end of their group
+        }
+        try {
+            return Integer.parseInt(s.substring(1));
+        } catch (NumberFormatException e) {
+            return Integer.MAX_VALUE; // names without a proper number go last within the group
+        }
+    }
 
     @FXML
     private void historyRowClicked(MouseEvent event) {
@@ -129,11 +329,6 @@ public class RightToolbarController {
         // Refresh the table so the "value" column shows the updated numbers
         inputTable.refresh();
     }
-
-
-
-
-
 
     @FXML
     void startListener(ActionEvent event) {
@@ -249,7 +444,6 @@ public class RightToolbarController {
         });
     }
 
-
     private void fillInputTable() {
 
         /// all the variable and label in the expended program, now need to know where each label and variable
@@ -314,16 +508,4 @@ public class RightToolbarController {
                 .toList();                // collect everything back into a list
         return inputsByOrder;
     }
-
-    private static int numAfterPrefix(String s, char prefix) {
-        if (s == null || s.length() < 2 || Character.toLowerCase(s.charAt(0)) != Character.toLowerCase(prefix)) {
-            return Integer.MAX_VALUE; // שלא יקדים שמות בלי מספר תקין
-        }
-        try {
-            return Integer.parseInt(s.substring(1));
-        } catch (NumberFormatException e) {
-            return Integer.MAX_VALUE; // x, z בלי מספר – יופיעו בסוף קבוצתם
-        }
-    }
-
 }
