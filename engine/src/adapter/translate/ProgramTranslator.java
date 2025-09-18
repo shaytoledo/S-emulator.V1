@@ -1,14 +1,13 @@
 package adapter.translate;
 
 
+import adapter.xml.generated.SFunction;
 import adapter.xml.generated.SInstruction;
 import adapter.xml.generated.SProgram;
+import core.program.Function;
 import core.program.Program;
 import core.program.ProgramImpl;
-import logic.exception.ArgsException;
-import logic.exception.LabelException;
-import logic.exception.MissingVariableException;
-import logic.exception.UnknownInstruction;
+import logic.exception.*;
 import logic.instruction.Instruction;
 import logic.instruction.basic.DecreaseInstruction;
 import logic.instruction.basic.IncreaseInstruction;
@@ -44,9 +43,52 @@ public final class ProgramTranslator {
 
         Map<String, Variable> varsByName = new LinkedHashMap<>();
         Map<String, Label> labelsByName = new LinkedHashMap<>();
+
         List<Instruction> code = new ArrayList<>();
+        List<Function> funcs = new ArrayList<>();
+
 
         List<SInstruction> sInstructions = Optional.ofNullable(sProgram.getInstructions()).orElse(List.of());
+        List<SFunction> SFunctions = Optional.ofNullable(sProgram.getSFunctions()).orElse(List.of());
+
+        // convert SFunctions to Functions, collecting errors
+        for (SFunction func : SFunctions) {
+            String funcName = func.getName();
+            if (funcName == null || funcName.isBlank()) {
+                errors.add(new ArgsException("Function with missing name"));
+                continue;
+            }
+            String userString = TranslatorHelper.safe(func.getUserString(), "");
+            if (userString == null || userString.isBlank()) {
+                errors.add(new ArgsException("Function '" + funcName + "' missing user-string"));
+                continue;
+            }
+            List<SInstruction> a = func.getSInstructions();
+
+            List<SInstruction> funcInstructions = Optional.ofNullable(a).orElse(List.of());
+            // convert function instructions to Instructions, collecting errors
+            funcs.add(new Function(funcName, userString, extractInstructions(funcInstructions, errors, funcs)));
+        }
+
+        // convert SInstructions to Instructions, collecting errors
+        code.addAll(extractInstructions(sInstructions, errors, funcs));
+
+        ProgramImpl program = new ProgramImpl(programName, code, funcs, varsByName, labelsByName);
+        return new Result(program, errors);
+    }
+
+    private static String errorMessageByLine(int line, String msg) {
+        return String.format("Error in line %d: %s", line + 1, msg);
+    }
+
+
+    // get SInstructions and convert them to Instructions, collecting errors
+    private static  List<Instruction> extractInstructions(List<SInstruction> sInstructions, List<Exception> errors, List<Function> funcs) {
+        Map<String, Variable> varsByName = new LinkedHashMap<>();
+        Map<String, Label> labelsByName = new LinkedHashMap<>();
+        List<Instruction> code = new ArrayList<>();
+
+
 
         // First pass: collect all labels
         Set<String> labels = new HashSet<>();
@@ -277,6 +319,42 @@ public final class ProgramTranslator {
                         }
                     }
 
+//                    case "QUOTE" -> {
+//                        String targetFunctionName = args.getOrDefault("functionName", "");
+//                        if (targetFunctionName.isEmpty()) {
+//                            // missing function name
+//                            errors.add(new MissingFunctionName(errorMessageByLine(idx, "QUOTE missing 'functionName'")));
+//                            instruction = new NoOpInstruction(TranslatorHelper.newVarStrict("y"), lineLabel);
+//                        }
+//                        else {
+//                            // function name provided
+//                            if (functionExists(targetFunctionName, funcs)) {
+//                                // function exists
+//                                String functionArguments = args.getOrDefault("functionArguments", "");
+//
+//                                // need to create new qute instruction and set there the function name and arguments
+//                                // for each funcction need to check if exists\
+//                                ///
+//
+//
+//                                // create the qute instruction // need to pase all funcs errores
+//                                Instruction qute = new QuoteInstruction(functionArguments, funcs, errors, lineLabel);
+//
+//                                FunctionCallModel fcm = new FunctionCallModel(targetFunctionName + functionArguments);
+//
+//
+//                            } else {
+//                                // function does not exist
+//                                errors.add(new MissingFunctionName(errorMessageByLine(idx, "QUOTE unknown function name: " + targetFunctionName)));
+//                                instruction = new NoOpInstruction(TranslatorHelper.newVarStrict("y"), lineLabel);
+//                            }
+//
+//
+//                        }
+//
+//
+//                    }
+
                     default -> {
                         errors.add(new UnknownInstruction(errorMessageByLine(idx, "Unknown synthetic instruction: " + name)));
                         instruction = new NoOpInstruction(
@@ -289,14 +367,21 @@ public final class ProgramTranslator {
             }
             code.add(instruction);
         }
-
-
-        ProgramImpl program = new ProgramImpl(programName, code, varsByName, labelsByName);
-
-        return new Result(program, errors);
+        return code;
     }
 
-    private static String errorMessageByLine(int line, String msg) {
-        return String.format("Error in line %d: %s", line + 1, msg);
+
+
+
+    public static boolean functionExists(String functionName, List<Function> funcs) {
+        for (Function func : funcs) {
+            if (func.getName().equals(functionName)) {
+                return true;
+            }
+        }
+        return false;
     }
+
+
+
 }

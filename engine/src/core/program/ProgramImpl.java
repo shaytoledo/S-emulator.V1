@@ -11,6 +11,7 @@ import java.util.*;
 public class ProgramImpl implements Program {
 
     private final String name;
+    private List<Function> functions;
     private List<Instruction> instructions;
     private List<Instruction> extendedInstructions;
     private final List<Variable> variables;
@@ -18,12 +19,13 @@ public class ProgramImpl implements Program {
 
     public VariableAndLabelMenger vlm;
 
-    public ProgramImpl(String programName, List<Instruction> instructions, Map<String, Variable> varsByName, Map<String, Label> labelsByName) {
+    public ProgramImpl(String programName, List<Instruction> instructions,List<Function> funcs, Map<String, Variable> varsByName, Map<String, Label> labelsByName) {
         this.name = programName;
         this.instructions = new ArrayList<>(instructions);
         this.variables = new ArrayList<>(varsByName.values());
         this.labels = new ArrayList<>(labelsByName.values());
         this.extendedInstructions = new ArrayList<>(instructions);
+        this.functions = new ArrayList<>(funcs);
     }
 
     @Override

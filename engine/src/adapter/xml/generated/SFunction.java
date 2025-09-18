@@ -1,24 +1,20 @@
 package adapter.xml.generated;
 
 import jakarta.xml.bind.annotation.*;
-
 import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "", propOrder = {
-    "sInstructions"
-})
-@XmlRootElement(name = "S-Function")
 public class SFunction {
 
-    @XmlAttribute(name = "name", required = true)
-    protected String name;
+    @XmlAttribute(name = "name")
+    private String name;
 
-    @XmlAttribute(name = "user-string", required = true)
-    protected String userString;
+    @XmlAttribute(name = "user-string")
+    private String userString;
 
-    @XmlElement(name = "S-Instructions", required = true)
-    protected List<SInstruction> sInstructions;
+    @XmlElementWrapper(name = "S-Instructions")
+    @XmlElement(name = "S-Instruction")
+    private List<SInstruction> sInstructions;
 
     public List<SInstruction> getSInstructions() {
         return sInstructions;

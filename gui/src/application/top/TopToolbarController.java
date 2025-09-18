@@ -122,12 +122,12 @@ public class TopToolbarController {
                 // Now safe to set text because we unbound above
                 statusLabel.setText("errors (" + report.errors().size() + ")");
                 showErrorsPopup(report.errors());
-                mainLayoutController.showProgram();
             } else {
                 statusLabel.setText("Finished");
                 currentLevel = 0;
                 CurrentlyLoadedFilePath.setText(file.getAbsolutePath());
                 mainLayoutController.clearAll();
+
             }
 
             // Schedule a safe clear of the status label

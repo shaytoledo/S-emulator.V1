@@ -15,9 +15,10 @@ public class SProgram {
     @XmlElement(name = "S-Instruction")
     private List<SInstruction> instructions;
 
-    @XmlElementWrapper(name = "S-SFunctions")
-    @XmlElement(name = "S-Functions")
-    protected List<SFunction> functions;
+    @XmlElementWrapper(name = "S-Functions")
+    @XmlElement(name = "S-Function")
+    private List<SFunction> functions;
+
 
     public String getName() { return name; }
     public List<SInstruction> getInstructions() { return instructions; }
