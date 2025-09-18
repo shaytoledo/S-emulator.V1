@@ -53,4 +53,14 @@ public class QuoteInstruction extends AbstractInstruction {
     public List<String> getAllInfo() {
         return List.of();
     }
+
+    @Override
+    public List<Variable> getAllVariables() {
+        return List.of();
+    }
+
+    @Override
+    public List<Label> getAllLabels() {
+        return List.of();
+    }
 }

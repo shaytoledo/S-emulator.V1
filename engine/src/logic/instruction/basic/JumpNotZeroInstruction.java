@@ -67,4 +67,18 @@ public class JumpNotZeroInstruction extends AbstractInstruction {
         list.add(jnzLabel.getLabelRepresentation());
         return list;
     }
+
+    @Override
+    public List<Variable> getAllVariables() {
+        return List.of(getVariable());
+    }
+
+    @Override
+    public List<Label> getAllLabels() {
+        if (getLabel() == null ) {
+            return List.of(jnzLabel);
+        } else {
+            return List.of(getLabel(), jnzLabel);
+        }
+    }
 }

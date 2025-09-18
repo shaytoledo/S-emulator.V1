@@ -56,6 +56,20 @@ public class GoToInstruction extends AbstractInstruction {
     }
 
     @Override
+    public List<Variable> getAllVariables() {
+        return List.of(getVariable());
+    }
+
+    @Override
+    public List<Label> getAllLabels() {
+        if (getLabel() == null) {
+            return List.of(target);
+        } else {
+            return List.of(getLabel(), target);
+        }
+    }
+
+    @Override
     public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
         List<Instruction> myInstructions = new ArrayList<>();
 

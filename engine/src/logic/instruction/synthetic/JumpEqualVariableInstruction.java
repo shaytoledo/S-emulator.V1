@@ -68,6 +68,20 @@ public class JumpEqualVariableInstruction extends AbstractInstruction {
     }
 
     @Override
+    public List<Variable> getAllVariables() {
+        return List.of(getVariable(), other);
+    }
+
+    @Override
+    public List<Label> getAllLabels() {
+        if (getLabel() == null) {
+            return List.of(jnzLabel);
+        } else {
+            return List.of(getLabel(), jnzLabel);
+        }
+    }
+
+    @Override
     public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
         List<Instruction> myInstructions = new ArrayList<>();
 

@@ -17,7 +17,7 @@ public class ProgramImpl implements Program {
     private final List<Variable> variables;
     private final List<Label> labels;
 
-    public VariableAndLabelMenger vlm;
+    public VariableAndLabelMenger vlm ;
 
     public ProgramImpl(String programName, List<Instruction> instructions,List<Function> funcs, Map<String, Variable> varsByName, Map<String, Label> labelsByName) {
         this.name = programName;
@@ -26,7 +26,36 @@ public class ProgramImpl implements Program {
         this.labels = new ArrayList<>(labelsByName.values());
         this.extendedInstructions = new ArrayList<>(instructions);
         this.functions = new ArrayList<>(funcs);
+        this.vlm = new VariableAndLabelMenger(getAllVariablesNames(), getAllLabelsNames());
     }
+
+
+    public List<Variable> getAllVariablesNames() {
+        List<Variable> varNames = new ArrayList<>();
+        for (Instruction instruction : instructions) {
+            List<Variable> info = instruction.getAllVariables();
+            for (Variable s : info) {
+                if (s != null && !varNames.contains(s) && s.getRepresentation().startsWith("x")) {
+                    varNames.add(s);
+                }
+            }
+        }
+        return varNames;
+    }
+
+    private List<Label> getAllLabelsNames() {
+        List<Label> labelNames = new ArrayList<>();
+        for (Instruction instruction : instructions) {
+            List<Label> info = instruction.getAllLabels();
+            for (Label s : info) {
+                if (s != null) {
+                    labelNames.add(s);
+                }
+            }
+        }
+        return labelNames;
+    }
+
 
     @Override
     public String getName() {

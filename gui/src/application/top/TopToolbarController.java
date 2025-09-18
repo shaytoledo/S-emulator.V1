@@ -30,14 +30,14 @@ public class TopToolbarController {
     MainLayoutController mainLayoutController;
 
     // Won't be used
-    @FXML public Button Expand;
-    @FXML public Button Collapse;
     @FXML private Label CurrentFromMaximumDegree;
 
     // Need to be implemented
-    @FXML public ComboBox<String> HighlightSelection;
-    @FXML private ComboBox<?> ProgramOrFunctionSelector;
+    @FXML public ComboBox<?> ProgramOrFunctionSelector;
 
+    @FXML public ComboBox<String> HighlightSelection;
+    @FXML public Button Expand;
+    @FXML public Button Collapse;
     @FXML private TextField howMuchToCollapse;
     @FXML private TextField howMuchToExpand;
     @FXML private TextField CurrentlyLoadedFilePath;
@@ -54,12 +54,42 @@ public class TopToolbarController {
 
     public void setMainLayoutController(MainLayoutController mainLayoutController) {
         this.mainLayoutController = mainLayoutController;
+        allButtonsWaitForLoad();
     }
 
     public void clearAll() {
         HighlightSelection.getItems().clear();
         expendLevel.setText("");
         currentLevel = 0;
+    }
+
+    private void allButtonsWaitForLoad() {
+        // all disable acsapt load
+        Expand.setDisable(true);
+        Collapse.setDisable(true);
+        HighlightSelection.setDisable(true);
+        ProgramOrFunctionSelector.setDisable(true);
+        howMuchToCollapse.setDisable(true);
+        howMuchToExpand.setDisable(true);
+        mainLayoutController.getRight().startButton.setDisable(true);
+        mainLayoutController.getRight().resumeDebugButton.setDisable(true);
+        mainLayoutController.getRight().startDebugButton.setDisable(true);
+        mainLayoutController.getRight().stepOverDebugButton.setDisable(true);
+        mainLayoutController.getRight().stopDebugButton.setDisable(true);
+        mainLayoutController.getRight().show.setDisable(true);
+        mainLayoutController.getRight().reRun.setDisable(true);
+    }
+
+    private void allButtonsEnableAfterLoad() {
+        // all enable acsapt load
+        Expand.setDisable(false);
+        Collapse.setDisable(false);
+        HighlightSelection.setDisable(false);
+        ProgramOrFunctionSelector.setDisable(false);
+        howMuchToCollapse.setDisable(false);
+        howMuchToExpand.setDisable(false);
+        mainLayoutController.getRight().startButton.setDisable(false);
+        mainLayoutController.getRight().startDebugButton.setDisable(false);
     }
 
     @FXML
@@ -76,7 +106,6 @@ public class TopToolbarController {
 
         File file = fc.showOpenDialog(stage);
         if (file != null) {
-            mainLayoutController.clearAll();
             lastDir = file.getParentFile();
         } else {
             return;
@@ -127,7 +156,8 @@ public class TopToolbarController {
                 currentLevel = 0;
                 CurrentlyLoadedFilePath.setText(file.getAbsolutePath());
                 mainLayoutController.clearAll();
-
+                mainLayoutController.showProgram();
+                allButtonsEnableAfterLoad();
             }
 
             // Schedule a safe clear of the status label

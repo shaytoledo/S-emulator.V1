@@ -67,11 +67,11 @@ public final class ProgramTranslator {
 
             List<SInstruction> funcInstructions = Optional.ofNullable(a).orElse(List.of());
             // convert function instructions to Instructions, collecting errors
-            funcs.add(new Function(funcName, userString, extractInstructions(funcInstructions, errors, funcs)));
+            funcs.add(new Function(funcName, userString, extractInstructions(funcInstructions, errors, funcs, varsByName, labelsByName)));
         }
 
         // convert SInstructions to Instructions, collecting errors
-        code.addAll(extractInstructions(sInstructions, errors, funcs));
+        code.addAll(extractInstructions(sInstructions, errors, funcs,varsByName, labelsByName));
 
         ProgramImpl program = new ProgramImpl(programName, code, funcs, varsByName, labelsByName);
         return new Result(program, errors);
@@ -83,9 +83,11 @@ public final class ProgramTranslator {
 
 
     // get SInstructions and convert them to Instructions, collecting errors
-    private static  List<Instruction> extractInstructions(List<SInstruction> sInstructions, List<Exception> errors, List<Function> funcs) {
-        Map<String, Variable> varsByName = new LinkedHashMap<>();
-        Map<String, Label> labelsByName = new LinkedHashMap<>();
+    private static  List<Instruction> extractInstructions(
+            List<SInstruction> sInstructions,
+            List<Exception> errors,
+            List<Function> funcs, Map<String, Variable> varsByName, Map<String, Label> labelsByName) {
+
         List<Instruction> code = new ArrayList<>();
 
 

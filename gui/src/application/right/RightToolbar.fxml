@@ -2,7 +2,6 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
@@ -125,9 +124,13 @@
          <children>
             <HBox alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" spacing="10.0" VBox.vgrow="ALWAYS">
                <children>
-                  <ComboBox onAction="#historyOrStatisticsListener" promptText="History\Statistics " />
-                  <Button mnemonicParsing="false" onAction="#showHistoryListener" text="Show" />
-                  <Button mnemonicParsing="false" onAction="#reRunListener" text="Re-run" />
+                  <Label fx:id="History" text="History">
+                     <font>
+                        <Font name="System Bold" size="14.0" />
+                     </font>
+                  </Label>
+                  <Button fx:id="show" mnemonicParsing="false" onAction="#showHistoryListener" text="Show" />
+                  <Button fx:id="reRun" mnemonicParsing="false" onAction="#reRunListener" text="Re-run" />
                </children>
                <padding>
                   <Insets left="5.0" right="5.0" />
@@ -136,7 +139,7 @@
                   <Insets bottom="5.0" top="5.0" />
                </VBox.margin>
             </HBox>
-            <TableView fx:id="historyTable" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" onMouseClicked="#historyRowClicked">
+            <TableView fx:id="historyTable" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
                <columns>
                   <TableColumn fx:id="Index" editable="false" prefWidth="58.666624903678894" style="-fx-alignment: CENTER;" text="Index" />
                   <TableColumn fx:id="level" editable="false" prefWidth="47.333309173583984" style="-fx-alignment: CENTER;" text="level" />

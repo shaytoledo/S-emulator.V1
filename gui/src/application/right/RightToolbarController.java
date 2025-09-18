@@ -26,17 +26,20 @@ public class RightToolbarController {
     @FXML private Label InputsLabel;
     @FXML private Label VariablesLabel;
     @FXML private Label debuggerLabel;
+    @FXML private Label History;
     @FXML private Label executionLabel;
     @FXML private VBox right;
     @FXML private HBox regulerExecution;
 
 
     // Need to be implemented
-    @FXML private Button resumeDebugButton;
-    @FXML private Button startButton;
-    @FXML private Button startDebugButton;
-    @FXML private Button stepOverDebugButton;
-    @FXML private Button stopDebugButton;
+    @FXML public Button resumeDebugButton;
+    @FXML public Button startButton;
+    @FXML public Button startDebugButton;
+    @FXML public Button stepOverDebugButton;
+    @FXML public Button stopDebugButton;
+    @FXML public Button show;
+    @FXML public Button reRun;
 
     @FXML private TextField CyclesCounter;
     @FXML private TableColumn<String, String> valueInput;
@@ -51,10 +54,6 @@ public class RightToolbarController {
     @FXML private TableColumn<RunSummary, String> inputs;
     @FXML private TableColumn<RunSummary, String> output;
     @FXML private TableColumn<RunSummary, String> cycles;
-
-    // Previous state snapshot
-    private Map<String, Long> previousVariableState = new HashMap<>();
-
 
     private final Map<String, Long> inputsMap = new LinkedHashMap<>();
 
@@ -71,16 +70,66 @@ public class RightToolbarController {
         historyTable.getItems().clear();
     }
 
-    @FXML
-    void historyOrStatisticsListener(ActionEvent event) {
+    private void startDebugButtons() {
+        mainLayoutController.getTop().Expand.setDisable(true);
+        mainLayoutController.getTop().Collapse.setDisable(true);
+        mainLayoutController.getTop().HighlightSelection.setDisable(true);
+        mainLayoutController.getTop().ProgramOrFunctionSelector.setDisable(true);
+        resumeDebugButton.setDisable(false);
+        stepOverDebugButton.setDisable(false);
+        stopDebugButton.setDisable(false);
+        show.setDisable(true);
+        reRun.setDisable(true);
+        inputTable.setEditable(false);
+        startButton.setDisable(true);
     }
+
+    private void endDebugButtons() {
+        mainLayoutController.getTop().HighlightSelection.setDisable(false);
+        mainLayoutController.getTop().ProgramOrFunctionSelector.setDisable(false);
+        mainLayoutController.getTop().Expand.setDisable(false);
+        mainLayoutController.getTop().Collapse.setDisable(false);
+        resumeDebugButton.setDisable(true);
+        stepOverDebugButton.setDisable(true);
+        stopDebugButton.setDisable(true);
+        startButton.setDisable(false);
+        if (historyTable.getItems().size() > 0) {
+            show.setDisable(false);
+            reRun.setDisable(false);
+        } else {
+            show.setDisable(true);
+            reRun.setDisable(true);
+        }
+
+    }
+
+    private void startButtons() {
+        resumeDebugButton.setDisable(true);
+        stepOverDebugButton.setDisable(true);
+        stopDebugButton.setDisable(true);
+        show.setDisable(false);
+        reRun.setDisable(false);
+    }
+
+
+
 
     @FXML
     void showHistoryListener(ActionEvent event) {
+        RunSummary selected = historyTable.getSelectionModel().getSelectedItem();
+        if (selected == null) return;
+
+        applyInputsToExistingInputTable(selected.inputs());
     }
 
     @FXML
     void reRunListener(ActionEvent event) {
+        RunSummary selected = historyTable.getSelectionModel().getSelectedItem();
+        if (selected == null) return;
+
+        applyInputsToExistingInputTable(selected.inputs());
+        run();
+
     }
 
 
@@ -99,15 +148,13 @@ public class RightToolbarController {
         mainLayoutController.getTop().Collapse.setDisable(false);
         // unbold all the table lines
         mainLayoutController.getLeft().clearHighlights();
+        endDebugButtons();
     }
 
     @FXML
     void startDebugListener(ActionEvent event) {
+        startDebugButtons();
         mainLayoutController.getTop().HighlightSelection.getItems().clear();
-
-        inputTable.setEditable(false);
-        mainLayoutController.getTop().Expand.setDisable(true);
-        mainLayoutController.getTop().Collapse.setDisable(true);
 
         Pair<Map<String, Long>,Integer> variableState = mainLayoutController.engine.startDebug(
                 mainLayoutController.getCurrentLevel(),
@@ -157,6 +204,7 @@ public class RightToolbarController {
     }
 
     private void endOfDebug() {
+        endDebugButtons();
         inputTable.setEditable(true);
         variableTable.getItems().clear();
 
@@ -303,14 +351,6 @@ public class RightToolbarController {
         }
     }
 
-    @FXML
-    private void historyRowClicked(MouseEvent event) {
-        RunSummary selected = historyTable.getSelectionModel().getSelectedItem();
-        if (selected == null) return;
-
-        applyInputsToExistingInputTable(selected.inputs());
-    }
-
     // Copies the given input values into the existing inputTable rows, in order.
     private void applyInputsToExistingInputTable(List<Long> values) {
         if (values == null) values = Collections.emptyList();
@@ -332,6 +372,11 @@ public class RightToolbarController {
 
     @FXML
     void startListener(ActionEvent event) {
+        run();
+        startButtons();
+    }
+
+    private void run () {
         List<Long> inputsByOrder = getCurrVariableState();
         RunResult res = mainLayoutController.engine.run(
                 mainLayoutController.getCurrentLevel(),

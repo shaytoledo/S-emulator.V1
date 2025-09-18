@@ -56,7 +56,19 @@ public class JumpZeroInstruction extends AbstractInstruction {
         return "IF " + getVariable().getRepresentation() + " = 0 GOTO " + jnzLabel.getLabelRepresentation();
     }
 
+    @Override
+    public List<Variable> getAllVariables() {
+        return List.of(getVariable());
+    }
 
+    @Override
+    public List<Label> getAllLabels() {
+        if (getLabel() == null) {
+            return List.of(jnzLabel);
+        } else {
+            return List.of(getLabel(), jnzLabel);
+        }
+    }
 
     @Override
     public int getMaxLevel() {

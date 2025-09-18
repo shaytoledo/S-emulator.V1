@@ -52,4 +52,17 @@ public class NoOpInstruction extends AbstractInstruction {
         }
         return list;
     }
+    @Override
+    public List<Variable> getAllVariables() {
+        return List.of(getVariable());
+    }
+
+    @Override
+    public List<Label> getAllLabels() {
+        if (getLabel() == null) {
+            return List.of();
+        } else {
+            return List.of(getLabel());
+        }
+    }
 }
