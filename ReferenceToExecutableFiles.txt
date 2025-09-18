@@ -1,0 +1,15 @@
+C:\Users\shayt\Desktop\Java\Exercises\Test Files\EX 1\minus.xml
+C:\Users\shayt\Desktop\Java\Exercises\Test Files\EX 1\badic.xml
+C:\Users\shayt\Desktop\Java\Exercises\Test Files\EX 1\synthetic.xml
+C:\Users\shayt\Desktop\Java\Exercises\Test Files\EX 1\error-1.xml
+C:\Users\shayt\Desktop\Java\Exercises\Test Files\EX 1\successor.xml
+C:\Users\shayt\Desktop\Java\Exercises\Test Files\EX 1\id.xml
+
+
+C:\Users\shayt\Desktop\Java\Exercises\Test Files\EX 2\composition.xml
+C:\Users\shayt\Desktop\Java\Exercises\Test Files\EX 2\divide.xml
+C:\Users\shayt\Desktop\Java\Exercises\Test Files\EX 2\error-1.xml
+C:\Users\shayt\Desktop\Java\Exercises\Test Files\EX 2\minus.xml
+C:\Users\shayt\Desktop\Java\Exercises\Test Files\EX 2\quotation.xml
+C:\Users\shayt\Desktop\Java\Exercises\Test Files\EX 2\self-composition.xml
+C:\Users\shayt\Desktop\Java\Exercises\Test Files\EX 2\successor.xml
