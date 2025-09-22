@@ -43,4 +43,9 @@ public class ConstantArgument implements Argument {
         return List.of();
     }
 
+    @Override
+    public List<Instruction> getExtendedInstructions(int extensionLevel, VariableAndLabelMenger vlm) {
+        return List.of();
+    }
+
 }

@@ -164,7 +164,7 @@ public class QuoteInstruction extends AbstractInstruction {
 
     @Override
     public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
-        return function.get;
+        return function.getExtendedInstructions(extensionLevel, vlm);
     }
 
     @Override

@@ -43,4 +43,9 @@ public class VariableArgument implements Argument {
     public List<String> getAllInfo() {
         return List.of(me.getRepresentation());
     }
+
+    @Override
+    public List<Instruction> getExtendedInstructions(int extensionLevel, VariableAndLabelMenger vlm) {
+        return List.of();
+    }
 }
