@@ -45,7 +45,7 @@
                         <Font size="9.0" />
                      </font>
                   </Label>
-                  <TextField fx:id="expendLevel" maxHeight="35.0" maxWidth="50.0" minHeight="26.0" minWidth="30.0" prefHeight="26.0" prefWidth="40.0" />
+                  <TextField fx:id="expendLevel" maxHeight="35.0" maxWidth="50.0" minHeight="26.0" minWidth="30.0" prefHeight="26.0" prefWidth="48.0" />
                   <TextField fx:id="howMuchToExpand" maxHeight="35.0" maxWidth="50.0" minHeight="26.0" minWidth="30.0" prefHeight="26.0" prefWidth="40.0" style="-fx-alignment: CENTER;" text="1" />
                   <Button fx:id="Expand" maxHeight="35.0" maxWidth="80.0" minHeight="26.0" minWidth="65.0" mnemonicParsing="false" onAction="#extendListener" prefHeight="26.0" prefWidth="65.0" text="Expand" HBox.hgrow="ALWAYS" />
                   <ComboBox fx:id="HighlightSelection" maxHeight="35.0" maxWidth="120.0" minHeight="26.0" minWidth="70.0" onAction="#selectionListener" prefHeight="26.0" prefWidth="70.0" promptText="Highlight selection" HBox.hgrow="ALWAYS" />

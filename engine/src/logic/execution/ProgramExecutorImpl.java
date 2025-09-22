@@ -42,7 +42,7 @@ public class ProgramExecutorImpl implements ProgramExecutor {
             }
         }
 
-        context = new ExecutionContextImpl(safeInputs); // create the context with inputs.
+        context = new ExecutionContextImpl(safeInputs, program.getFunctions()); // create the context with inputs.
         Variable res = new VariableImpl(VariableType.RESULT, 1);
         context.updateVariable(res, 0); // initialize the result variable to 0.
 
@@ -126,7 +126,7 @@ public class ProgramExecutorImpl implements ProgramExecutor {
                 safeInputs.add(v != null ? v : 0L);
             }
         }
-        context = new ExecutionContextImpl(inputs); // create the context with inputs.
+        context = new ExecutionContextImpl(inputs, program.getFunctions()); // create the context with inputs.
 
         Variable res = new VariableImpl(VariableType.RESULT, 1);
         context.updateVariable(res, 0); // initialize the result variable to 0.

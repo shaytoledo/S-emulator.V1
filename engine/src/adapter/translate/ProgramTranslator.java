@@ -321,41 +321,43 @@ public final class ProgramTranslator {
                         }
                     }
 
-//                    case "QUOTE" -> {
-//                        String targetFunctionName = args.getOrDefault("functionName", "");
-//                        if (targetFunctionName.isEmpty()) {
-//                            // missing function name
-//                            errors.add(new MissingFunctionName(errorMessageByLine(idx, "QUOTE missing 'functionName'")));
-//                            instruction = new NoOpInstruction(TranslatorHelper.newVarStrict("y"), lineLabel);
-//                        }
-//                        else {
-//                            // function name provided
-//                            if (functionExists(targetFunctionName, funcs)) {
-//                                // function exists
-//                                String functionArguments = args.getOrDefault("functionArguments", "");
-//
-//                                // need to create new qute instruction and set there the function name and arguments
-//                                // for each funcction need to check if exists\
-//                                ///
-//
-//
-//                                // create the qute instruction // need to pase all funcs errores
-//                                Instruction qute = new QuoteInstruction(functionArguments, funcs, errors, lineLabel);
-//
-//                                FunctionCallModel fcm = new FunctionCallModel(targetFunctionName + functionArguments);
-//
-//
-//                            } else {
-//                                // function does not exist
-//                                errors.add(new MissingFunctionName(errorMessageByLine(idx, "QUOTE unknown function name: " + targetFunctionName)));
-//                                instruction = new NoOpInstruction(TranslatorHelper.newVarStrict("y"), lineLabel);
-//                            }
-//
-//
-//                        }
-//
-//
-//                    }
+                    case "QUOTE" -> {
+                        if(variable != null) {
+                            String targetFunctionName = args.getOrDefault("functionName", "");
+                            if (targetFunctionName.isEmpty()) {
+                                // missing function name
+                                errors.add(new MissingFunctionName(errorMessageByLine(idx, "QUOTE missing 'functionName'")));
+                                instruction = new NoOpInstruction(TranslatorHelper.newVarStrict("y"), lineLabel);
+                            } else {
+                                // function name provided
+                                if (functionExists(targetFunctionName, funcs)) {
+                                    // function exists
+                                    String functionArguments = args.getOrDefault("functionArguments", "");
+
+                                    // create the qute instruction // need to pase all funcs errores
+                                    try {
+                                        // Create new qute instruction and set there the function name and arguments
+                                        instruction = new QuoteInstruction(targetFunctionName, functionArguments,variable, funcs, lineLabel);
+                                    } catch (IllegalArgumentException ex) {
+                                        errors.add(new ArgsException(errorMessageByLine(idx, "QUOTE bad 'functionArguments': " + functionArguments)));
+                                        instruction = new NoOpInstruction(TranslatorHelper.newVarStrict("y"), lineLabel);
+                                    }
+
+                                } else {
+                                    // function does not exist
+                                    errors.add(new MissingFunctionName(errorMessageByLine(idx, "QUOTE unknown function name: " + targetFunctionName)));
+                                    instruction = new NoOpInstruction(TranslatorHelper.newVarStrict("y"), lineLabel);
+                                }
+
+
+                            }
+                        } else {
+                            errors.add(new MissingVariableException(errorMessageByLine(idx, "QUOTE missing target variable")));
+                            instruction = new NoOpInstruction(TranslatorHelper.newVarStrict("y"), lineLabel);
+                        }
+
+
+                    }
 
                     default -> {
                         errors.add(new UnknownInstruction(errorMessageByLine(idx, "Unknown synthetic instruction: " + name)));

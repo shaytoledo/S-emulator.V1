@@ -21,4 +21,5 @@ public interface Program {
     List<InstructionView> getInstructionsPeek();
     VariableAndLabelMenger getvlm();
     List<List<String>> getInfo(int level);
+    List<Function> getFunctions();
     }

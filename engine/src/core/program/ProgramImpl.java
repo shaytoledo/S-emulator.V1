@@ -293,4 +293,9 @@ public class ProgramImpl implements Program {
         }
         return info;
     }
+
+    @Override
+    public List<Function> getFunctions() {
+        return functions;
+    }
 }
