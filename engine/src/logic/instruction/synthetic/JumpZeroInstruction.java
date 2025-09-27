@@ -16,7 +16,7 @@ import java.util.List;
 
 public class JumpZeroInstruction extends AbstractInstruction {
 
-    private final Label jnzLabel;
+    private Label jnzLabel;
 
     public JumpZeroInstruction(Variable var, Label target) {
         super(InstructionData.JUMP_ZERO, var);
@@ -42,7 +42,7 @@ public class JumpZeroInstruction extends AbstractInstruction {
     }
 
     @Override
-    public Label execute(ExecutionContext context) {
+    public Label execute(ExecutionContext context, VariableAndLabelMenger vlm) {
         long variableValue = context.getVariableValue(getVariable());
 
         if (variableValue == 0) {
@@ -110,6 +110,23 @@ public class JumpZeroInstruction extends AbstractInstruction {
 
                 return myInstructions;
             }
+        }
+    }
+
+    @Override
+    public void replace(Variable oldVar, Variable newVar) {
+        if(getVariable().equals(oldVar)) {
+            setVariable(newVar);
+        }
+    }
+
+    @Override
+    public void replace(Label oldLabel, Label newLabel) {
+        if(getLabel().equals(oldLabel)) {
+            setLabel(newLabel);
+        }
+        if(jnzLabel.equals(oldLabel)) {
+            jnzLabel = newLabel;
         }
     }
 }

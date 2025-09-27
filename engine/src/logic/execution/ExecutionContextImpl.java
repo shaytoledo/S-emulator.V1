@@ -34,6 +34,44 @@ public class ExecutionContextImpl implements ExecutionContext {
         }
     }
 
+    public ExecutionContextImpl(ExecutionContext other) {
+        // Deep copy variables map: new map + new Variable instances
+        this.variableState = new HashMap<>();
+        for (Map.Entry<Variable, Long> e : other.getVariablesState().entrySet()) {
+            Variable copiedVar = copyVariable(e.getKey());
+            Long copiedVal = e.getValue(); // Long is immutable
+            this.variableState.put(copiedVar, copiedVal);
+        }
+
+        // Deep copy functions map when possible
+        this.functions = new HashMap<>();
+        for (Map.Entry<String, Function> e : other.getFunctions().entrySet()) {
+            this.functions.put(e.getKey(), copyFunction(e.getValue()));
+        }
+    }
+
+    private static Variable copyVariable(Variable v) {
+        if (v instanceof VariableImpl) {
+            VariableImpl vi = (VariableImpl) v;
+            return new VariableImpl(vi.getType(), vi.getIndex());
+        }
+        // Fallback if Variable interface exposes these:
+        return new VariableImpl(v.getType(), v.getIndex());
+    }
+
+    private static Function copyFunction(Function f) {
+        try {
+            // Common patterns – uncomment/adjust to your Function API:
+            // if (f instanceof CloneableFunction) return ((CloneableFunction) f).deepCopy();
+            // return f.deepCopy();
+            // return f.copy();
+            // return (Function) f.clone();
+            return f; // fallback: shared reference if no deep-copy API exists
+        } catch (Exception ex) {
+            return f; // safe fallback
+        }
+    }
+
     @Override
     public long getVariableValue(Variable v) {
         Long val = variableState.get(v);

@@ -26,7 +26,7 @@ public class IncreaseInstruction extends AbstractInstruction {
     }
 
     @Override
-    public Label execute(ExecutionContext context) {
+    public Label execute(ExecutionContext context, VariableAndLabelMenger vlm) {
 
         long variableValue = context.getVariableValue(getVariable());
         variableValue++;
@@ -73,6 +73,20 @@ public class IncreaseInstruction extends AbstractInstruction {
             return List.of();
         } else {
             return List.of(getLabel());
+        }
+    }
+
+    @Override
+    public void replace(Variable oldVar, Variable newVar) {
+        if(getVariable().equals(oldVar)) {
+            setVariable(newVar);
+        }
+    }
+
+    @Override
+    public void replace(Label oldLabel, Label newLabel) {
+        if(getLabel().equals(oldLabel)) {
+            setLabel(newLabel);
         }
     }
 

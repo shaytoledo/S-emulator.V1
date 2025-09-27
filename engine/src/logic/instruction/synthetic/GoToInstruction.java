@@ -15,7 +15,7 @@ import java.util.List;
 
 public class GoToInstruction extends AbstractInstruction {
 
-    private final Label target;
+    private Label target;
 
     public GoToInstruction(Variable var, Label target) {
         super(InstructionData.GOTO_LABEL, var);
@@ -28,7 +28,7 @@ public class GoToInstruction extends AbstractInstruction {
     }
 
     @Override
-    public Label execute(ExecutionContext context) {
+    public Label execute(ExecutionContext context, VariableAndLabelMenger vlm) {
         return target;
     }
 
@@ -88,6 +88,23 @@ public class GoToInstruction extends AbstractInstruction {
                 return myInstructions;
 
             }
+        }
+    }
+
+    @Override
+    public void replace(Variable oldVar, Variable newVar) {
+        if(getVariable().equals(oldVar)) {
+            setVariable(newVar);
+        }
+    }
+
+    @Override
+    public void replace(Label oldLabel, Label newLabel) {
+        if(getLabel().equals(oldLabel)) {
+            setLabel(newLabel);
+        }
+        if(target.equals(oldLabel)) {
+            target = newLabel;
         }
     }
 }

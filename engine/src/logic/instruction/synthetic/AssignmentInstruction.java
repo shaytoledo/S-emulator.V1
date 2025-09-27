@@ -34,7 +34,7 @@ public class AssignmentInstruction extends AbstractInstruction {
         return assignedVariable;
     }
     @Override
-    public Label execute(ExecutionContext context) {
+    public Label execute(ExecutionContext context, VariableAndLabelMenger vlm) {
         long assignedValue = context.getVariableValue(assignedVariable);
         context.updateVariable(getVariable(), assignedValue);
         return FixedLabel.EMPTY;
@@ -156,6 +156,23 @@ public class AssignmentInstruction extends AbstractInstruction {
                 myInstructions.add(instr12);
                 return myInstructions;
             }
+        }
+    }
+
+    @Override
+    public void replace(Variable oldVar, Variable newVar) {
+        if(getVariable().equals(oldVar)) {
+            setVariable(newVar);
+        }
+        if(assignedVariable.equals(oldVar)) {
+            assignedVariable = newVar;
+        }
+    }
+
+    @Override
+    public void replace(Label oldLabel, Label newLabel) {
+        if(getLabel().equals(oldLabel)) {
+            setLabel(newLabel);
         }
     }
 }

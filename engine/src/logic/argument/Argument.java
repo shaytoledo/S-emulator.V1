@@ -9,7 +9,7 @@ import java.util.List;
 public interface Argument {
 
     // Run the argument and return its value
-    long evaluate(ExecutionContext context);
+    long evaluate(ExecutionContext context, VariableAndLabelMenger vlm);
 
     // Validate if the argument is legal in the current context
     List<Exception> validate(ExecutionContext context);

@@ -17,6 +17,7 @@ public class VariableImpl implements Variable {
         return type;
     }
 
+
     @Override
     public String getRepresentation() {
         return type.getVariableRepresentation(number);
@@ -27,6 +28,10 @@ public class VariableImpl implements Variable {
         return type.toString() + number;
     }
 
+    @Override
+    public int getIndex() {
+        return number;
+    }
 
     @Override
     public boolean equals(Object o) {

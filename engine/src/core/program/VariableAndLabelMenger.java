@@ -41,6 +41,10 @@ public class VariableAndLabelMenger {
         this.lCounter = nextIndexStartingFrom("L", usedLabels);
     }
 
+    public VariableAndLabelMenger() {
+
+    }
+
     // find the largest index used with the given prefix, and return next
     private static int nextIndexStartingFrom(String prefix, Set<String> used) {
         int max = 0;
@@ -80,5 +84,19 @@ public class VariableAndLabelMenger {
         all.addAll(usedVars);
         all.addAll(usedLabels);
         return all;
+    }
+
+    public boolean existsVar(Variable v) {
+        if (usedVars.contains(v.getRepresentation())) {
+            return true;
+        }
+        return false;
+    }
+
+    public boolean existsLabel(Label L) {
+        if (usedLabels.contains(L.getLabelRepresentation())) {
+            return true;
+        }
+        return false;
     }
 }

@@ -26,7 +26,7 @@ public class ZeroVariableInstruction extends AbstractInstruction {
     }
 
     @Override
-    public Label execute(ExecutionContext context) {
+    public Label execute(ExecutionContext context, VariableAndLabelMenger vlm) {
         context.updateVariable(getVariable(), 0L);
         return FixedLabel.EMPTY;
     }
@@ -86,6 +86,20 @@ public class ZeroVariableInstruction extends AbstractInstruction {
                 return myInstructions;
 
             }
+        }
+    }
+
+    @Override
+    public void replace(Variable oldVar, Variable newVar) {
+        if(getVariable().equals(oldVar)) {
+            setVariable(newVar);
+        }
+    }
+
+    @Override
+    public void replace(Label oldLabel, Label newLabel) {
+        if(getLabel().equals(oldLabel)) {
+            setLabel(newLabel);
         }
     }
 }

@@ -1,6 +1,7 @@
 package logic.execution;
 
 import core.program.Program;
+import core.program.VariableAndLabelMenger;
 import logic.instruction.Instruction;
 import logic.label.FixedLabel;
 import logic.label.Label;
@@ -58,7 +59,7 @@ public class ProgramExecutorImpl implements ProgramExecutor {
 
         Label nextLabel;
         do {
-            nextLabel = currentInstruction.execute(context);
+            nextLabel = currentInstruction.execute(context, new VariableAndLabelMenger());
             // sum cycles
             cycleCount += currentInstruction.cycles();
 
@@ -141,7 +142,7 @@ public class ProgramExecutorImpl implements ProgramExecutor {
         Label nextLabel;
 
         // get the instruction next label if take you there
-        nextLabel = currentInstruction.execute(context);
+        nextLabel = currentInstruction.execute(context, new VariableAndLabelMenger());
 
         // sum cycles
         cycleCount += currentInstruction.cycles();
@@ -177,7 +178,7 @@ public class ProgramExecutorImpl implements ProgramExecutor {
 
         Label nextLabel;
         do {
-            nextLabel = currentInstruction.execute(context);
+            nextLabel = currentInstruction.execute(context, new VariableAndLabelMenger());
             // sum cycles
             cycleCount += currentInstruction.cycles();
 

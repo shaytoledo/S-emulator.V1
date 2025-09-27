@@ -14,7 +14,7 @@ import java.util.List;
 
 public class JumpNotZeroInstruction extends AbstractInstruction {
 
-    private final Label jnzLabel;
+    private Label jnzLabel;
 
     public JumpNotZeroInstruction(Variable var, Label target, Label lineLabel) {
         super(InstructionData.JUMP_NOT_ZERO, var, lineLabel);
@@ -29,7 +29,7 @@ public class JumpNotZeroInstruction extends AbstractInstruction {
     }
 
     @Override
-    public Label execute(ExecutionContext context) {
+    public Label execute(ExecutionContext context, VariableAndLabelMenger vlm) {
         long variableValue = context.getVariableValue(getVariable());
 
         if (variableValue != 0) {
@@ -79,6 +79,23 @@ public class JumpNotZeroInstruction extends AbstractInstruction {
             return List.of(jnzLabel);
         } else {
             return List.of(getLabel(), jnzLabel);
+        }
+    }
+
+    @Override
+    public void replace(Variable oldVar, Variable newVar) {
+        if(getVariable().equals(oldVar)) {
+            setVariable(newVar);
+        }
+    }
+
+    @Override
+    public void replace(Label oldLabel, Label newLabel) {
+        if(getLabel().equals(oldLabel)) {
+            setLabel(newLabel);
+        }
+        if (jnzLabel.equals(oldLabel)) {
+            jnzLabel = newLabel;
         }
     }
 }

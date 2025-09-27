@@ -28,7 +28,7 @@ public class ConstantAssignmentInstruction extends AbstractInstruction {
     }
 
     @Override
-    public Label execute(ExecutionContext context) {
+    public Label execute(ExecutionContext context, VariableAndLabelMenger vlm) {
         context.updateVariable(getVariable(), constant);
         return FixedLabel.EMPTY;
     }
@@ -95,6 +95,20 @@ public class ConstantAssignmentInstruction extends AbstractInstruction {
                 Instruction instr2 = new IncreaseInstruction(v);
                 myInstructions.add(instr2);
                 return myInstructions;
+        }
+    }
+
+    @Override
+    public void replace(Variable oldVar, Variable newVar) {
+        if(getVariable().equals(oldVar)) {
+            setVariable(newVar);
+        }
+    }
+
+    @Override
+    public void replace(Label oldLabel, Label newLabel) {
+        if(getLabel().equals(oldLabel)) {
+            setLabel(newLabel);
         }
     }
 }

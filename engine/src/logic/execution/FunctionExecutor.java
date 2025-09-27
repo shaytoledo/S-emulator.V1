@@ -1,6 +1,7 @@
 package logic.execution;
 
 import core.program.Function;
+import core.program.VariableAndLabelMenger;
 import logic.instruction.Instruction;
 import logic.label.FixedLabel;
 import logic.label.Label;
@@ -22,9 +23,10 @@ public class FunctionExecutor implements ProgramExecutor {
     public List<Function> functions;
     public int debugIndexCounter = 0;
 
-public FunctionExecutor(Function function, List<Function> functions) {
+public FunctionExecutor(Function function, List<Function> functions, ExecutionContext context) {
     this.functions = functions;
     this.function = function;
+    this.context = context;
 
 }
 
@@ -58,7 +60,7 @@ public FunctionExecutor(Function function, List<Function> functions) {
 
         Label nextLabel;
         do {
-            nextLabel = currentInstruction.execute(context);
+            nextLabel = currentInstruction.execute(context, new VariableAndLabelMenger());
             // sum cycles
             cycleCount += currentInstruction.cycles();
 
@@ -69,7 +71,6 @@ public FunctionExecutor(Function function, List<Function> functions) {
                 }
             } else if (!isExit(nextLabel)) {
                 currentInstruction = function.getInstructionByLabel(nextLabel);
-
             }
         } while (!isExit(nextLabel));
 
@@ -98,6 +99,7 @@ public FunctionExecutor(Function function, List<Function> functions) {
     }
 
     private void enterAllVariabalesInContext() {
+    if (function == null) return;
         List<Instruction> instructions = function.getInstructions();
         for (Instruction instruction : instructions) {
             List<String> infos = instruction.getAllInfo();

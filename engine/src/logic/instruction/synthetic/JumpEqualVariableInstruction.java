@@ -36,7 +36,7 @@ public class JumpEqualVariableInstruction extends AbstractInstruction {
     }
 
     @Override
-    public Label execute(ExecutionContext context) {
+    public Label execute(ExecutionContext context, VariableAndLabelMenger vlm) {
         if (context.getVariableValue(getVariable()) == context.getVariableValue(other)) {
             return jnzLabel;
         }
@@ -216,6 +216,26 @@ public class JumpEqualVariableInstruction extends AbstractInstruction {
 
                 return myInstructions;
             }
+        }
+    }
+
+    @Override
+    public void replace(Variable oldVar, Variable newVar) {
+        if(getVariable().equals(oldVar)) {
+            setVariable(newVar);
+        }
+        if(other.equals(oldVar)) {
+            other = newVar;
+        }
+    }
+
+    @Override
+    public void replace(Label oldLabel, Label newLabel) {
+        if(getLabel().equals(oldLabel)) {
+            setLabel(newLabel);
+        }
+        if(jnzLabel.equals(oldLabel)) {
+            jnzLabel = newLabel;
         }
     }
 }

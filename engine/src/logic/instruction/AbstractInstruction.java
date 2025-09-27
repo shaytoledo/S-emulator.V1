@@ -9,8 +9,8 @@ import java.util.List;
 public abstract class AbstractInstruction implements Instruction {
 
     private final InstructionData instructionData;
-    private final Label label;
-    private final Variable variable;
+    private Label label;
+    private Variable variable;
     public boolean basic = false;
 
     public List<Instruction> myInstructions;
@@ -54,5 +54,13 @@ public abstract class AbstractInstruction implements Instruction {
     @Override
     public boolean isBasic() {
         return basic;
+    }
+
+    public void setVariable(Variable variable) {
+        this.variable = variable;
+    }
+
+    public void setLabel(Label label) {
+        this.label = label;
     }
 }

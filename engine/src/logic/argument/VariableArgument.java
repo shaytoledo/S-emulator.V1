@@ -15,7 +15,7 @@ public class VariableArgument implements Argument {
     }
 
     @Override
-    public long evaluate(ExecutionContext context) {
+    public long evaluate(ExecutionContext context, VariableAndLabelMenger vlm) {
         return context.getVariableValue(me);
     }
 

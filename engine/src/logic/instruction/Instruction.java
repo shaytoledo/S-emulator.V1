@@ -10,7 +10,7 @@ import java.util.List;
 public interface Instruction {
 
     String getName();
-    Label execute(ExecutionContext context);
+    Label execute(ExecutionContext context, VariableAndLabelMenger vlm);
     int cycles();
     Label getLabel();
     Variable getVariable();
@@ -21,5 +21,7 @@ public interface Instruction {
     List<String> getAllInfo();
     List<Variable> getAllVariables();
     List<Label> getAllLabels();
+    void replace(Variable oldVar, Variable newVar);
+    void replace(Label oldLabel, Label newLabel);
 
 }

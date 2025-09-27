@@ -10,6 +10,7 @@ import logic.execution.ExecutionContext;
 import logic.instruction.AbstractInstruction;
 import logic.instruction.Instruction;
 import logic.instruction.InstructionData;
+import logic.label.FixedLabel;
 import logic.label.Label;
 import logic.variable.Variable;
 import logic.variable.VariableImpl;
@@ -18,22 +19,41 @@ import logic.variable.VariableType;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.Collectors.toList;
+
 public class QuoteInstruction extends AbstractInstruction {
 
-    FunctionArgument function;
+    Function function;
+    FunctionArgument arguments;
     List<Function> allFunctions;
 
     public QuoteInstruction(String name, String functionArguments,Variable var,  List<Function> funcs, Label lineLabel) {
         super(InstructionData.QUOTE, var, lineLabel);
         List<Argument> arguments = new ArrayList<>(toArguments(functionArguments ,funcs));
-        function = new FunctionArgument(name, arguments, funcs);
+        this.arguments = new FunctionArgument(name, arguments, funcs);
         this.allFunctions = funcs;
-    }
 
+
+        for (Function f : funcs) {
+            if (f.getName().equals(name)) {
+                this.function = f;
+                break;
+            }
+        }
+    }
     public QuoteInstruction(String name, String functionArguments,Variable var,  List<Function> funcs) {
         super(InstructionData.QUOTE, var);
         List<Argument> arguments = new ArrayList<>(toArguments(functionArguments ,funcs));
-        function = new FunctionArgument(name, arguments, funcs);
+        this.arguments = new FunctionArgument(name, arguments, funcs);
+        this.allFunctions = funcs;
+
+        for (Function f : funcs) {
+            if (f.getName().equals(name)) {
+                this.function = f;
+                break;
+            }
+        }
     }
 
     List<String> splitArguments(String input) {
@@ -63,20 +83,24 @@ public class QuoteInstruction extends AbstractInstruction {
 
         return stringArgs;
     }
-
     List<Argument> toArguments(String input, List<Function> funcs) {
+
+        if(input == null) {
+            return List.of();
+        }
 
         List<String> stringArgs = new ArrayList<>(splitArguments(input));
 
         List<Argument> result = new ArrayList<>();
         for (String arg : stringArgs) {
-            if (arg.startsWith("CONST")) {
-                String num = arg.substring("CONST".length()).trim();
-                if (num.isEmpty())
-                    throw new IllegalArgumentException("CONST without value: " + arg);
-                Argument constArg = new ConstantArgument(Long.parseLong(num));
-                result.add(constArg);
-            } else if(arg.startsWith("x")) {
+//            if (arg.toUpperCase().startsWith("CONST")) {
+//                String num = arg.substring("CONST".length()).trim();
+//                if (num.isEmpty())
+//                    throw new IllegalArgumentException("CONST without value: " + arg);
+//                Argument constArg = new ConstantArgument(Long.parseLong(num));
+//                result.add(constArg);
+//            } else if(arg.startsWith("x")) {
+            if(arg.startsWith("x")) {
                 Argument varArg = new VariableArgument(new VariableImpl(VariableType.INPUT,Integer.parseInt(arg.substring("x".length()))));
                 result.add(varArg);
             } else if(arg.startsWith("z")) {
@@ -87,41 +111,30 @@ public class QuoteInstruction extends AbstractInstruction {
                 result.add(varArg);
 
             } else if (arg.startsWith("(") && arg.endsWith(")")) {
-                String inner = arg.substring(1, arg.length() - 1).trim();
-
+                String inner = arg.substring(1, arg.length() - 1).trim(); // only the inside without ()
 
                 int commaIndex = inner.indexOf(',');
-                if (commaIndex < 0) { // error or that isnt function call its just const or variable
-                    Argument curr;
-                    if (inner.startsWith("CONST")) {
-                        String num = inner.substring("CONST".length()).trim();
-                        if (num.isEmpty())
-                            throw new IllegalArgumentException("CONST without value: " + inner);
-                        curr = new ConstantArgument(Long.parseLong(num));
-                    } else if(inner.startsWith("x")) {
-                        curr = new VariableArgument(new VariableImpl(VariableType.INPUT,Integer.parseInt(inner.substring("x".length()))));
-                    } else if(inner.startsWith("z")) {
-                        curr = new VariableArgument(new VariableImpl(VariableType.WORK,Integer.parseInt(inner.substring("z".length()))));
-                    } else if(inner.startsWith("y")) {
-                        curr = new VariableArgument(new VariableImpl(VariableType.RESULT,1));
-                    } else {
-                        throw new IllegalArgumentException("Must contain a variable or constant if not using a function " + inner);
-                    }
-                    result.add(curr);
-                }
-                else {
-                    String targetFunctionName = inner.substring(0, commaIndex).trim();
+                Argument curr;
 
-                    // check if function exists
+                if (commaIndex > 0) { // there are arguments for the function
+                    String targetFunctionName = inner.substring(0, commaIndex).trim();
+                    String functionArguments = inner.substring(commaIndex + 1).trim();
+                    curr = new FunctionArgument(targetFunctionName, toArguments(functionArguments, funcs), funcs);
+                }
+//                        // check if function exists
 //                    if (!isValidFunction(targetFunctionName, funcs)) {
 //                        throw new IllegalArgumentException("Function not defined: " + targetFunctionName);
 //                    }
 
-                    String functionArguments  = inner.substring(commaIndex + 1).trim();
-
-                    FunctionArgument func = new FunctionArgument(targetFunctionName, toArguments(functionArguments, funcs), funcs);
-                    result.add(func);
+                else { // only function name without arguments
+                    String targetFunctionName = inner.trim();
+                    curr = new FunctionArgument(targetFunctionName, List.of(), funcs);
+//                    // check if function exists
+//                    if (!isValidFunction(targetFunctionName, funcs)) {
+//                        throw new IllegalArgumentException("Function not defined: " + targetFunctionName);
+//                    }
                 }
+                result.add(curr);
             }
             else {
                 throw new IllegalArgumentException("Unsupported argument format: " + arg);
@@ -131,6 +144,63 @@ public class QuoteInstruction extends AbstractInstruction {
 
         return result;
     }
+
+    @Override
+    public int getMaxLevel() {
+        return arguments.getMaxLevel();
+    }
+
+    @Override
+    public String toDisplayString() {
+        return getVariable().getRepresentation() + " <- " + arguments.toDisplayString();
+    }
+
+    @Override
+    public List<String> getAllInfo() {
+        List<String> all = getAllVariables().stream()
+                .map(Variable::getRepresentation)
+                .collect(toCollection(java.util.LinkedHashSet::new)) // unique + order
+                .stream()
+                .collect(toList());
+
+
+        all.addAll(getAllLabels().stream()
+                .map(Label::getLabelRepresentation)
+                .collect(toCollection(java.util.LinkedHashSet::new)) // unique + order
+                .stream()
+                .collect(toList()));
+        return all;
+    }
+
+    @Override
+    public List<Variable> getAllVariables() {
+        List<Variable> all = new ArrayList<>();
+        return all;
+    }
+
+    @Override
+    public List<Label> getAllLabels() {
+        List<Label> all = new ArrayList<>();
+        return all;
+    }
+
+    @Override
+    public void replace(Variable oldVar, Variable newVar) {
+        if(getVariable().equals(oldVar)) {
+            setVariable(newVar);
+        }
+    }
+
+    @Override
+    public void replace(Label oldLabel, Label newLabel) {
+        if(getLabel().equals(oldLabel)) {
+            setLabel(newLabel);
+        }
+    }
+
+
+
+
 
     private boolean isValidFunction(String name, List<Function> funcs) {
         for (Function func : funcs) {
@@ -143,52 +213,36 @@ public class QuoteInstruction extends AbstractInstruction {
 
 
     @Override
-    public String toDisplayString() {
-        return getVariable().getRepresentation() + " <- " + function.toDisplayString();
+    public Label execute(ExecutionContext context, VariableAndLabelMenger vlm) {
+        // evaluate arguments in arguments evaluate
+        // create new context
+        // execute function in that context
+        // get result and store in variable
+
+
+
+        arguments.evaluate(context, vlm);
+        // update the variable with the result
+        return FixedLabel.EMPTY;
     }
 
-    @Override
-    public int getMaxLevel() {
-        return function.getMaxLevel();
-    }
 
 
 
 
-
-
-    @Override
-    public Label execute(ExecutionContext context) {
-        return null;
-    }
 
     @Override
     public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
-        return function.getExtendedInstructions(extensionLevel, vlm);
+
+        // replace the variable with a work variable
+        // replace labels with new labels
+
+        // extend the function for the neccesary level
+
+
+        return List.of(this);
+                //arguments.getExtendedInstructions(extensionLevel, vlm);
     }
-
-    @Override
-    public List<String> getAllInfo() {
-        return List.of();
-    }
-
-    @Override
-    public List<Variable> getAllVariables() {
-        return List.of();
-    }
-
-    @Override
-    public List<Label> getAllLabels() {
-        return List.of();
-    }
-
-
-
-
-
-
-
-
 
 
 

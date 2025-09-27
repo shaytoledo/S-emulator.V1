@@ -17,7 +17,7 @@ import java.util.List;
 
 public class JumpEqualConstantInstruction extends AbstractInstruction {
 
-    private final Label target;
+    private Label target;
     private final long constant;
 
     public JumpEqualConstantInstruction(Variable var, Label target, long constant) {
@@ -33,7 +33,7 @@ public class JumpEqualConstantInstruction extends AbstractInstruction {
     }
 
     @Override
-    public Label execute(ExecutionContext context) {
+    public Label execute(ExecutionContext context, VariableAndLabelMenger vlm) {
         if (context.getVariableValue(getVariable()) == constant) {
             return target;
         }
@@ -177,6 +177,23 @@ public class JumpEqualConstantInstruction extends AbstractInstruction {
                 return myInstructions;
             }
 
+        }
+    }
+
+    @Override
+    public void replace(Variable oldVar, Variable newVar) {
+        if(getVariable().equals(oldVar)) {
+            setVariable(newVar);
+        }
+    }
+
+    @Override
+    public void replace(Label oldLabel, Label newLabel) {
+        if(getLabel().equals(oldLabel)) {
+            setLabel(newLabel);
+        }
+        if(target.equals(oldLabel)) {
+            target = newLabel;
         }
     }
 }

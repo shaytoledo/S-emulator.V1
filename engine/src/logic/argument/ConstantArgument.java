@@ -14,7 +14,7 @@ public class ConstantArgument implements Argument {
     }
 
     @Override
-    public long evaluate(ExecutionContext context) {
+    public long evaluate(ExecutionContext context, VariableAndLabelMenger vlm) {
         return me;
     }
 
