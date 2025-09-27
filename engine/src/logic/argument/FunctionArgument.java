@@ -5,6 +5,7 @@ import core.program.VariableAndLabelMenger;
 import logic.execution.ExecutionContext;
 import logic.execution.ExecutionContextImpl;
 import logic.execution.FunctionExecutor;
+import logic.exception.FunctionNotExist;
 import logic.instruction.Instruction;
 import logic.variable.Variable;
 import logic.variable.VariableImpl;
@@ -51,27 +52,27 @@ public class FunctionArgument implements Argument {
         // Evaluate all child arguments in the *current* context to numeric values
         List<Long> values = new ArrayList<>(arguments.size());
         for (Argument arg : arguments) {
-            ExecutionContextImpl newContext = new ExecutionContextImpl(context);
-            long v = arg.evaluate(newContext, vlm);
+            // Use the original context as base to ensure proper variable resolution
+            ExecutionContextImpl argContext = new ExecutionContextImpl(context);
+            long v = arg.evaluate(argContext, vlm);
             values.add(v);
         }
 
-//        // change the context using the function inputs (to a new context)
-//        // take the arg and move to work variable arg(0) -> Z5
-//        List<Instruction> newInstructions = inIt(instructions, vlm, values, context); // Assigning all arguments to variables that are going to be used // return list of variables that
-//        replaceX(instructions, vlm); // replace all the x for the z (arg variable)
-//        replaceL(instructions, vlm); // replace all the L for new L
-//        replaceZ(instructions, vlm); // replace the z that used in the original program
-//        Variable y = replaceY(instructions, vlm); // replace y with new z
-//
+        // Create a clean execution context for this function evaluation
+        ExecutionContextImpl functionContext = new ExecutionContextImpl(values, functions);
 
-        // update context with new inputs
+        // Ensure function is not null
+        if (function == null) {
+            throw new RuntimeException("Function not found: " + name);
+        }
 
-        ExecutionContextImpl newContext = new ExecutionContextImpl(values,functions);
-        FunctionExecutor currentExecutor = new FunctionExecutor(function, functions, newContext);
-            long result = currentExecutor.run(values);
+        // Execute the function with the evaluated arguments
+        FunctionExecutor currentExecutor = new FunctionExecutor(function, functions, functionContext);
+        long result = currentExecutor.run(values);
+
+        // Update the original context with the result
         Variable res = new VariableImpl(VariableType.RESULT, 1);
-        context.updateVariable(res,result);
+        context.updateVariable(res, result);
 
 
         return result;
@@ -260,7 +261,7 @@ public class FunctionArgument implements Argument {
 
     @Override
     public  List<Exception> validate(ExecutionContext context) {
-        // for each funcction need to check if exists\
+        // for each function need to check if exists\
 
         return List.of();
     }

@@ -83,6 +83,8 @@ public class Function {
 
     }
 
-
-
+    public void setInstructions(List<Instruction> instructions) {
+        this.instructions = instructions;
+        this.extendedInstructions = new ArrayList<>(instructions);
+    }
 }

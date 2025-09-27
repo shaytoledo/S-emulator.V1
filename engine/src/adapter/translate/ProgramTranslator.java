@@ -37,7 +37,6 @@ public final class ProgramTranslator {
     }
 
     public static Result translate(SProgram sProgram) {
-
         List<Exception> errors = new ArrayList<>();
         String programName = TranslatorHelper.safe(sProgram.getName(), "Unnamed Program");
 
@@ -46,12 +45,12 @@ public final class ProgramTranslator {
 
         List<Instruction> code = new ArrayList<>();
         List<Function> funcs = new ArrayList<>();
-
+        Map<String, SFunction> functionMap = new HashMap<>(); // For quick lookup by name
 
         List<SInstruction> sInstructions = Optional.ofNullable(sProgram.getInstructions()).orElse(List.of());
         List<SFunction> SFunctions = Optional.ofNullable(sProgram.getSFunctions()).orElse(List.of());
 
-        // convert SFunctions to Functions, collecting errors
+        // First pass: Register all functions with placeholders to establish their existence
         for (SFunction func : SFunctions) {
             String funcName = func.getName();
             if (funcName == null || funcName.isBlank()) {
@@ -63,15 +62,26 @@ public final class ProgramTranslator {
                 errors.add(new ArgsException("Function '" + funcName + "' missing user-string"));
                 continue;
             }
-            List<SInstruction> a = func.getSInstructions();
 
-            List<SInstruction> funcInstructions = Optional.ofNullable(a).orElse(List.of());
-            // convert function instructions to Instructions, collecting errors
-            funcs.add(new Function(funcName, userString, extractInstructionsForFuncs(funcInstructions, errors, funcs, varsByName, labelsByName)));
+            // Register the function with empty instructions for now
+            funcs.add(new Function(funcName, userString, new ArrayList<>()));
+            functionMap.put(funcName, func);
+        }
+
+        // Second pass: Process function instructions now that all functions are registered
+        for (int i = 0; i < funcs.size(); i++) {
+            Function function = funcs.get(i);
+            SFunction sFunction = functionMap.get(function.getName());
+            if (sFunction != null) {
+                List<SInstruction> funcInstructions = Optional.ofNullable(sFunction.getSInstructions()).orElse(List.of());
+                // Process instructions and update the function
+                List<Instruction> processedInstructions = extractInstructionsForFuncs(funcInstructions, errors, funcs, varsByName, labelsByName);
+                function.setInstructions(processedInstructions);
+            }
         }
 
         // convert SInstructions to Instructions, collecting errors
-        code.addAll(extractInstructions(sInstructions, errors, funcs,varsByName, labelsByName));
+        code.addAll(extractInstructions(sInstructions, errors, funcs, varsByName, labelsByName));
 
         ProgramImpl program = new ProgramImpl(programName, code, funcs, varsByName, labelsByName);
         return new Result(program, errors);

@@ -214,18 +214,24 @@ public class QuoteInstruction extends AbstractInstruction {
 
     @Override
     public Label execute(ExecutionContext context, VariableAndLabelMenger vlm) {
-        // evaluate arguments in arguments evaluate
-        // create new context
-        // execute function in that context
-        // get result and store in variable
+        // Create a clean execution context for the function evaluation
+        // This ensures that nested function calls don't interfere with each other
 
+        // Store the current result value to restore it later
+        Variable resultVar = new VariableImpl(VariableType.RESULT, 1);
+        long oldResult = context.getVariableValue(resultVar);
 
+        // Evaluate the function with its arguments directly
+        long functionResult = arguments.evaluate(context, vlm);
 
-        arguments.evaluate(context, vlm);
-        // update the variable with the result
+        // Update the target variable with the function result
+        context.updateVariable(getVariable(), functionResult);
+
+        // Restore the original result value
+        context.updateVariable(resultVar, oldResult);
+
         return FixedLabel.EMPTY;
     }
-
 
 
 
