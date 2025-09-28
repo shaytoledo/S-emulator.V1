@@ -26,5 +26,7 @@ public interface Engine {
     void endDebug();
     Map<String, Long> resumeDebug();
     int getCycels();
-    }
+    List<functionView> getAllFunctionViews();
+
+}
 

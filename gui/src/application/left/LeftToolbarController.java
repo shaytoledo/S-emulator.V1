@@ -22,13 +22,13 @@ public class LeftToolbarController {
     MainLayoutController mainLayoutController;
 
     @FXML private TableColumn<InstructionView, String> colBS;
-    @FXML private TableColumn<InstructionView, Integer> colCycles;
+    @FXML private TableColumn<InstructionView, String> colCycles;
     @FXML private TableColumn<InstructionView, Integer> colNumber;
     @FXML private TableColumn<InstructionView, String> colInstruction;
     @FXML private TableColumn<InstructionView, String> colLabel;
     @FXML public TableView<InstructionView> instructionsTable;
     @FXML private TableColumn<InstructionView, String> colHistoryBS;
-    @FXML private TableColumn<InstructionView, Integer> colHistoryCycles;
+    @FXML private TableColumn<InstructionView, String> colHistoryCycles;
     @FXML private TableColumn<InstructionView, Integer> colHistoryNumber;
     @FXML private TableColumn<InstructionView, String> colHistoryInstruction;
     @FXML private TableColumn<InstructionView, String> colHistoryLabel;

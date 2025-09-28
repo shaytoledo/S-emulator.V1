@@ -15,7 +15,7 @@ public class VariableArgument implements Argument {
     }
 
     @Override
-    public long evaluate(ExecutionContext context, VariableAndLabelMenger vlm) {
+    public long evaluate(ExecutionContext context, VariableAndLabelMenger vlm, int cycleCount) {
         return context.getVariableValue(me);
     }
 

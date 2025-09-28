@@ -1,6 +1,7 @@
 package core.program;
 
 import dto.InstructionView;
+import dto.functionView;
 import logic.instruction.Instruction;
 import logic.label.Label;
 
@@ -22,4 +23,6 @@ public interface Program {
     VariableAndLabelMenger getvlm();
     List<List<String>> getInfo(int level);
     List<Function> getFunctions();
-    }
+    List<functionView> getAllFunctionViews();
+
+}

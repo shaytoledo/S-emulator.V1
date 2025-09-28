@@ -2,8 +2,8 @@ package logic.instruction.synthetic;
 
 import core.program.Function;
 import core.program.VariableAndLabelMenger;
+import javafx.util.Pair;
 import logic.argument.Argument;
-import logic.argument.ConstantArgument;
 import logic.argument.FunctionArgument;
 import logic.argument.VariableArgument;
 import logic.execution.ExecutionContext;
@@ -27,6 +27,8 @@ public class QuoteInstruction extends AbstractInstruction {
     Function function;
     FunctionArgument arguments;
     List<Function> allFunctions;
+
+    int cycles = 0;
 
     public QuoteInstruction(String name, String functionArguments,Variable var,  List<Function> funcs, Label lineLabel) {
         super(InstructionData.QUOTE, var, lineLabel);
@@ -223,7 +225,7 @@ public class QuoteInstruction extends AbstractInstruction {
 
         // Evaluate the quoted function in a pure way (no side effects on the outer context).
         // Evaluate the quoted function (child calls are pure now)
-        long functionResult = arguments.evaluate(context, vlm);
+        long functionResult = arguments.evaluate(context, vlm, cycles);
         // Store the function result into this instruction's target variable (often 'y').
         context.updateVariable(getVariable(), functionResult);
 
@@ -237,15 +239,24 @@ public class QuoteInstruction extends AbstractInstruction {
 
     @Override
     public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
+        if (extensionLevel <= 0) {
+            return List.of(this);
+        }
 
-        // replace the variable with a work variable
-        // replace labels with new labels
+        // Delegate expansion to the function argument with the appropriate extension level
+        Pair<List<Instruction>, Label> expandedResult = arguments.extend(extensionLevel, vlm);
+        List<Instruction> expandedInstructions = expandedResult.getKey();
+        Label exitLabel = expandedResult.getValue();
 
-        // extend the function for the neccesary level
+        // If there's a valid exit label, add a final instruction to assign the result to the target variable
+        if (exitLabel != null) {
+            expandedInstructions.add(new AssignmentInstruction(getVariable(), new VariableImpl(VariableType.RESULT, 1), exitLabel));
+        } else {
+            // If no exit label, still add assignment instruction without label
+            expandedInstructions.add(new AssignmentInstruction(getVariable(), new VariableImpl(VariableType.RESULT, 1)));
+        }
 
-
-        return List.of(this);
-                //arguments.getExtendedInstructions(extensionLevel, vlm);
+        return expandedInstructions;
     }
 
 

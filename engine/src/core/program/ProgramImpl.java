@@ -1,7 +1,9 @@
 package core.program;
 
 import dto.InstructionView;
+import dto.functionView;
 import logic.instruction.Instruction;
+import logic.instruction.synthetic.QuoteInstruction;
 import logic.label.Label;
 import logic.variable.Variable;
 
@@ -173,7 +175,8 @@ public class ProgramImpl implements Program {
                 ? ""
                 : ins.getLabel().getLabelRepresentation();
         String command = ins.toDisplayString();
-        int cycles = ins.cycles();
+        int midCycles = ins.cycles();
+        String cycles = ins instanceof QuoteInstruction? "5+" : String.valueOf(midCycles);
 
         return new InstructionView(number, type, label, command, cycles);
     }
@@ -197,7 +200,8 @@ public class ProgramImpl implements Program {
                     : "";
 
             String command = inst.toDisplayString();
-            int cycles = inst.cycles();
+            int midCycles = inst.cycles();
+            String cycles = inst instanceof QuoteInstruction? "5+" : String.valueOf(midCycles);
 
             InstructionView curr = new InstructionView(
                     number,
@@ -298,4 +302,13 @@ public class ProgramImpl implements Program {
     public List<Function> getFunctions() {
         return functions;
     }
+
+    public List<functionView> getAllFunctionViews() {
+        List<functionView> result = new ArrayList<>();
+        for (Function function : functions) {
+            result.add(function.toView());
+        }
+        return result;
+    }
+
 }

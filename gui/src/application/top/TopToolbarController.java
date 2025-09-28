@@ -4,6 +4,7 @@ import application.main.MainLayoutController;
 import core.program.VariableAndLabelMenger;
 import dto.InstructionView;
 import dto.LoadReport;
+import dto.functionView;
 import javafx.animation.PauseTransition;
 import javafx.beans.Observable;
 import javafx.beans.property.IntegerProperty;
@@ -33,7 +34,7 @@ public class TopToolbarController {
     @FXML private Label CurrentFromMaximumDegree;
 
     // Need to be implemented
-    @FXML public ComboBox<?> ProgramOrFunctionSelector;
+    @FXML public ComboBox<String> ProgramOrFunctionSelector;
 
     @FXML public ComboBox<String> HighlightSelection;
     @FXML public Button Expand;
@@ -161,6 +162,18 @@ public class TopToolbarController {
                 mainLayoutController.clearAll();
                 mainLayoutController.showProgram();
                 allButtonsEnableAfterLoad();
+                List<functionView> functions = mainLayoutController.engine.getAllFunctionViews();
+                if (functions.size() > 1) {
+                    ProgramOrFunctionSelector.getItems().setAll(
+                            functions.stream().map(functionView::toString).toList()
+                    );
+                    ProgramOrFunctionSelector.setDisable(false);
+                    ProgramOrFunctionSelector.getSelectionModel().select(0);
+                } else {
+                    ProgramOrFunctionSelector.getItems().clear();
+                    ProgramOrFunctionSelector.setDisable(true);
+                }
+
             }
 
             // Schedule a safe clear of the status label
@@ -393,4 +406,29 @@ public class TopToolbarController {
         }
         return new HashSet<>(indices);
     }
+
+
+
+
+/// This part is not working now, need to be fixed later
+
+    @FXML
+    void programOrFunctionChanged(ActionEvent e) {
+        Object selected = ProgramOrFunctionSelector.getSelectionModel().getSelectedItem();
+        if (selected == null) return;
+
+        List<functionView> functions = mainLayoutController.engine.getAllFunctionViews();
+        functionView selectedFunction = functions.stream()
+                .filter(f -> f.toString().equals(selected.toString()))
+                .findFirst()
+                .orElse(null);
+
+        List<InstructionView> functionInstructions = selectedFunction.getInstructions();
+
+
+        mainLayoutController.getLeft().clearHistory();
+        mainLayoutController.showProgram();
+    }
+
+
 }

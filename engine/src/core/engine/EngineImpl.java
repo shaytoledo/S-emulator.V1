@@ -2,6 +2,7 @@ package core.engine;
 
 import adapter.translate.JaxbLoader;
 import adapter.translate.ProgramTranslator;
+import core.program.Function;
 import core.program.Program;
 import core.program.VariableAndLabelMenger;
 import dto.*;
@@ -201,4 +202,29 @@ public class EngineImpl implements Engine {
         return exe.cycleCount;
     }
 
+
+    @Override
+    public List<functionView> getAllFunctionViews() {
+        List<functionView> funcs = cuurentProgram.getAllFunctionViews();
+        return funcs;
+    }
+
+
+//    @Override
+//    public RunResult runFunc (int level, List<Long> inputs, Function funcName) {
+//        List<InstructionView> instructionViews = cuurentProgram
+//                .instructionViewsAfterExtendRunShow(level);
+//        exe = new ProgramExecutorImpl(cuurentProgram);
+//        long y = exe.runFunc(inputs, funcName);
+//        int cycles = exe.cycleCount;
+//
+//        RunSummary summary = new RunSummary(++runCounter, level, inputs, y, cycles);
+//        summaries.add(summary);
+//
+//        if (exe != null) {
+//            var res = new RunResult(y, exe.variablesState(), cycles);
+//            return res;
+//        }
+//        return null;
+//    }
 }

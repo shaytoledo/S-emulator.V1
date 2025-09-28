@@ -2,16 +2,21 @@ package logic.argument;
 
 import core.program.Function;
 import core.program.VariableAndLabelMenger;
+import javafx.util.Pair;
 import logic.execution.ExecutionContext;
 import logic.execution.ExecutionContextImpl;
 import logic.execution.FunctionExecutor;
 import logic.exception.FunctionNotExist;
 import logic.instruction.Instruction;
+import logic.instruction.synthetic.AssignmentInstruction;
+import logic.label.Label;
 import logic.variable.Variable;
 import logic.variable.VariableImpl;
 import logic.variable.VariableType;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class FunctionArgument implements Argument {
 
@@ -31,7 +36,7 @@ public class FunctionArgument implements Argument {
     private final List<Function> functions;
 
 
-        public FunctionArgument(String name, List<Argument> arguments, List<Function> funcs) {
+    public FunctionArgument(String name, List<Argument> arguments, List<Function> funcs) {
         this.name = name;
         this.arguments = arguments;
         this.functions = funcs;
@@ -50,13 +55,13 @@ public class FunctionArgument implements Argument {
 
 
     @Override
-    public long evaluate(ExecutionContext context, VariableAndLabelMenger vlm) {
+    public long evaluate(ExecutionContext context, VariableAndLabelMenger vlm, int cycles) {
         // Evaluate all child arguments in the *current* context to numeric values
         List<Long> values = new ArrayList<>(arguments.size());
         for (Argument arg : arguments) {
             // Use the original context as base to ensure proper variable resolution
             ExecutionContextImpl argContext = new ExecutionContextImpl(context);
-            long v = arg.evaluate(argContext, vlm);
+            long v = arg.evaluate(argContext, vlm, cycles);
             values.add(v);
         }
 
@@ -70,7 +75,7 @@ public class FunctionArgument implements Argument {
 
         // Execute the function with the evaluated arguments
         FunctionExecutor currentExecutor = new FunctionExecutor(function, functions, functionContext);
-        long result = currentExecutor.run(values);
+        long result = currentExecutor.run(values, cycles);
 
 //        Variable res = new VariableImpl(VariableType.RESULT, 1);
 //        context.updateVariable(res,result);
@@ -78,6 +83,118 @@ public class FunctionArgument implements Argument {
 
         return result;
     }
+
+    @Override
+    public Pair<List<Instruction>, Label> extend(int extensionLevel, VariableAndLabelMenger vlm) {
+        if (extensionLevel <= 0) {
+            return new Pair<>(List.of(), null);
+        }
+
+        List<Instruction> instructions = new ArrayList<>();
+        Label exitLabel = vlm.newLabel();
+
+        // 1. Create new variables for function arguments and map them
+        List<Pair<Variable, Variable>> variableMapping = new ArrayList<>();
+        for (int i = 0; i < arguments.size(); i++) {
+            Variable oldVar = new VariableImpl(VariableType.INPUT, i + 1);
+            Variable newVar = vlm.newZVariable();
+            variableMapping.add(new Pair<>(oldVar, newVar));
+
+            // Add assignment instruction for argument value
+            Argument arg = arguments.get(i);
+            if (extensionLevel > 1) {
+                // For higher levels, recursively expand the argument
+                Pair<List<Instruction>, Label> expanded = arg.extend(extensionLevel - 1, vlm);
+                instructions.addAll(expanded.getKey());
+
+                // Now assign the result to our new variable
+                if (expanded.getValue() != null) {
+                    instructions.add(new AssignmentInstruction(newVar, new VariableImpl(VariableType.RESULT, 1), expanded.getValue()));
+                } else {
+                    // Direct assignment if no label was returned
+                    instructions.add(new AssignmentInstruction(newVar, new VariableImpl(VariableType.RESULT, 1)));
+                }
+            } else {
+                // For level 1, just add direct assignment
+                instructions.add(new AssignmentInstruction(newVar, oldVar));
+            }
+        }
+
+        // 2. Replace variables in function instructions with our new variables
+        Map<Label, Label> labelMapping = new HashMap<>();
+        List<Instruction> functionInstructions = new ArrayList<>();
+
+        // Clone all function instructions
+        for (Instruction instr : function.getInstructions()) {
+            Instruction clonedInstr = instr.clone();
+            functionInstructions.add(clonedInstr);
+        }
+
+        // 3. Replace all labels in the function with new labels
+        for (Instruction instr : functionInstructions) {
+            for (Label label : instr.getAllLabels()) {
+                if (label != null && !label.equals(FixedLabel.EMPTY)) {
+                    if (!labelMapping.containsKey(label)) {
+                        labelMapping.put(label, vlm.newLabel());
+                    }
+                    instr.replace(label, labelMapping.get(label));
+                }
+            }
+        }
+
+        // 4. Replace all variables in the function instructions
+        for (Instruction instr : functionInstructions) {
+            // Replace input variables with our new variables
+            for (Pair<Variable, Variable> mapping : variableMapping) {
+                instr.replace(mapping.getKey(), mapping.getValue());
+            }
+        }
+
+        // Add function's instructions to our list
+        instructions.addAll(functionInstructions);
+
+        // 5. Add an instruction at the end to assign the result to y
+        Variable resultVar = new VariableImpl(VariableType.RESULT, 1);
+        instructions.add(new AssignmentInstruction(resultVar, resultVar, exitLabel));
+
+        return new Pair<>(instructions, exitLabel);
+    }
+
+
+
+    @Override
+    public List<Instruction> getExtendedInstructions(int extensionLevel, VariableAndLabelMenger vlm) {
+        switch (extensionLevel) {
+            case 0:
+                return List.of();
+            case 1:
+                return List.of();
+        }
+
+        return List.of();
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 //    private  List<Instruction> inIt(List<Instruction> instructions, VariableAndLabelMenger vlm, List<Long> values, ExecutionContext context) {
@@ -269,27 +386,13 @@ public class FunctionArgument implements Argument {
 
 
 
-    @Override
-    public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
-        return List.of();
-    }
+
 
     @Override
     public List<String> getAllInfo() {
         return List.of();
     }
 
-    @Override
-    public List<Instruction> getExtendedInstructions(int extensionLevel, VariableAndLabelMenger vlm) {
-        switch (extensionLevel) {
-            case 0:
-                return List.of();
-                case 1:
-                    return List.of();
-        }
-
-        return List.of();
-    }
 
 
 

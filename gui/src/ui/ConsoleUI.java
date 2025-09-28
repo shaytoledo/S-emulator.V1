@@ -219,7 +219,7 @@ public class ConsoleUI {
         String type    = String.valueOf(iv.type());
         String label   = String.valueOf(iv.label());
         String command = String.valueOf(iv.command());
-        long cycles    = iv.cycles();
+        String cycles    = iv.cycles();
         // Use a rare separator character to avoid accidental collisions
         return type + "\u001F" + label + "\u001F" + command + "\u001F" + cycles;
     }

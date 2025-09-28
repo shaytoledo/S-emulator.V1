@@ -3,6 +3,7 @@ package logic.execution;
 import core.program.Program;
 import core.program.VariableAndLabelMenger;
 import logic.instruction.Instruction;
+import logic.instruction.synthetic.QuoteInstruction;
 import logic.label.FixedLabel;
 import logic.label.Label;
 import logic.variable.Variable;

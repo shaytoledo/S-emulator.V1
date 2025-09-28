@@ -1,15 +1,17 @@
 package logic.argument;
 
 import core.program.VariableAndLabelMenger;
+import javafx.util.Pair;
 import logic.execution.ExecutionContext;
 import logic.instruction.Instruction;
+import logic.label.Label;
 
 import java.util.List;
 
 public interface Argument {
 
     // Run the argument and return its value
-    long evaluate(ExecutionContext context, VariableAndLabelMenger vlm);
+    long evaluate(ExecutionContext context, VariableAndLabelMenger vlm, int cycleCount);
 
     // Validate if the argument is legal in the current context
     List<Exception> validate(ExecutionContext context);
@@ -21,7 +23,7 @@ public interface Argument {
     int getMaxLevel();
 
     // Expand the argument into instructions if needed
-    List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm);
+    Pair<List<Instruction>, Label> extend(int extensionLevel, VariableAndLabelMenger vlm);
 
     // Get all the labels and variables in this section
     List<String> getAllInfo();

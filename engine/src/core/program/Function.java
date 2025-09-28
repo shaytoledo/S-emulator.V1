@@ -1,8 +1,12 @@
 package core.program;
 
+import dto.InstructionView;
+import dto.RunSummary;
+import dto.functionView;
 import logic.execution.ExecutionContext;
 import logic.execution.ExecutionContextImpl;
 import logic.instruction.Instruction;
+import logic.instruction.synthetic.QuoteInstruction;
 import logic.label.Label;
 
 import java.util.ArrayList;
@@ -14,34 +18,30 @@ public class Function {
     private String userString;
     private List<Instruction> instructions;
     private List<Instruction> extendedInstructions;
+    private List<String> args;
+    public List<RunSummary> summaries = new ArrayList<>();
 
 
     public Function(String name, String userString, List<Instruction> instructions) {
         this.name = name;
         this.userString = userString;
         this.instructions = instructions;
+        this.args = getArgs(instructions);
         this.extendedInstructions = new ArrayList<>(instructions);
     }
 
-    public List<Instruction> getInstructions() {
-        return instructions;
-    }
+    private List<String> getArgs(List<Instruction> instructions) {
 
-    public List<Instruction> getExtendedInstructions() {
-        return extendedInstructions;
-    }
-    public String getUserString() {
-        return userString;
-    }
-    public String getName() {
-        return name;
-    }
-
-    public long evaluate() {
-        long result = 0;
-
-        return result;
-
+        List<String> args = new ArrayList<>();
+        for (Instruction instruction : instructions) {
+            if (instruction.getVariable() != null) {
+                String varName = instruction.getVariable().getRepresentation();
+                if (!args.contains(varName)) {
+                    args.add(varName);
+                }
+            }
+        }
+        return args;
     }
 
     public int calculateMaxDegree() {
@@ -54,9 +54,15 @@ public class Function {
         }
         return maxDegree;
     }
-
-
-
+    public List<Instruction> getInstructions() {
+        return instructions;
+    }
+    public String getUserString() {
+        return userString;
+    }
+    public String getName() {
+        return name;
+    }
 
     // return the next instruction after the current one, or null if at the end
     public Instruction getNextInstructionLabel(Instruction currentInstruction) {
@@ -87,4 +93,44 @@ public class Function {
         this.instructions = instructions;
         this.extendedInstructions = new ArrayList<>(instructions);
     }
+
+    public functionView toView(){
+        List<InstructionView> instructionViews = new ArrayList<>();
+        int number = 1;
+        for (Instruction instruction : instructions) {
+
+            String cyclesText = (instruction instanceof QuoteInstruction)
+                    ? instruction.cycles() + "+"
+                    : Integer.toString(instruction.cycles());
+
+            InstructionView iv = new InstructionView(
+                    number,
+                    instruction.getName()
+                    , instruction.getLabel() == null ? null : instruction.getLabel().getLabelRepresentation(),
+                    cyclesText,
+                    instruction.isBasic() ? "basic" : "composite");
+            instructionViews.add(iv);
+            number++;
+        }
+        return new functionView(name, args, instructionViews);
+    }
+
+
+
+
+    public List<Instruction> getExtendedInstructions(int extensionLevel, VariableAndLabelMenger vlm) {
+        List<Instruction> result = new ArrayList<>();
+        for (Instruction instruction : instructions) {
+            result.addAll(instruction.extend(extensionLevel, vlm));
+        }
+
+        return result;
+    }
+    public long evaluate() {
+        long result = 0;
+
+        return result;
+
+    }
 }
+

@@ -5,7 +5,7 @@ public record InstructionView(
         String type,
         String  label,
         String command,
-        int cycles) {
+        String cycles) {
 
 
     @Override

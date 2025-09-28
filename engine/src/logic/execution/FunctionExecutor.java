@@ -30,6 +30,12 @@ public FunctionExecutor(Function function, List<Function> functions, ExecutionCo
 
 }
 
+    public long run(List<Long> inputs, int cycels) {
+        long res =  run(inputs);
+        cycleCount = this.cycleCount;
+        return res;
+    }
+
     @Override
     public long run(List<Long> inputs) {
 
