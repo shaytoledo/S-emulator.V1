@@ -26,6 +26,8 @@ public class FunctionArgument implements Argument {
     // function instruction
     public List<Instruction> instructions;
 
+    int cycles = 0;
+
     private final List<Function> functions;
 
 

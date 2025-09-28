@@ -174,14 +174,18 @@ public class QuoteInstruction extends AbstractInstruction {
 
     @Override
     public List<Variable> getAllVariables() {
-        List<Variable> all = new ArrayList<>();
-        return all;
+        if(getVariable() != null) {
+            return List.of(getVariable());
+        }
+        return List.of();
     }
 
     @Override
     public List<Label> getAllLabels() {
-        List<Label> all = new ArrayList<>();
-        return all;
+        if (getLabel() != null) {
+            return List.of(getLabel());
+        }
+        return List.of();
     }
 
     @Override

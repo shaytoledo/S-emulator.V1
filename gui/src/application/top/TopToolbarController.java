@@ -41,7 +41,7 @@ public class TopToolbarController {
     @FXML private TextField howMuchToCollapse;
     @FXML private TextField howMuchToExpand;
     @FXML private TextField CurrentlyLoadedFilePath;
-    @FXML private Button LoadFileButton;
+    @FXML public Button LoadFileButton;
     @FXML private TextField expendLevel;
     @FXML private ProgressBar progressBar;
     @FXML private Label statusLabel;
@@ -78,6 +78,7 @@ public class TopToolbarController {
         mainLayoutController.getRight().stopDebugButton.setDisable(true);
         mainLayoutController.getRight().show.setDisable(true);
         mainLayoutController.getRight().reRun.setDisable(true);
+        mainLayoutController.getRight().initButton.setDisable(true);
     }
 
     private void allButtonsEnableAfterLoad() {
@@ -90,6 +91,8 @@ public class TopToolbarController {
         howMuchToExpand.setDisable(false);
         mainLayoutController.getRight().startButton.setDisable(false);
         mainLayoutController.getRight().startDebugButton.setDisable(false);
+        mainLayoutController.getRight().initButton.setDisable(false);
+
     }
 
     @FXML

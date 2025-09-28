@@ -33,6 +33,7 @@ public class RightToolbarController {
 
     // Need to be implemented
     @FXML public Button resumeDebugButton;
+    @FXML public Button initButton;
     @FXML public Button startButton;
     @FXML public Button startDebugButton;
     @FXML public Button stepOverDebugButton;
@@ -70,6 +71,7 @@ public class RightToolbarController {
     }
 
     private void startDebugButtons() {
+        mainLayoutController.getTop().LoadFileButton.setDisable(true);
         mainLayoutController.getTop().Expand.setDisable(true);
         mainLayoutController.getTop().Collapse.setDisable(true);
         mainLayoutController.getTop().HighlightSelection.setDisable(true);
@@ -81,9 +83,11 @@ public class RightToolbarController {
         reRun.setDisable(true);
         inputTable.setEditable(false);
         startButton.setDisable(true);
+        initButton.setDisable(true);
     }
 
     private void endDebugButtons() {
+        mainLayoutController.getTop().LoadFileButton.setDisable(false);
         mainLayoutController.getTop().HighlightSelection.setDisable(false);
         mainLayoutController.getTop().ProgramOrFunctionSelector.setDisable(false);
         mainLayoutController.getTop().Expand.setDisable(false);
@@ -92,6 +96,7 @@ public class RightToolbarController {
         stepOverDebugButton.setDisable(true);
         stopDebugButton.setDisable(true);
         startButton.setDisable(false);
+        initButton.setDisable(false);
         if (historyTable.getItems().size() > 0) {
             show.setDisable(false);
             reRun.setDisable(false);
@@ -110,15 +115,102 @@ public class RightToolbarController {
         reRun.setDisable(false);
     }
 
-
-
-
     @FXML
     void showHistoryListener(ActionEvent event) {
         RunSummary selected = historyTable.getSelectionModel().getSelectedItem();
         if (selected == null) return;
 
-        applyInputsToExistingInputTable(selected.inputs());
+        runHiddenPreviewAndPopup(selected.level(), selected.inputs());
+
+
+    }
+
+    // Hidden run (no UI updates, no history) using the provided level and inputs
+    private void runHiddenPreviewAndPopup(int level, List<Long> inputsByOrder) {
+        List<Long> in = (inputsByOrder == null) ? Collections.emptyList() : inputsByOrder;
+
+        // Start debug run (doesn't affect history)
+        Pair<Map<String, Long>, Integer> state = mainLayoutController.engine.startDebug(level, in);
+        Map<String, Long> lastState = (state.getKey() == null) ? Collections.emptyMap() : state.getKey();
+
+        // Step until finished, keep last state only
+        while (true) {
+            Pair<Map<String, Long>, Integer> step = mainLayoutController.engine.oneStepInDebug();
+            if (step.getValue() == -1) break;
+            lastState = step.getKey();
+        }
+        long cycles = mainLayoutController.engine.getCycels();
+        mainLayoutController.engine.endDebug();
+
+        showPreviewPopup(lastState, cycles);
+    }
+
+    // Minimal popup with a centered, black-text table of variables
+    private void showPreviewPopup(Map<String, Long> vars, long cycles) {
+        javafx.scene.control.TableView<String> tv = new javafx.scene.control.TableView<>();
+        javafx.scene.control.TableColumn<String, String> colVar = new javafx.scene.control.TableColumn<>("variable");
+        javafx.scene.control.TableColumn<String, String> colVal = new javafx.scene.control.TableColumn<>("value");
+
+        // sort keys: y, then x1..xn, z1..zn, then alphabetical
+        java.util.List<String> keys = new java.util.ArrayList<>(vars.keySet());
+        keys.sort((a, b) -> {
+            String la = a == null ? "" : a.toLowerCase();
+            String lb = b == null ? "" : b.toLowerCase();
+            if (la.equals("y") && !lb.equals("y")) return -1;
+            if (lb.equals("y") && !la.equals("y")) return 1;
+            boolean ax = la.startsWith("x"), bx = lb.startsWith("x");
+            if (ax && bx) return Integer.compare(numAfterPrefix(la, 'x'), numAfterPrefix(lb, 'x'));
+            if (ax) return -1; if (bx) return 1;
+            boolean az = la.startsWith("z"), bz = lb.startsWith("z");
+            if (az && bz) return Integer.compare(numAfterPrefix(la, 'z'), numAfterPrefix(lb, 'z'));
+            if (az) return -1; if (bz) return 1;
+            return la.compareTo(lb);
+        });
+
+        colVar.setCellValueFactory(cd -> new ReadOnlyStringWrapper(cd.getValue()));
+        colVal.setCellValueFactory(cd -> {
+            Long v = vars.get(cd.getValue());
+            return new ReadOnlyStringWrapper(v == null ? "" : String.valueOf(v));
+        });
+
+        // center + black text
+        colVar.setCellFactory(c -> new TableCell<>() {
+            @Override protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty ? null : item);
+                setStyle("-fx-alignment: CENTER; -fx-text-fill: black;");
+            }
+        });
+        colVal.setCellFactory(c -> new TableCell<>() {
+            @Override protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty ? null : item);
+                setStyle("-fx-alignment: CENTER; -fx-text-fill: black;");
+            }
+        });
+
+        tv.getColumns().addAll(colVar, colVal);
+        tv.getItems().setAll(keys);
+        tv.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+
+        Label header = new Label("Preview (cycles: " + cycles + ")");
+        VBox root = new VBox(10, header, tv);
+        root.setStyle("-fx-padding: 12;");
+
+        javafx.stage.Stage st = new javafx.stage.Stage();
+        st.setTitle("Run Preview");
+        st.initOwner(right.getScene().getWindow());
+        st.setScene(new javafx.scene.Scene(root, 380, 480));
+        st.show();
+    }
+
+    @FXML
+    void initListener(ActionEvent event) {
+        variableTable.getItems().clear();
+        inputTable.getItems().clear();
+        CyclesCounter.setText("");
+        inputsMap.clear();
+        fillInputTable();
     }
 
     @FXML
@@ -127,11 +219,8 @@ public class RightToolbarController {
         if (selected == null) return;
 
         applyInputsToExistingInputTable(selected.inputs());
-        run();
 
     }
-
-
 
     @FXML
     void resumeDebugListener(ActionEvent event) {
@@ -145,6 +234,8 @@ public class RightToolbarController {
         mainLayoutController.engine.endDebug();
         mainLayoutController.getTop().Expand.setDisable(false);
         mainLayoutController.getTop().Collapse.setDisable(false);
+        mainLayoutController.getTop().LoadFileButton.setDisable(false);
+
         // unbold all the table lines
         mainLayoutController.getLeft().clearHighlights();
         endDebugButtons();
@@ -171,7 +262,9 @@ public class RightToolbarController {
             Set<Integer> index = new HashSet<>();
             index.add(0);
             mainLayoutController.getLeft().boldRows(index);
-           // fillVariableStateTable(variableState.getKey());
+            fillVariableStateTable(variableState.getKey());
+            resetVariableTableStyle();
+
             CyclesCounter.setText("0");
         }
     }
@@ -199,7 +292,26 @@ public class RightToolbarController {
 
             // cycles counter update
             CyclesCounter.setText(String.valueOf(mainLayoutController.engine.getCycels()));
+
         }
+    }
+
+    private void resetVariableTableStyle() {
+        variableState.setCellFactory(col -> new TableCell<>() {
+            @Override protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty ? null : item);
+                setStyle("-fx-alignment: CENTER; -fx-text-fill: black;");
+            }
+        });
+        valueState.setCellFactory(col -> new TableCell<>() {
+            @Override protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty ? null : item);
+                setStyle("-fx-alignment: CENTER; -fx-text-fill: black;");
+            }
+        });
+        variableTable.refresh();
     }
 
     private void endOfDebug() {
@@ -214,10 +326,13 @@ public class RightToolbarController {
         // unbold all the table lines
         mainLayoutController.getLeft().clearHighlights();
         CyclesCounter.setText("");
+        resetVariableTableStyle();
+
     }
 
     @FXML
     void stopDebugListener(ActionEvent event) {
+        resetVariableTableStyle();
         endOfDebug();
     }
 
@@ -371,6 +486,7 @@ public class RightToolbarController {
 
     @FXML
     void startListener(ActionEvent event) {
+        resetVariableTableStyle();
         run();
         startButtons();
     }
