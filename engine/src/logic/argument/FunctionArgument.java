@@ -70,9 +70,8 @@ public class FunctionArgument implements Argument {
         FunctionExecutor currentExecutor = new FunctionExecutor(function, functions, functionContext);
         long result = currentExecutor.run(values);
 
-        // Update the original context with the result
-        Variable res = new VariableImpl(VariableType.RESULT, 1);
-        context.updateVariable(res, result);
+//        Variable res = new VariableImpl(VariableType.RESULT, 1);
+//        context.updateVariable(res,result);
 
 
         return result;

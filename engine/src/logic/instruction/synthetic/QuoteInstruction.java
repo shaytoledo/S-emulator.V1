@@ -198,40 +198,34 @@ public class QuoteInstruction extends AbstractInstruction {
         }
     }
 
-
-
-
-
-    private boolean isValidFunction(String name, List<Function> funcs) {
-        for (Function func : funcs) {
-            if (func.getName().equals(name)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-
     @Override
     public Label execute(ExecutionContext context, VariableAndLabelMenger vlm) {
-        // Create a clean execution context for the function evaluation
-        // This ensures that nested function calls don't interfere with each other
+//        // evaluate arguments in arguments evaluate
+//        // create new context
+//        // execute function in that context
+//        // get result and store in variable
+//
+//        Variable var = new VariableImpl(VariableType.RESULT, 1);
+//        long oldY = context.getVariableValue(var);
+//        arguments.evaluate(context, vlm);
+//        long newY = context.getVariableValue(var);
+//        context.updateVariable(getVariable(), newY);
+//        context.updateVariable(var, oldY);
+//        // update the variable with the result
 
-        // Store the current result value to restore it later
-        Variable resultVar = new VariableImpl(VariableType.RESULT, 1);
-        long oldResult = context.getVariableValue(resultVar);
 
-        // Evaluate the function with its arguments directly
+
+
+
+        // Evaluate the quoted function in a pure way (no side effects on the outer context).
+        // Evaluate the quoted function (child calls are pure now)
         long functionResult = arguments.evaluate(context, vlm);
-
-        // Update the target variable with the function result
+        // Store the function result into this instruction's target variable (often 'y').
         context.updateVariable(getVariable(), functionResult);
-
-        // Restore the original result value
-        context.updateVariable(resultVar, oldResult);
 
         return FixedLabel.EMPTY;
     }
+
 
 
 
@@ -251,6 +245,14 @@ public class QuoteInstruction extends AbstractInstruction {
     }
 
 
+    private boolean isValidFunction(String name, List<Function> funcs) {
+        for (Function func : funcs) {
+            if (func.getName().equals(name)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
 //    @Override
 //    public int getCycles() {
