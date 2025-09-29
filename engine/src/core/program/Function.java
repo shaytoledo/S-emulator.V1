@@ -341,5 +341,12 @@ public class Function implements Program {
     }
 
 
+    public Function clone () {
+        List<Instruction> clonedInstructions = instructions
+                .stream()
+                .map(Instruction::clone)
+                .collect(java.util.stream.Collectors.toList());;
+        return new Function(name, userString,clonedInstructions);
+    }
 }
 

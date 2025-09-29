@@ -28,11 +28,16 @@ public class QuoteInstruction extends AbstractInstruction {
     FunctionArgument arguments;
     List<Function> allFunctions;
 
+    String functionArguments;
+    Variable variable;
+
     int cycles = 0;
 
     public QuoteInstruction(String name, String functionArguments,Variable var,  List<Function> funcs, Label lineLabel) {
         super(InstructionData.QUOTE, var, lineLabel);
         List<Argument> arguments = new ArrayList<>(toArguments(functionArguments ,funcs));
+        this.functionArguments = functionArguments;
+        this.variable = var;
         this.arguments = new FunctionArgument(name, arguments, funcs);
         this.allFunctions = funcs;
 
@@ -55,6 +60,15 @@ public class QuoteInstruction extends AbstractInstruction {
                 this.function = f;
                 break;
             }
+        }
+    }
+
+    @Override
+    public Instruction clone() {
+        if(getLabel() == null) {
+            return new QuoteInstruction(function.getName(), functionArguments, variable, allFunctions);
+        } else {
+            return new QuoteInstruction(function.getName(), functionArguments, variable, allFunctions, getLabel());
         }
     }
 
@@ -238,14 +252,13 @@ public class QuoteInstruction extends AbstractInstruction {
         }
 
         // Delegate expansion to the function argument with the appropriate extension level
-        Pair<List<Instruction>, Label> expandedResult = arguments.extend(extensionLevel, vlm);
-        List<Instruction> expandedInstructions = expandedResult.getKey();
-        Label exitLabel = expandedResult.getValue();
-
-        // If there's a valid exit label, add a final instruction to assign the result to the target variable
-        expandedInstructions.add(new AssignmentInstruction(getVariable(), new VariableImpl(VariableType.RESULT, 1), exitLabel));
-
-        return expandedInstructions;
+        List<Instruction> expandedResult = arguments.extend(extensionLevel, vlm);
+        return arguments.addEndInstrucrion(getVariable());
+//        List<Instruction> expandedInstructions = expandedResult.getKey();
+//        Label exitLabel = expandedResult.getValue();
+//
+//        // If there's a valid exit label, add a final instruction to assign the result to the target variable
+//        expandedInstructions.add(new AssignmentInstruction(getVariable(), new VariableImpl(VariableType.RESULT, 1), exitLabel));
     }
 
 }

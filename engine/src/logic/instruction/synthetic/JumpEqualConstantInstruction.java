@@ -33,6 +33,15 @@ public class JumpEqualConstantInstruction extends AbstractInstruction {
     }
 
     @Override
+    public Instruction clone() {
+        if(getLabel() == null) {
+            return new JumpEqualConstantInstruction(getVariable(), target, constant);
+        } else {
+            return new JumpEqualConstantInstruction(getVariable(), target, constant, getLabel());
+        }
+    }
+
+    @Override
     public Label execute(ExecutionContext context, VariableAndLabelMenger vlm) {
         if (context.getVariableValue(getVariable()) == constant) {
             return target;

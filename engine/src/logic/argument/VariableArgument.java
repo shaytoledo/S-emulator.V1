@@ -32,8 +32,8 @@ public class VariableArgument implements Argument {
     }
 
     @Override
-    public Pair<List<Instruction>, Label> extend(int extensionLevel, VariableAndLabelMenger vlm) {
-        return new Pair<>(List.of(), null);
+    public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
+        return List.of();
     }
 
     @Override

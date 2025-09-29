@@ -23,5 +23,5 @@ public interface Instruction {
     List<Label> getAllLabels();
     void replace(Variable oldVar, Variable newVar);
     void replace(Label oldLabel, Label newLabel);
-
+    Instruction clone();
     }

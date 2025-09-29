@@ -29,6 +29,15 @@ public class JumpZeroInstruction extends AbstractInstruction {
     }
 
     @Override
+    public Instruction clone() {
+        if(getLabel() == null) {
+            return new JumpZeroInstruction(getVariable(), jnzLabel);
+        } else {
+            return new JumpZeroInstruction(getVariable(), jnzLabel, getLabel());
+        }
+    }
+
+    @Override
     public List<String> getAllInfo() {
         List<String> list = new ArrayList<>();
         if (getLabel() != null) {

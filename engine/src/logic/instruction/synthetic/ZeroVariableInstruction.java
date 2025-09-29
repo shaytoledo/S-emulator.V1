@@ -26,6 +26,15 @@ public class ZeroVariableInstruction extends AbstractInstruction {
     }
 
     @Override
+    public Instruction clone() {
+        if(getLabel() == null) {
+            return new ZeroVariableInstruction(getVariable());
+        } else {
+            return new ZeroVariableInstruction(getVariable(), getLabel());
+        }
+    }
+
+    @Override
     public Label execute(ExecutionContext context, VariableAndLabelMenger vlm) {
         context.updateVariable(getVariable(), 0L);
         return FixedLabel.EMPTY;

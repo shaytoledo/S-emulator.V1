@@ -31,6 +31,15 @@ public class JumpEqualVariableInstruction extends AbstractInstruction {
         this.other = other;
     }
 
+    @Override
+    public Instruction clone() {
+        if(getLabel() == null) {
+            return new JumpEqualVariableInstruction(getVariable(), jnzLabel, other);
+        } else {
+            return new JumpEqualVariableInstruction(getVariable(), jnzLabel, other, getLabel());
+        }
+    }
+
     public Variable getOther() {
         return other;
     }

@@ -20,7 +20,8 @@ public interface Argument {
     int getMaxLevel();
 
     // Expand the argument into instructions if needed
-    Pair<List<Instruction>, Label> extend(int extensionLevel, VariableAndLabelMenger vlm);
+    //Pair<List<Instruction>, Label> extend(int extensionLevel, VariableAndLabelMenger vlm);
+    List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm);
 
     // Get all the labels and variables in this section
     List<String> getAllInfo();

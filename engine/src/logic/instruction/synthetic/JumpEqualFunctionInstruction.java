@@ -27,13 +27,16 @@ public class JumpEqualFunctionInstruction extends AbstractInstruction {
     Function function;
     FunctionArgument arguments;
     List<Function> allFunctions;
-
     Label jnzLabel; // label to jump if not equal
 
+    String functionArguments;
+    Variable variable;
     int cycles = 0;
 
     public JumpEqualFunctionInstruction(String name, String functionArguments, Variable var, List<Function> funcs, Label lineLabel, Label jnzLabel) {
         super(InstructionData.JUMP_EQUAL_FUNCTION, var, lineLabel);
+        this.functionArguments = functionArguments;
+        this.variable = var;
         List<Argument> arguments = new ArrayList<>(toArguments(functionArguments ,funcs));
         this.arguments = new FunctionArgument(name, arguments, funcs);
         this.allFunctions = funcs;
@@ -59,6 +62,15 @@ public class JumpEqualFunctionInstruction extends AbstractInstruction {
                 this.function = f;
                 break;
             }
+        }
+    }
+
+    @Override
+    public Instruction clone() {
+        if(getLabel() == null) {
+            return new JumpEqualFunctionInstruction(function.getName(), functionArguments, variable, allFunctions, jnzLabel);
+        } else {
+            return new JumpEqualFunctionInstruction(function.getName(), functionArguments, variable, allFunctions, jnzLabel, getLabel());
         }
     }
 
@@ -251,24 +263,7 @@ public class JumpEqualFunctionInstruction extends AbstractInstruction {
 
     @Override
     public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
-        if (extensionLevel <= 0) {
-            return List.of(this);
-        }
-
-        // Delegate expansion to the function argument with the appropriate extension level
-        Pair<List<Instruction>, Label> expandedResult = arguments.extend(extensionLevel, vlm);
-        List<Instruction> expandedInstructions = expandedResult.getKey();
-        Label exitLabel = expandedResult.getValue();
-
-        // If there's a valid exit label, add a final instruction to assign the result to the target variable
-        if (exitLabel != null) {
-            expandedInstructions.add(new AssignmentInstruction(getVariable(), new VariableImpl(VariableType.RESULT, 1), exitLabel));
-        } else {
-            // If no exit label, still add assignment instruction without label
-            expandedInstructions.add(new AssignmentInstruction(getVariable(), new VariableImpl(VariableType.RESULT, 1)));
-        }
-
-        return expandedInstructions;
+        return List.of(this);
     }
 
 

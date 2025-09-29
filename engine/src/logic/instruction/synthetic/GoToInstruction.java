@@ -28,6 +28,15 @@ public class GoToInstruction extends AbstractInstruction {
     }
 
     @Override
+    public Instruction clone() {
+        if(getLabel() == null) {
+            return new GoToInstruction(getVariable(), target);
+        } else {
+            return new GoToInstruction(getVariable(), target, getLabel());
+        }
+    }
+
+    @Override
     public Label execute(ExecutionContext context, VariableAndLabelMenger vlm) {
         return target;
     }

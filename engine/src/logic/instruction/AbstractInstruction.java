@@ -1,5 +1,6 @@
 package logic.instruction;
 
+import logic.instruction.basic.NoOpInstruction;
 import logic.label.FixedLabel;
 import logic.label.Label;
 import logic.variable.Variable;
@@ -63,6 +64,10 @@ public abstract class AbstractInstruction implements Instruction {
 
     public void setLabel(Label label) {
         this.label = label;
+    }
+
+    public Instruction clone() {
+        return new NoOpInstruction(getVariable());
     }
 
 }

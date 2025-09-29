@@ -24,6 +24,15 @@ public class DecreaseInstruction extends AbstractInstruction {
         basic = true;
     }
 
+    @Override
+    public Instruction clone() {
+        if(getLabel() != null) {
+            return new DecreaseInstruction(getVariable(), getLabel());
+        }
+        else {
+            return new DecreaseInstruction(getVariable());
+        }
+    }
 
     @Override
     public Label execute(ExecutionContext context, VariableAndLabelMenger vlm) {

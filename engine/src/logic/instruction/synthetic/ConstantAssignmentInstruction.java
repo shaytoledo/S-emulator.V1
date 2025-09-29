@@ -28,6 +28,15 @@ public class ConstantAssignmentInstruction extends AbstractInstruction {
     }
 
     @Override
+    public Instruction clone() {
+        if(getLabel() == null) {
+            return new ConstantAssignmentInstruction(getVariable(), constant);
+        } else {
+            return new ConstantAssignmentInstruction(getVariable(), constant, getLabel());
+        }
+    }
+
+    @Override
     public Label execute(ExecutionContext context, VariableAndLabelMenger vlm) {
         context.updateVariable(getVariable(), constant);
         return FixedLabel.EMPTY;

@@ -30,6 +30,15 @@ public class AssignmentInstruction extends AbstractInstruction {
         this.assignedVariable = source;
     }
 
+    @Override
+    public Instruction clone() {
+        if(getLabel() == null) {
+            return new AssignmentInstruction(getVariable(), assignedVariable);
+        } else {
+            return new AssignmentInstruction(getVariable(), assignedVariable, getLabel());
+        }
+    }
+
     public Variable getAssignedVariable() {
         return assignedVariable;
     }

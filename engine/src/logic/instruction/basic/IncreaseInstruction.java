@@ -26,6 +26,16 @@ public class IncreaseInstruction extends AbstractInstruction {
     }
 
     @Override
+    public Instruction clone() {
+        if(getLabel() != null) {
+            return new IncreaseInstruction(getVariable(), getLabel());
+        }
+        else {
+            return new IncreaseInstruction(getVariable());
+        }
+    }
+
+    @Override
     public Label execute(ExecutionContext context, VariableAndLabelMenger vlm) {
 
         long variableValue = context.getVariableValue(getVariable());

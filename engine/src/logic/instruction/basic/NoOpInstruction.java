@@ -25,6 +25,15 @@ public class NoOpInstruction extends AbstractInstruction {
     }
 
     @Override
+    public Instruction clone() {
+        if(getLabel() == null)
+            return new NoOpInstruction(getVariable());
+        else {
+            return new NoOpInstruction(getVariable(), getLabel());
+        }
+    }
+
+    @Override
     public Label execute(ExecutionContext context, VariableAndLabelMenger vlm) {
         return FixedLabel.EMPTY;
     }

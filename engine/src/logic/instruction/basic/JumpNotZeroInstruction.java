@@ -29,6 +29,15 @@ public class JumpNotZeroInstruction extends AbstractInstruction {
     }
 
     @Override
+    public Instruction clone() {
+        if(getLabel() == null)
+            return new JumpNotZeroInstruction(getVariable(), jnzLabel);
+        else {
+            return new JumpNotZeroInstruction(getVariable(), jnzLabel, getLabel());
+        }
+    }
+
+    @Override
     public Label execute(ExecutionContext context, VariableAndLabelMenger vlm) {
         long variableValue = context.getVariableValue(getVariable());
 

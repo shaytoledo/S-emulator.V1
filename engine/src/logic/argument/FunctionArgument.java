@@ -6,7 +6,6 @@ import javafx.util.Pair;
 import logic.execution.ExecutionContext;
 import logic.execution.ExecutionContextImpl;
 import logic.execution.FunctionExecutor;
-import logic.exception.FunctionNotExist;
 import logic.instruction.Instruction;
 import logic.instruction.synthetic.AssignmentInstruction;
 import logic.label.FixedLabel;
@@ -14,10 +13,9 @@ import logic.label.Label;
 import logic.variable.Variable;
 import logic.variable.VariableImpl;
 import logic.variable.VariableType;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class FunctionArgument implements Argument {
 
@@ -33,6 +31,7 @@ public class FunctionArgument implements Argument {
     public List<Instruction> instructions;
 
     int cycles = 0;
+    Label exitLabel;
 
     private final List<Function> functions;
 
@@ -46,7 +45,7 @@ public class FunctionArgument implements Argument {
             if (f.getName().equals(name)) {
                 this.instructions = new ArrayList<>(f.getInstructions());
                 this.userString = f.getUserString();
-                this.function = f;
+                this.function = f.clone();
                 break;
             }
         }
@@ -113,74 +112,223 @@ public class FunctionArgument implements Argument {
 
 
 
-
+    // 1. Change inputs of instructions to new work variables
+    // 2. Change all old input variables to the new work variables
+    // 3. Replace all old work variables to new work variables
+    // 4. Replace all old labels to new labels
 
     @Override
-    public Pair<List<Instruction>, Label> extend(int extensionLevel, VariableAndLabelMenger vlm) {
+    //public Pair<List<Instruction>, Label> extend(int extensionLevel, VariableAndLabelMenger vlm) {
+    public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
+
         if (extensionLevel <= 0) {
-            return new Pair<>(List.of(), null);
+            //return new Pair<>(List.of(), null);\
+            return List.of();
+        }
+        else {
+            extensionLevel--;
         }
 
-        // need to change inputs of instructions to new work variables
-        // need to change all old input variables to the new work variables
-        // need to change all old work variables to new work variables
-        // need to change all old labels to new labels
 
         List<Instruction> instructions = new ArrayList<>();
-        Label exitLabel = vlm.newLabel();
 
-        // 1. Create new variables for function arguments and map them
-        // and extend the instructions for each argument
-        List<Pair<Variable, Variable>> variableMapping = new ArrayList<>();
+        // (1+2) Replace all input variables with new work variables and add assignment instructions from input to new work variables
         for (int i = 0; i < arguments.size(); i++) {
-            Variable oldVar = new VariableImpl(VariableType.INPUT, i + 1);
             Variable newVar = vlm.newZVariable();
-            variableMapping.add(new Pair<>(oldVar, newVar));
-            // 1) Prepare fresh Z-vars for each function argument (x1..xk -> zArg[i])
-            List<Pair<Variable, Variable>> xToZArg = new ArrayList<>();
-
-
-
-            // 2. Replace variables in function instructions with our new variables
-            Map<Label, Label> labelMapping = new HashMap<>();
-            List<Instruction> functionInstructions = new ArrayList<>();
-
-            // Clone all function instructions
-            for (Instruction instr : function.getInstructions()) {
-                Instruction clonedInstr = instr;
-                functionInstructions.add(clonedInstr);
+            //assign new work variable to the input variable
+            instructions.add(new AssignmentInstruction(newVar, new VariableImpl(VariableType.INPUT, i + 1)));
+            // replace all input variables with new work variables
+            for (Instruction inst : function.getInstructions()) {
+                inst.replace(new VariableImpl(VariableType.INPUT, i + 1), newVar);
             }
+        }
 
-            // 3. Replace all labels in the function with new labels
-            for (Instruction instr : functionInstructions) {
-                for (Label label : instr.getAllLabels()) {
-                    if (label != null && !label.equals(FixedLabel.EMPTY)) {
-                        if (!labelMapping.containsKey(label)) {
-                            labelMapping.put(label, vlm.newLabel());
-                        }
-                        instr.replace(label, labelMapping.get(label));
-                    }
+        // Use Set to avoid duplicates
+        Set<Label> labelsInFunction = new HashSet<>();
+        Set<Variable> workVariablesInFunction = new HashSet<>();
+
+        // Get all Labels and Variables in the function
+        for (Instruction inst : function.getInstructions()) {
+            // add all labels (duplicates automatically ignored in the Set)
+            labelsInFunction.addAll(inst.getAllLabels());
+
+            // add only work variables
+            workVariablesInFunction.addAll(
+                    inst.getAllVariables().stream()
+                            .filter(v -> v.getType() == VariableType.WORK)
+                            .collect(Collectors.toSet())
+            );
+        }
+
+        // (3) Replace all old work variables with new work variables
+        List<Pair<Variable, Variable>> oldNewWorkVars = new ArrayList<>();
+        for (Variable oldVar : workVariablesInFunction) {
+            Variable newVar = vlm.newZVariable();
+            oldNewWorkVars.add(new Pair<>(oldVar, newVar));
+            // replace all old work variables with new work variables
+            for (Instruction inst : function.getInstructions()) {
+                inst.replace(oldVar, newVar);
+            }
+        }
+
+        // (4) Replace all old labels with new labels
+        List<Pair<Label, Label>> oldNewLabels = new ArrayList<>();
+        for (Label oldLabel : labelsInFunction) {
+            Label newLabel = vlm.newLabel();
+            if (oldLabel.equals(FixedLabel.EXIT)) {
+                oldNewLabels.add(new Pair<>(oldLabel, newLabel));
+                exitLabel = newLabel;
+            } else {
+                oldNewLabels.add(new Pair<>(oldLabel, newLabel));
+            }
+            // replace all old labels with new labels
+            for (Instruction inst : function.getInstructions()) {
+                inst.replace(oldLabel, newLabel);
+            }
+        }
+
+        // now in instructions we have the new assignment instructions of the arguments to new work variables,
+        // function instructions with replaced variables and labels
+        instructions.addAll(function.getInstructions());
+
+        // update function instructions
+        function.setInstructions(instructions);
+
+
+        // Get the maximum instruction level of the function after all changes
+        int maxInstructionLevel = function.calculateMaxDegree();
+
+        // Check if we need to extend further
+        if (extensionLevel > 0) {
+
+            // need to extend only the instructions
+            List<Instruction> extended = new ArrayList<>();
+            if (extensionLevel <= maxInstructionLevel) {
+                for (Instruction inst : function.getInstructions()) {
+                    extended.addAll(inst.extend(extensionLevel, vlm));
                 }
             }
+            // need to extend the arguments too
+            else {
+                // extend of the instructions to the max level
+                for (Instruction inst : function.getInstructions()) {
+                    extended.addAll(inst.extend(extensionLevel, vlm));
+                }
+                extensionLevel = extensionLevel - maxInstructionLevel;
 
-            // 4. Replace all variables in the function instructions
-            for (Instruction instr : functionInstructions) {
-                // Replace input variables with our new variables
-                for (Pair<Variable, Variable> mapping : variableMapping) {
-                    instr.replace(mapping.getKey(), mapping.getValue());
+                // extend the arguments
+                for (Argument arg : arguments) {
+                    extended.addAll(arg.extend(extensionLevel, vlm));
                 }
             }
-
-            // Add function's instructions to our list
-            instructions.addAll(functionInstructions);
-
-            // 5. Add an instruction at the end to assign the result to y
-            Variable resultVar = new VariableImpl(VariableType.RESULT, 1);
-            instructions.add(new AssignmentInstruction(resultVar, resultVar, exitLabel));
-
-            return new Pair<>(instructions, exitLabel);
+            function.setInstructions(extended);
+            return extended;
+        } else {
+            // just return the instructions as they are now
+            return function.getInstructions();
         }
     }
+
+    public List<Instruction> addEndInstrucrion(Variable var) {
+        instructions.add(new AssignmentInstruction(var, new VariableImpl(VariableType.RESULT, 1), exitLabel));
+        return instructions;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//
+//        List<Instruction> instructions = new ArrayList<>();
+//        Label exitLabel = vlm.newLabel();
+//
+//        // 1. Create new variables for function arguments and map them
+//        // and extend the instructions for each argument
+//        List<Pair<Variable, Variable>> variableMapping = new ArrayList<>();
+//        for (int i = 0; i < arguments.size(); i++) {
+//            Variable oldVar = new VariableImpl(VariableType.INPUT, i + 1);
+//            Variable newVar = vlm.newZVariable();
+//            variableMapping.add(new Pair<>(oldVar, newVar));
+//            // 1) Prepare fresh Z-vars for each function argument (x1..xk -> zArg[i])
+//            List<Pair<Variable, Variable>> xToZArg = new ArrayList<>();
+//
+//
+//
+//            // 2. Replace variables in function instructions with our new variables
+//            Map<Label, Label> labelMapping = new HashMap<>();
+//            List<Instruction> functionInstructions = new ArrayList<>();
+//
+//            // Clone all function instructions
+//            for (Instruction instr : function.getInstructions()) {
+//                Instruction clonedInstr = instr;
+//                functionInstructions.add(clonedInstr);
+//            }
+//
+//            // 3. Replace all labels in the function with new labels
+//            for (Instruction instr : functionInstructions) {
+//                for (Label label : instr.getAllLabels()) {
+//                    if (label != null && !label.equals(FixedLabel.EMPTY)) {
+//                        if (!labelMapping.containsKey(label)) {
+//                            labelMapping.put(label, vlm.newLabel());
+//                        }
+//                        instr.replace(label, labelMapping.get(label));
+//                    }
+//                }
+//            }
+//
+//            // 4. Replace all variables in the function instructions
+//            for (Instruction instr : functionInstructions) {
+//                // Replace input variables with our new variables
+//                for (Pair<Variable, Variable> mapping : variableMapping) {
+//                    instr.replace(mapping.getKey(), mapping.getValue());
+//                }
+//            }
+//
+//            // Add function's instructions to our list
+//            instructions.addAll(functionInstructions);
+//
+//            // 5. Add an instruction at the end to assign the result to y
+//            Variable resultVar = new VariableImpl(VariableType.RESULT, 1);
+//            instructions.add(new AssignmentInstruction(resultVar, resultVar, exitLabel));
+//
+//            return new Pair<>(instructions, exitLabel);
+//        }
+//    }
 
 
     @Override
