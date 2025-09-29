@@ -9,6 +9,7 @@ import logic.execution.FunctionExecutor;
 import logic.exception.FunctionNotExist;
 import logic.instruction.Instruction;
 import logic.instruction.synthetic.AssignmentInstruction;
+import logic.label.FixedLabel;
 import logic.label.Label;
 import logic.variable.Variable;
 import logic.variable.VariableImpl;
@@ -68,18 +69,9 @@ public class FunctionArgument implements Argument {
         // Create a clean execution context for this function evaluation
         ExecutionContextImpl functionContext = new ExecutionContextImpl(values, functions);
 
-        // Ensure function is not null
-        if (function == null) {
-            throw new RuntimeException("Function not found: " + name);
-        }
-
         // Execute the function with the evaluated arguments
         FunctionExecutor currentExecutor = new FunctionExecutor(function, functions, functionContext);
         long result = currentExecutor.run(values, cycles);
-
-//        Variable res = new VariableImpl(VariableType.RESULT, 1);
-//        context.updateVariable(res,result);
-
 
         return result;
     }
@@ -126,7 +118,7 @@ public class FunctionArgument implements Argument {
 
         // Clone all function instructions
         for (Instruction instr : function.getInstructions()) {
-            Instruction clonedInstr = instr.clone();
+            Instruction clonedInstr = instr;
             functionInstructions.add(clonedInstr);
         }
 

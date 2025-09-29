@@ -1,8 +1,10 @@
 package logic.argument;
 
 import core.program.VariableAndLabelMenger;
+import javafx.util.Pair;
 import logic.execution.ExecutionContext;
 import logic.instruction.Instruction;
+import logic.label.Label;
 import logic.variable.Variable;
 
 import java.util.List;
@@ -35,8 +37,8 @@ public class VariableArgument implements Argument {
     }
 
     @Override
-    public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
-        return List.of();
+    public Pair<List<Instruction>, Label> extend(int extensionLevel, VariableAndLabelMenger vlm) {
+        return new Pair<>(List.of(), null);
     }
 
     @Override

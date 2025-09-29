@@ -3,6 +3,7 @@ package core.program;
 import dto.InstructionView;
 import dto.functionView;
 import logic.instruction.Instruction;
+import logic.instruction.synthetic.JumpEqualFunctionInstruction;
 import logic.instruction.synthetic.QuoteInstruction;
 import logic.label.Label;
 import logic.variable.Variable;
@@ -112,7 +113,7 @@ public class ProgramImpl implements Program {
         return new ArrayList<>(variables);
     }
 
-    private static void addIfStartsWithX(Set<String> variables, String curr) {
+    public static void addIfStartsWithX(Set<String> variables, String curr) {
         if (curr == null) return;
         String t = curr.trim().toLowerCase();
         if (t.startsWith("x")) {
@@ -168,7 +169,7 @@ public class ProgramImpl implements Program {
     }
 
     // convert Instruction to InstructionView for display in table
-    private static InstructionView toView(Instruction ins, int index) {
+    public static InstructionView toView(Instruction ins, int index) {
         int number = index;
         String type = ins.isBasic() ? "B" : "S";
         String label = (ins.getLabel() == null)
@@ -176,8 +177,7 @@ public class ProgramImpl implements Program {
                 : ins.getLabel().getLabelRepresentation();
         String command = ins.toDisplayString();
         int midCycles = ins.cycles();
-        String cycles = ins instanceof QuoteInstruction? "5+" : String.valueOf(midCycles);
-
+        String cycles = ((ins instanceof QuoteInstruction) || (ins instanceof JumpEqualFunctionInstruction))  ? String.valueOf(midCycles) + "+": String.valueOf(midCycles);
         return new InstructionView(number, type, label, command, cycles);
     }
 
@@ -201,7 +201,7 @@ public class ProgramImpl implements Program {
 
             String command = inst.toDisplayString();
             int midCycles = inst.cycles();
-            String cycles = inst instanceof QuoteInstruction? "5+" : String.valueOf(midCycles);
+            String cycles = ((inst instanceof QuoteInstruction) || (inst instanceof JumpEqualFunctionInstruction))  ? String.valueOf(midCycles) + "+": String.valueOf(midCycles);
 
             InstructionView curr = new InstructionView(
                     number,
@@ -310,5 +310,4 @@ public class ProgramImpl implements Program {
         }
         return result;
     }
-
 }

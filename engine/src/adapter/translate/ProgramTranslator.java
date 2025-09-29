@@ -311,7 +311,7 @@ public final class ProgramTranslator {
                             if (targetLabelName.isBlank()) {
                                 errors.add(new ArgsException(errorMessageByLine(idx, "JUMP_EQUAL_VARIABLE missing 'JEQLabel'")));
                                 instruction = new NoOpInstruction(variable, lineLabel);
-                            } else if (!targetLabelName.equals("EXIT") && !labels.contains(targetLabelName)) {
+                                } else if (!targetLabelName.equals("EXIT") && !labels.contains(targetLabelName)) {
                                 errors.add(new LabelException(errorMessageByLine(idx, "Unknown JEVariableLabel label: " + targetLabelName)));
                             } else {
                                 if (otherVarName.isBlank()) {
@@ -352,22 +352,60 @@ public final class ProgramTranslator {
                                         errors.add(new ArgsException(errorMessageByLine(idx, "QUOTE bad 'functionArguments': " + functionArguments)));
                                         instruction = new NoOpInstruction(TranslatorHelper.newVarStrict("y"), lineLabel);
                                     }
-
                                 } else {
                                     // function does not exist
                                     errors.add(new MissingFunctionName(errorMessageByLine(idx, "QUOTE unknown function name: " + targetFunctionName)));
                                     instruction = new NoOpInstruction(TranslatorHelper.newVarStrict("y"), lineLabel);
                                 }
-
-
                             }
                         } else {
                             errors.add(new MissingVariableException(errorMessageByLine(idx, "QUOTE missing target variable")));
                             instruction = new NoOpInstruction(TranslatorHelper.newVarStrict("y"), lineLabel);
                         }
-
-
                     }
+
+                    case "JUMP_EQUAL_FUNCTION" -> {
+                        if(variable != null) {
+                            String targetFunctionName = args.getOrDefault("functionName", "");
+                            if (targetFunctionName.isEmpty()) {
+                                // missing function name
+                                errors.add(new MissingFunctionName(errorMessageByLine(idx, "QUOTE missing 'functionName'")));
+                                instruction = new NoOpInstruction(TranslatorHelper.newVarStrict("y"), lineLabel);
+                            } else {
+                                // function name provided
+                                String jnzLabel = args.getOrDefault("JEFunctionLabel", "");
+                                if (!jnzLabel.isBlank() && !labels.contains(jnzLabel)) {
+
+                                    if (functionExists(targetFunctionName, funcs)) {
+                                        // function exists
+                                        String functionArguments = args.getOrDefault("functionArguments", "");
+
+                                        // create the qute instruction // need to pase all funcs errores
+                                        try {
+                                            Label target = labelsByName.computeIfAbsent(jnzLabel, LabelImpl::new);
+
+                                            // Create new Jump equal function instruction and set there the function name and arguments
+                                            instruction = new JumpEqualFunctionInstruction(targetFunctionName, functionArguments, variable, funcs, lineLabel, target);
+                                        } catch (IllegalArgumentException ex) {
+                                            errors.add(new ArgsException(errorMessageByLine(idx, "QUOTE bad 'functionArguments': " + functionArguments)));
+                                            instruction = new NoOpInstruction(TranslatorHelper.newVarStrict("y"), lineLabel);
+                                        }
+                                    } else {
+                                        // function does not exist
+                                        errors.add(new MissingFunctionName(errorMessageByLine(idx, "QUOTE unknown function name: " + targetFunctionName)));
+                                        instruction = new NoOpInstruction(TranslatorHelper.newVarStrict("y"), lineLabel);
+                                    }
+                                } else {
+                                    errors.add(new MissingFormatArgumentException(errorMessageByLine(idx, "JUMP_EQUAL_FUNCTION missing JEFunctionLabel")));
+                                    instruction = new NoOpInstruction(TranslatorHelper.newVarStrict("y"), lineLabel);
+                                }
+                            }
+                        } else {
+                            errors.add(new MissingVariableException(errorMessageByLine(idx, "JUMP_EQUAL_FUNCTION missing target variable")));
+                            instruction = new NoOpInstruction(TranslatorHelper.newVarStrict("y"), lineLabel);
+                        }
+                    }
+
 
                     default -> {
                         errors.add(new UnknownInstruction(errorMessageByLine(idx, "Unknown synthetic instruction: " + name)));
@@ -643,7 +681,7 @@ public final class ProgramTranslator {
                     }
 
                     case "QUOTE" -> {
-                        if(variable != null) {
+                        if (variable != null) {
                             String targetFunctionName = args.getOrDefault("functionName", "");
                             if (targetFunctionName.isEmpty()) {
                                 // missing function name
@@ -658,7 +696,7 @@ public final class ProgramTranslator {
                                     // create the qute instruction // need to pase all funcs errores
                                     try {
                                         // Create new qute instruction and set there the function name and arguments
-                                        instruction = new QuoteInstruction(targetFunctionName, functionArguments,variable, funcs, lineLabel);
+                                        instruction = new QuoteInstruction(targetFunctionName, functionArguments, variable, funcs, lineLabel);
                                     } catch (IllegalArgumentException ex) {
                                         errors.add(new ArgsException(errorMessageByLine(idx, "QUOTE bad 'functionArguments': " + functionArguments)));
                                         instruction = new NoOpInstruction(TranslatorHelper.newVarStrict("y"), lineLabel);
@@ -669,15 +707,53 @@ public final class ProgramTranslator {
                                     errors.add(new MissingFunctionName(errorMessageByLine(idx, "QUOTE unknown function name: " + targetFunctionName)));
                                     instruction = new NoOpInstruction(TranslatorHelper.newVarStrict("y"), lineLabel);
                                 }
-
-
                             }
                         } else {
                             errors.add(new MissingVariableException(errorMessageByLine(idx, "QUOTE missing target variable")));
                             instruction = new NoOpInstruction(TranslatorHelper.newVarStrict("y"), lineLabel);
                         }
+                    }
 
+                    case "JUMP_EQUAL_FUNCTION" -> {
+                        if(variable != null) {
+                            String targetFunctionName = args.getOrDefault("functionName", "");
+                            if (targetFunctionName.isEmpty()) {
+                                // missing function name
+                                errors.add(new MissingFunctionName(errorMessageByLine(idx, "QUOTE missing 'functionName'")));
+                                instruction = new NoOpInstruction(TranslatorHelper.newVarStrict("y"), lineLabel);
+                            } else {
+                                // function name provided
+                                String jnzLabel = args.getOrDefault("JEFunctionLabel", "");
+                                if (!jnzLabel.isBlank() && !labels.contains(jnzLabel)) {
 
+                                    if (functionExists(targetFunctionName, funcs)) {
+                                        // function exists
+                                        String functionArguments = args.getOrDefault("functionArguments", "");
+
+                                        // create the qute instruction // need to pase all funcs errores
+                                        try {
+                                            Label target = labelsByName.computeIfAbsent(jnzLabel, LabelImpl::new);
+
+                                            // Create new Jump equal function instruction and set there the function name and arguments
+                                            instruction = new JumpEqualFunctionInstruction(targetFunctionName, functionArguments, variable, funcs, lineLabel, target);
+                                        } catch (IllegalArgumentException ex) {
+                                            errors.add(new ArgsException(errorMessageByLine(idx, "QUOTE bad 'functionArguments': " + functionArguments)));
+                                            instruction = new NoOpInstruction(TranslatorHelper.newVarStrict("y"), lineLabel);
+                                        }
+                                    } else {
+                                        // function does not exist
+                                        errors.add(new MissingFunctionName(errorMessageByLine(idx, "QUOTE unknown function name: " + targetFunctionName)));
+                                        instruction = new NoOpInstruction(TranslatorHelper.newVarStrict("y"), lineLabel);
+                                    }
+                                } else {
+                                    errors.add(new MissingFormatArgumentException(errorMessageByLine(idx, "JUMP_EQUAL_FUNCTION missing JEFunctionLabel")));
+                                    instruction = new NoOpInstruction(TranslatorHelper.newVarStrict("y"), lineLabel);
+                                }
+                            }
+                        } else {
+                            errors.add(new MissingVariableException(errorMessageByLine(idx, "JUMP_EQUAL_FUNCTION missing target variable")));
+                            instruction = new NoOpInstruction(TranslatorHelper.newVarStrict("y"), lineLabel);
+                        }
                     }
 
                     default -> {
