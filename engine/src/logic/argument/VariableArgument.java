@@ -22,11 +22,6 @@ public class VariableArgument implements Argument {
     }
 
     @Override
-    public  List<Exception> validate(ExecutionContext context) {
-        return List.of();
-    }
-
-    @Override
     public String toDisplayString() {
         return me.getRepresentation();
     }
@@ -46,8 +41,4 @@ public class VariableArgument implements Argument {
         return List.of(me.getRepresentation());
     }
 
-    @Override
-    public List<Instruction> getExtendedInstructions(int extensionLevel, VariableAndLabelMenger vlm) {
-        return List.of();
-    }
 }

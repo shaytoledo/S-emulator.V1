@@ -13,9 +13,6 @@ public interface Argument {
     // Run the argument and return its value
     long evaluate(ExecutionContext context, VariableAndLabelMenger vlm, int cycleCount);
 
-    // Validate if the argument is legal in the current context
-    List<Exception> validate(ExecutionContext context);
-
     // Display-friendly string for debugging/logs
     String toDisplayString();
 
@@ -28,5 +25,4 @@ public interface Argument {
     // Get all the labels and variables in this section
     List<String> getAllInfo();
 
-    List<Instruction> getExtendedInstructions(int extensionLevel, VariableAndLabelMenger vlm);
 }

@@ -3,6 +3,7 @@ package logic.instruction;
 import logic.label.FixedLabel;
 import logic.label.Label;
 import logic.variable.Variable;
+import logic.variable.VariableImpl;
 
 import java.util.List;
 
@@ -63,4 +64,5 @@ public abstract class AbstractInstruction implements Instruction {
     public void setLabel(Label label) {
         this.label = label;
     }
+
 }

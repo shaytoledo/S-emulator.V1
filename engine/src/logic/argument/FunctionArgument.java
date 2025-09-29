@@ -53,6 +53,39 @@ public class FunctionArgument implements Argument {
 
     }
 
+    @Override
+    public String toDisplayString() {
+        StringBuilder sb = new StringBuilder();
+        for (Argument arg : arguments) {
+            sb.append(",");
+            sb.append(arg.toDisplayString());
+        }
+
+        return "(" + userString + sb + ")";
+    }
+
+    @Override
+    public int getMaxLevel() {
+
+        int base = 0;
+
+        for (Function func : functions) {
+            if (func.getName().equals(name)) {
+                base = func.calculateMaxDegree(); // ensure its calculated
+            }
+        }
+
+        int best = base + 1; // +1 for the function call itself
+        for (Argument arg : arguments) {
+            if (arg instanceof FunctionArgument) {
+                int sub = 1 + ((FunctionArgument) arg).getMaxLevel(); // +1 for the argument function call itself
+                if (sub > best) {
+                    best = sub;
+                }
+            }
+        }
+        return best;
+    }
 
 
     @Override
@@ -76,104 +109,85 @@ public class FunctionArgument implements Argument {
         return result;
     }
 
+
+
+
+
+
+
     @Override
     public Pair<List<Instruction>, Label> extend(int extensionLevel, VariableAndLabelMenger vlm) {
         if (extensionLevel <= 0) {
             return new Pair<>(List.of(), null);
         }
 
+        // need to change inputs of instructions to new work variables
+        // need to change all old input variables to the new work variables
+        // need to change all old work variables to new work variables
+        // need to change all old labels to new labels
+
         List<Instruction> instructions = new ArrayList<>();
         Label exitLabel = vlm.newLabel();
 
         // 1. Create new variables for function arguments and map them
+        // and extend the instructions for each argument
         List<Pair<Variable, Variable>> variableMapping = new ArrayList<>();
         for (int i = 0; i < arguments.size(); i++) {
             Variable oldVar = new VariableImpl(VariableType.INPUT, i + 1);
             Variable newVar = vlm.newZVariable();
             variableMapping.add(new Pair<>(oldVar, newVar));
+            // 1) Prepare fresh Z-vars for each function argument (x1..xk -> zArg[i])
+            List<Pair<Variable, Variable>> xToZArg = new ArrayList<>();
 
-            // Add assignment instruction for argument value
-            Argument arg = arguments.get(i);
-            if (extensionLevel > 1) {
-                // For higher levels, recursively expand the argument
-                Pair<List<Instruction>, Label> expanded = arg.extend(extensionLevel - 1, vlm);
-                instructions.addAll(expanded.getKey());
 
-                // Now assign the result to our new variable
-                if (expanded.getValue() != null) {
-                    instructions.add(new AssignmentInstruction(newVar, new VariableImpl(VariableType.RESULT, 1), expanded.getValue()));
-                } else {
-                    // Direct assignment if no label was returned
-                    instructions.add(new AssignmentInstruction(newVar, new VariableImpl(VariableType.RESULT, 1)));
-                }
-            } else {
-                // For level 1, just add direct assignment
-                instructions.add(new AssignmentInstruction(newVar, oldVar));
+
+            // 2. Replace variables in function instructions with our new variables
+            Map<Label, Label> labelMapping = new HashMap<>();
+            List<Instruction> functionInstructions = new ArrayList<>();
+
+            // Clone all function instructions
+            for (Instruction instr : function.getInstructions()) {
+                Instruction clonedInstr = instr;
+                functionInstructions.add(clonedInstr);
             }
-        }
 
-        // 2. Replace variables in function instructions with our new variables
-        Map<Label, Label> labelMapping = new HashMap<>();
-        List<Instruction> functionInstructions = new ArrayList<>();
-
-        // Clone all function instructions
-        for (Instruction instr : function.getInstructions()) {
-            Instruction clonedInstr = instr;
-            functionInstructions.add(clonedInstr);
-        }
-
-        // 3. Replace all labels in the function with new labels
-        for (Instruction instr : functionInstructions) {
-            for (Label label : instr.getAllLabels()) {
-                if (label != null && !label.equals(FixedLabel.EMPTY)) {
-                    if (!labelMapping.containsKey(label)) {
-                        labelMapping.put(label, vlm.newLabel());
+            // 3. Replace all labels in the function with new labels
+            for (Instruction instr : functionInstructions) {
+                for (Label label : instr.getAllLabels()) {
+                    if (label != null && !label.equals(FixedLabel.EMPTY)) {
+                        if (!labelMapping.containsKey(label)) {
+                            labelMapping.put(label, vlm.newLabel());
+                        }
+                        instr.replace(label, labelMapping.get(label));
                     }
-                    instr.replace(label, labelMapping.get(label));
                 }
             }
-        }
 
-        // 4. Replace all variables in the function instructions
-        for (Instruction instr : functionInstructions) {
-            // Replace input variables with our new variables
-            for (Pair<Variable, Variable> mapping : variableMapping) {
-                instr.replace(mapping.getKey(), mapping.getValue());
+            // 4. Replace all variables in the function instructions
+            for (Instruction instr : functionInstructions) {
+                // Replace input variables with our new variables
+                for (Pair<Variable, Variable> mapping : variableMapping) {
+                    instr.replace(mapping.getKey(), mapping.getValue());
+                }
             }
+
+            // Add function's instructions to our list
+            instructions.addAll(functionInstructions);
+
+            // 5. Add an instruction at the end to assign the result to y
+            Variable resultVar = new VariableImpl(VariableType.RESULT, 1);
+            instructions.add(new AssignmentInstruction(resultVar, resultVar, exitLabel));
+
+            return new Pair<>(instructions, exitLabel);
         }
-
-        // Add function's instructions to our list
-        instructions.addAll(functionInstructions);
-
-        // 5. Add an instruction at the end to assign the result to y
-        Variable resultVar = new VariableImpl(VariableType.RESULT, 1);
-        instructions.add(new AssignmentInstruction(resultVar, resultVar, exitLabel));
-
-        return new Pair<>(instructions, exitLabel);
     }
-
 
 
     @Override
-    public List<Instruction> getExtendedInstructions(int extensionLevel, VariableAndLabelMenger vlm) {
-        switch (extensionLevel) {
-            case 0:
-                return List.of();
-            case 1:
-                return List.of();
-        }
-
+    public List<String> getAllInfo() {
         return List.of();
     }
-
-
-
-
-
-
-
-
-
+}
 
 
 
@@ -358,67 +372,4 @@ public class FunctionArgument implements Argument {
 //            }
 //        }
 //        return whatToChange;    }
-
-
-
-
-
-
-
-
-
-
-
-    @Override
-    public  List<Exception> validate(ExecutionContext context) {
-        // for each function need to check if exists\
-
-        return List.of();
-    }
-
-
-
-
-
-    @Override
-    public List<String> getAllInfo() {
-        return List.of();
-    }
-
-
-
-
-    @Override
-    public String toDisplayString() {
-        StringBuilder sb = new StringBuilder();
-        for (Argument arg : arguments) {
-            sb.append(",");
-            sb.append(arg.toDisplayString());
-        }
-
-        return "(" + userString + sb + ")";
-    }
-
-    @Override
-    public int getMaxLevel() {
-
-        int base = 0;
-
-        for (Function func : functions) {
-            if (func.getName().equals(name)) {
-                base = func.calculateMaxDegree(); // ensure its calculated
-            }
-        }
-
-        int best = base + 1; // +1 for the function call itself
-        for (Argument arg : arguments) {
-            if( arg instanceof FunctionArgument ) {
-                int sub = 1 + ((FunctionArgument) arg).getMaxLevel(); // +1 for the argument function call itself
-                if (sub > best) {
-                    best = sub;
-                }
-            }
-        }
-        return best;
-    }
-}
+//}

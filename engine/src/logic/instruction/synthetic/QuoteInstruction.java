@@ -58,7 +58,7 @@ public class QuoteInstruction extends AbstractInstruction {
         }
     }
 
-    List<String> splitArguments(String input) {
+    private List<String> splitArguments(String input) {
         List<String> stringArgs = new ArrayList<>();
 
         StringBuilder current = new StringBuilder();
@@ -85,7 +85,8 @@ public class QuoteInstruction extends AbstractInstruction {
 
         return stringArgs;
     }
-    List<Argument> toArguments(String input, List<Function> funcs) {
+
+    private List<Argument> toArguments(String input, List<Function> funcs) {
 
         if(input == null) {
             return List.of();
@@ -95,13 +96,6 @@ public class QuoteInstruction extends AbstractInstruction {
 
         List<Argument> result = new ArrayList<>();
         for (String arg : stringArgs) {
-//            if (arg.toUpperCase().startsWith("CONST")) {
-//                String num = arg.substring("CONST".length()).trim();
-//                if (num.isEmpty())
-//                    throw new IllegalArgumentException("CONST without value: " + arg);
-//                Argument constArg = new ConstantArgument(Long.parseLong(num));
-//                result.add(constArg);
-//            } else if(arg.startsWith("x")) {
             if(arg.startsWith("x")) {
                 Argument varArg = new VariableArgument(new VariableImpl(VariableType.INPUT,Integer.parseInt(arg.substring("x".length()))));
                 result.add(varArg);
@@ -249,29 +243,9 @@ public class QuoteInstruction extends AbstractInstruction {
         Label exitLabel = expandedResult.getValue();
 
         // If there's a valid exit label, add a final instruction to assign the result to the target variable
-        if (exitLabel != null) {
-            expandedInstructions.add(new AssignmentInstruction(getVariable(), new VariableImpl(VariableType.RESULT, 1), exitLabel));
-        } else {
-            // If no exit label, still add assignment instruction without label
-            expandedInstructions.add(new AssignmentInstruction(getVariable(), new VariableImpl(VariableType.RESULT, 1)));
-        }
+        expandedInstructions.add(new AssignmentInstruction(getVariable(), new VariableImpl(VariableType.RESULT, 1), exitLabel));
 
         return expandedInstructions;
     }
-
-
-    private boolean isValidFunction(String name, List<Function> funcs) {
-        for (Function func : funcs) {
-            if (func.getName().equals(name)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-//    @Override
-//    public int getCycles() {
-//        return cycles;
-//    }
 
 }
