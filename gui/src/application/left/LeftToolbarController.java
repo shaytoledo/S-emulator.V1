@@ -37,6 +37,8 @@ public class LeftToolbarController {
     @FXML private TextField SummaryLine;
     @FXML private Label SelectedInstructionHistoryChain;
 
+    private Integer breakpointIndex = null;
+
 
     public void setMainLayoutController(MainLayoutController mainLayoutController) {
         this.mainLayoutController = mainLayoutController;
@@ -47,6 +49,44 @@ public class LeftToolbarController {
         clearHistory();
         SummaryLine.setText("");
     }
+
+
+    // Small helper: re-apply row styles to show breakpoint
+    private void refreshRowStylesWithBreakpoint() {
+        instructionsTable.setRowFactory(tv -> new TableRow<InstructionView>() {
+            @Override
+            protected void updateItem(InstructionView item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setStyle("");
+                    return;
+                }
+                int idx = getIndex();
+                // Breakpoint style (soft red left border)
+                String bpStyle = (breakpointIndex != null && breakpointIndex == idx)
+                        ? "-fx-background-color: rgba(255,0,0,0.08); -fx-border-color: red; -fx-border-width: 0 0 0 3;"
+                        : "";
+                // Keep default otherwise
+                setStyle(bpStyle);
+            }
+        });
+        instructionsTable.refresh();
+    }
+
+
+    public void clearBreakpoint() {
+        breakpointIndex = null;
+        refreshRowStylesWithBreakpoint();
+    }
+
+    public Integer getBreakpointIndex() {
+        return breakpointIndex;
+    }
+
+
+
+
+
     public void clearHistory() {
         instructionsHistoryTable.getItems().clear();
     }

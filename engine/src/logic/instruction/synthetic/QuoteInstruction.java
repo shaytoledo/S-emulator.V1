@@ -286,11 +286,21 @@ public class QuoteInstruction extends AbstractInstruction {
         }
 
         // 2.4 labels -> fresh labels
+        // Only map labels that are referenced by functions (i.e., labels that are jump targets)
+        Set<Label> referencedLabels = new HashSet<>();
+        // First identify which labels are referenced by functions in the body
         for (Instruction ins : body) {
-            for (Label l : ins.getAllLabels()) {
-                if (!vlm.getLocalLabelMap().containsKey(l)) {
-                    vlm.mapLabel(l, vlm.newLabel());   // your label factory
-                }
+            // Add logic to identify referenced labels here
+            // For now, we'll treat all existing labels as potentially referenced
+            if (ins.getLabel() != null && ins.getLabel() != FixedLabel.EMPTY) {
+                referencedLabels.add(ins.getLabel());
+            }
+        }
+
+        // Only map labels that are referenced
+        for (Label l : referencedLabels) {
+            if (!vlm.getLocalLabelMap().containsKey(l)) {
+                vlm.mapLabel(l, vlm.newLabel());
             }
         }
 
@@ -332,10 +342,21 @@ public class QuoteInstruction extends AbstractInstruction {
                 Variable to = vlm.applyVar(v);
                 if (to != v) c.replace(v, to);
             }
-            for (Label l : ins.getAllLabels()) {
-                Label to = vlm.applyLabel(l);
-                if (to != l) c.replace(l, to);
+
+            // Only remap labels that are referenced by functions
+            // If the instruction has a label but it's not referenced, set it to EMPTY
+            Label currentLabel = ins.getLabel();
+            if (currentLabel != null && currentLabel != FixedLabel.EMPTY) {
+                if (referencedLabels.contains(currentLabel)) {
+                    // This label is referenced, so apply the mapping
+                    Label to = vlm.applyLabel(currentLabel);
+                    if (to != currentLabel) c.replace(currentLabel, to);
+                } else {
+                    // This label is not referenced, so remove it by setting to EMPTY
+                    c.replace(currentLabel, FixedLabel.EMPTY);
+                }
             }
+
             mappedBody.add(c);
         }
 
