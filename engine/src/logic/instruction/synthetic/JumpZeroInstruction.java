@@ -90,7 +90,7 @@ public class JumpZeroInstruction extends AbstractInstruction {
 
         switch (extensionLevel) {
             case 0:
-                return List.of(this);
+                return List.of(this.clone());
             case 1: {
                 Label label1 = vlm.newLabel();
 

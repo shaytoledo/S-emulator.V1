@@ -10,6 +10,7 @@ import logic.instruction.Instruction;
 import logic.instruction.synthetic.AssignmentInstruction;
 import logic.label.FixedLabel;
 import logic.label.Label;
+import logic.label.LabelImpl;
 import logic.variable.Variable;
 import logic.variable.VariableImpl;
 import logic.variable.VariableType;
@@ -31,10 +32,32 @@ public class FunctionArgument implements Argument {
     public List<Instruction> instructions;
 
     int cycles = 0;
-    Label exitLabel;
+    private Label exitLabel;
+    private Variable newResultVar;
 
     private final List<Function> functions;
 
+    public String getName() {
+        return name;
+    }
+    public String getUserString() {
+        return userString;
+    }
+    public List<Function> getFunctions() {
+        return functions;
+    }
+    public String getArgs() {
+        StringBuilder sb = new StringBuilder();
+        for (Argument arg : arguments) {
+            sb.append(arg.toDisplayString());
+            sb.append(",");
+        }
+        if (sb.length() > 0) {
+            sb.setLength(sb.length() - 1); // remove last comma
+        }
+        return sb.toString();
+
+    }
 
     public FunctionArgument(String name, List<Argument> arguments, List<Function> funcs) {
         this.name = name;
@@ -45,7 +68,9 @@ public class FunctionArgument implements Argument {
             if (f.getName().equals(name)) {
                 this.instructions = new ArrayList<>(f.getInstructions());
                 this.userString = f.getUserString();
+//                this.function = f;
                 this.function = f.clone();
+
                 break;
             }
         }
@@ -109,6 +134,69 @@ public class FunctionArgument implements Argument {
     }
 
 
+//    @Override
+//    public long evaluate(ExecutionContext context, VariableAndLabelMenger vlm, int cycles) {
+//        // 1) חשב את ערכי הארגומנטים (רק החזרות ערך – אין כתיבה ל-context של הקורא)
+//        List<Long> values = new ArrayList<>(arguments.size());
+//        for (Argument arg : arguments) {
+//            values.add(arg.evaluate(context, vlm, cycles));
+//        }
+//
+//        // 2) צור הקשר פנימי חדש לפונקציה זו והרץ אותה
+//        ExecutionContextImpl functionContext = new ExecutionContextImpl(values, functions);
+//
+//        if (function == null) {
+//            throw new RuntimeException("Function not found: " + name);
+//        }
+//
+//        FunctionExecutor currentExecutor = new FunctionExecutor(function, functions, functionContext);
+//        long result = currentExecutor.run(values);
+//
+//        // 3) ❌ אל תעדכן RESULT בהקשר של הקורא! פשוט החזר את הערך:
+//        // Variable res = new VariableImpl(VariableType.RESULT, 1);
+//        // context.updateVariable(res, result);
+//
+//        return result;
+//    }
+//
+
+
+
+
+    public List<Instruction> cloneBody() {
+        List<Instruction> copy = new ArrayList<>();
+        for (Instruction i : function.getInstructions()) { // if you hold 'instructions'; otherwise use function.getInstructions()
+            copy.add(i.clone());
+        }
+        return copy;
+    }
+
+
+    /** Collect function inputs (INPUT1, INPUT2, ...) by first-appearance order. */
+    public static List<Variable> collectInputsInOrder(List<Instruction> body) {
+        List<Variable> inputs = new ArrayList<>();
+        for (Instruction ins : body) {
+            for (Variable v : ins.getAllVariables()) {
+                if (v.getType() == VariableType.INPUT && !inputs.contains(v)) {
+                    inputs.add(v);
+                }
+            }
+        }
+        return inputs;
+    }
+
+
+    /** Find the RESULT variable used in this function (first occurrence). */
+    public static Variable findResultVariable(List<Instruction> body) {
+        for (Instruction ins : body) {
+            for (Variable v : ins.getAllVariables()) {
+                if (v.getType() == VariableType.RESULT) return v;
+            }
+        }
+        return null;
+    }
+
+
 
 
 
@@ -132,15 +220,17 @@ public class FunctionArgument implements Argument {
 
         List<Instruction> instructions = new ArrayList<>();
 
+        List<Variable> newInputs = new ArrayList<>();
         // (1+2) Replace all input variables with new work variables and add assignment instructions from input to new work variables
         for (int i = 0; i < arguments.size(); i++) {
             Variable newVar = vlm.newZVariable();
+            newInputs.add(newVar);
             //assign new work variable to the input variable
             instructions.add(new AssignmentInstruction(newVar, new VariableImpl(VariableType.INPUT, i + 1)));
             // replace all input variables with new work variables
-            for (Instruction inst : function.getInstructions()) {
-                inst.replace(new VariableImpl(VariableType.INPUT, i + 1), newVar);
-            }
+//            for (Instruction inst : function.getInstructions()) {
+//                inst.replace(new VariableImpl(VariableType.INPUT, i + 1), newVar);
+//            }
         }
 
         // Use Set to avoid duplicates
@@ -150,7 +240,11 @@ public class FunctionArgument implements Argument {
         // Get all Labels and Variables in the function
         for (Instruction inst : function.getInstructions()) {
             // add all labels (duplicates automatically ignored in the Set)
-            labelsInFunction.addAll(inst.getAllLabels());
+            labelsInFunction.addAll(
+                    inst.getAllLabels().stream()
+                            .filter(l -> l != null && !l.equals(FixedLabel.EMPTY))
+                            .collect(Collectors.toSet())
+            );
 
             // add only work variables
             workVariablesInFunction.addAll(
@@ -175,7 +269,7 @@ public class FunctionArgument implements Argument {
         List<Pair<Label, Label>> oldNewLabels = new ArrayList<>();
         for (Label oldLabel : labelsInFunction) {
             Label newLabel = vlm.newLabel();
-            if (oldLabel.equals(FixedLabel.EXIT)) {
+            if (oldLabel.equals(new LabelImpl(FixedLabel.EXIT.getLabelRepresentation()))) {
                 oldNewLabels.add(new Pair<>(oldLabel, newLabel));
                 exitLabel = newLabel;
             } else {
@@ -186,6 +280,32 @@ public class FunctionArgument implements Argument {
                 inst.replace(oldLabel, newLabel);
             }
         }
+
+        // Create a new result variable
+        newResultVar = vlm.newZVariable();
+        // (5) Replace the result variable with a new work variable
+        for( Instruction inst : function.getInstructions()) {
+            inst.replace(new VariableImpl(VariableType.RESULT, 1),newResultVar);
+        }
+
+        // Add an instruction at the end to assign the result to resultVar
+        // in extend method in qute instruction
+
+
+
+
+        // (1+2) Replace all input variables with new work variables and add assignment instructions from input to new work variables
+        for (int i = 0; i < arguments.size(); i++) {
+//            Variable newVar = vlm.newZVariable();
+//            //assign new work variable to the input variable
+//            instructions.add(new AssignmentInstruction(newVar, new VariableImpl(VariableType.INPUT, i + 1)));
+//            // replace all input variables with new work variables
+            for (Instruction inst : function.getInstructions()) {
+                inst.replace(new VariableImpl(VariableType.INPUT, i + 1), newInputs.get(i));
+            }
+        }
+
+
 
         // now in instructions we have the new assignment instructions of the arguments to new work variables,
         // function instructions with replaced variables and labels
@@ -198,6 +318,12 @@ public class FunctionArgument implements Argument {
         // Get the maximum instruction level of the function after all changes
         int maxInstructionLevel = function.calculateMaxDegree();
 
+
+
+
+
+
+        /// To check if we need to extend further
         // Check if we need to extend further
         if (extensionLevel > 0) {
 
@@ -229,10 +355,26 @@ public class FunctionArgument implements Argument {
         }
     }
 
-    public List<Instruction> addEndInstrucrion(Variable var) {
-        instructions.add(new AssignmentInstruction(var, new VariableImpl(VariableType.RESULT, 1), exitLabel));
-        return instructions;
-    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//    public List<Instruction> addEndInstrucrion(Variable var) {
+//        function.getInstructions().add(new AssignmentInstruction(newResultVar, var, exitLabel));
+//        return function.getInstructions();
+//    }
 
 
 

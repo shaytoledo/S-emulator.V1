@@ -142,16 +142,69 @@ public class ProgramImpl implements Program {
         return uniqueInfo;
     }
 
-    // extend Instructions to the given level (with the original instructions)
-    public void extend (int level) {
-        vlm = new VariableAndLabelMenger(variables, labels);
 
-        extendedInstructions.clear();
+
+
+
+
+    public void extend(int level) {
+        if (level < 0) level = 0;
+
+        // Use your existing constructor; if you need to pass initial vars/labels, do so.
+        VariableAndLabelMenger vlm = new VariableAndLabelMenger();
+
+        List<Instruction> out = new ArrayList<>();
         for (Instruction inst : instructions) {
-            List<Instruction> extended = inst.extend(level, vlm);
-            extendedInstructions.addAll(extended);
+            // Local maps for this single instruction expansion
+            vlm.beginLocalScope();
+            try {
+                // Each instruction is responsible to return NEW instructions (no in-place mutation)
+                out.addAll(inst.extend(level, vlm));
+            } finally {
+                vlm.endLocalScope(); // clear local maps, keep global counters
+            }
         }
+
+        // Replace the program's current instruction list with the expanded one,
+        // or store it to a dedicated field if you keep both.
+        this.instructions = out; // or this.extendedInstructions = out; depends on your design
     }
+
+
+
+
+
+
+
+
+//    // extend Instructions to the given level (with the original instructions)
+//    public void extend (int level) {
+//        if (level < 0) level = 0;
+//
+//        vlm = new VariableAndLabelMenger(variables, labels);
+//
+//        extendedInstructions.clear();
+//
+//
+//
+//
+//        List<Instruction> out = new ArrayList<>();
+//        for (Instruction inst : instructions) {
+//            vlm.beginLocalScope(); // local maps for this single instruction
+//            try {
+//                out.addAll(inst.extend(level, vlm)); // each instruction must return NEW instructions
+//            } finally {
+//                vlm.endLocalScope();
+//            }
+//        }
+//        this.extendedInstructions = out;
+//
+//
+////        for (Instruction inst : instructions) {
+////            List<Instruction> extended = inst.extend(level, vlm);
+////            extendedInstructions.addAll(extended);
+////        }
+//    }
 
     // expand Instructions to the given level and return InstructionView list
     @Override

@@ -328,7 +328,7 @@ public class TopToolbarController {
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Invalid Extend Value");
                 alert.setHeaderText(null);
-                alert.setContentText("The collapse value must be a number.");
+                alert.setContentText("The Extend value must be a number.");
                 alert.showAndWait();
             }
         }

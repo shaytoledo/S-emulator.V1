@@ -17,7 +17,9 @@ import logic.variable.VariableImpl;
 import logic.variable.VariableType;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
@@ -26,6 +28,7 @@ public class QuoteInstruction extends AbstractInstruction {
 
     Function function;
     FunctionArgument arguments;
+    List<Argument> argumentList;
     List<Function> allFunctions;
 
     String functionArguments;
@@ -35,10 +38,10 @@ public class QuoteInstruction extends AbstractInstruction {
 
     public QuoteInstruction(String name, String functionArguments,Variable var,  List<Function> funcs, Label lineLabel) {
         super(InstructionData.QUOTE, var, lineLabel);
-        List<Argument> arguments = new ArrayList<>(toArguments(functionArguments ,funcs));
+        this.argumentList = new ArrayList<>(toArguments(functionArguments ,funcs));
         this.functionArguments = functionArguments;
         this.variable = var;
-        this.arguments = new FunctionArgument(name, arguments, funcs);
+        this.arguments = new FunctionArgument(name, argumentList, funcs);
         this.allFunctions = funcs;
 
 
@@ -248,17 +251,125 @@ public class QuoteInstruction extends AbstractInstruction {
     @Override
     public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
         if (extensionLevel <= 0) {
-            return List.of(this);
+            return List.of(this.clone());
         }
 
-        // Delegate expansion to the function argument with the appropriate extension level
-        List<Instruction> expandedResult = arguments.extend(extensionLevel, vlm);
-        return arguments.addEndInstrucrion(getVariable());
-//        List<Instruction> expandedInstructions = expandedResult.getKey();
-//        Label exitLabel = expandedResult.getValue();
-//
-//        // If there's a valid exit label, add a final instruction to assign the result to the target variable
-//        expandedInstructions.add(new AssignmentInstruction(getVariable(), new VariableImpl(VariableType.RESULT, 1), exitLabel));
+        // 1) clone function body
+        List<Instruction> body = new ArrayList<>();
+        for (Instruction ins : function.getInstructions()) body.add(ins.clone());
+
+        // 2) build local mapping in this scope
+        // 2.1 inputs -> fresh WORK
+        List<Variable> inputs = FunctionArgument.collectInputsInOrder(body);
+        for (Variable xin : inputs) {
+            Variable w = vlm.newZVariable();     // use your factory for WORK (z)
+            vlm.mapVar(xin, w);
+        }
+
+        // 2.2 result -> fresh RESULT
+        Variable resultVar = FunctionArgument.findResultVariable(body);
+        Variable mappedResult = vlm.newZVariable(); // use your factory for RESULT (y)
+        if (resultVar != null) vlm.mapVar(resultVar, mappedResult);
+
+        // 2.3 internal WORKs -> fresh WORKs (skip already-mapped inputs)
+        Set<Variable> internalWorks = new HashSet<>();
+        for (Instruction ins : body) {
+            for (Variable v : ins.getAllVariables()) {
+                if (v.getType() == VariableType.WORK && !vlm.getLocalVarMap().containsKey(v)) {
+                    internalWorks.add(v);
+                }
+            }
+        }
+        for (Variable w0 : internalWorks) {
+            vlm.mapVar(w0, vlm.newZVariable());
+        }
+
+        // 2.4 labels -> fresh labels
+        for (Instruction ins : body) {
+            for (Label l : ins.getAllLabels()) {
+                if (!vlm.getLocalLabelMap().containsKey(l)) {
+                    vlm.mapLabel(l, vlm.newLabel());   // your label factory
+                }
+            }
+        }
+
+        // 3) prologue: write arguments into mapped(INPUT_i)
+        List<Instruction> prologue = new ArrayList<>();
+        for (int i = 0; i < Math.min(argumentList.size(), inputs.size()); i++) {
+            Variable xiTarget = vlm.applyVar(inputs.get(i));
+            Argument arg = argumentList.get(i);
+
+          if (arg instanceof VariableArgument v) {
+                // if your AssignmentInstruction is (target <- source): AssignmentInstruction(source, target, [label])
+                // NOTE: If your constructor order is (target, source) – flip the params accordingly.
+                prologue.add(new AssignmentInstruction(v.getVariable(), xiTarget, FixedLabel.EMPTY));
+          } else if (arg instanceof FunctionArgument f) {
+                // Nested function: inline it to level-1 into xiTarget using a forked scope
+                QuoteInstruction nested = new QuoteInstruction(
+                        f.getName(),            // function name
+                        f.getArgs(),       // build user string of args if you keep it
+                        xiTarget,
+                       f.getFunctions(),
+                        FixedLabel.EMPTY
+                );
+                prologue.addAll(nested.extend(extensionLevel - 1, vlm)); // uses same vlm (counters shared), maps are local within nested because extend() will call beginLocalScope at Program-level; if not, we can wrap:
+                // Alternative safe local mapping:
+                // vlm.beginLocalScope();
+                // try { prologue.addAll(nested.extend(extensionLevel - 1, vlm)); }
+                // finally { vlm.endLocalScope(); }
+          }
+        }
+
+        // 4) remap variables & labels in the cloned body
+        List<Instruction> mappedBody = new ArrayList<>(body.size());
+        for (Instruction ins : body) {
+            Instruction c = ins.clone();
+            for (Variable v : ins.getAllVariables()) {
+                Variable to = vlm.applyVar(v);
+                if (to != v) c.replace(v, to);
+            }
+            for (Label l : ins.getAllLabels()) {
+                Label to = vlm.applyLabel(l);
+                if (to != l) c.replace(l, to);
+            }
+            mappedBody.add(c);
+        }
+
+        // 5) epilogue: mappedResult -> this.variable  (y <- RESULT)
+        List<Instruction> epilogue = new ArrayList<>();
+        if (mappedResult != null) {
+            // If ctor is (source, target): AssignmentInstruction(mappedResult, this.getVariable(), null)
+            epilogue.add(new AssignmentInstruction( this.getVariable(),mappedResult, FixedLabel.EMPTY));
+        }
+
+        // 6) return full sequence
+        List<Instruction> out = new ArrayList<>(prologue.size() + mappedBody.size() + epilogue.size());
+        out.addAll(prologue);
+        out.addAll(mappedBody);
+        out.addAll(epilogue);
+        return out;
     }
+
+
+
+
+
+
+//    @Override
+//    public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
+//        if (extensionLevel == 0) {
+//            return List.of(this.clone());
+//        }
+//
+//
+//        // Delegate expansion to the function argument with the appropriate extension level
+//        List<Instruction> expandedResult = arguments.extend(extensionLevel, vlm);
+//        return arguments.addEndInstrucrion(getVariable());
+////        List<Instruction> expandedInstructions = expandedResult.getKey();
+////        Label exitLabel = expandedResult.getValue();
+////
+////        // If there's a valid exit label, add a final instruction to assign the result to the target variable
+////        expandedInstructions.add(new AssignmentInstruction(getVariable(), new VariableImpl(VariableType.RESULT, 1), exitLabel));
+//    }
 
 }

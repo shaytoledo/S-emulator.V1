@@ -83,7 +83,7 @@ public class ConstantAssignmentInstruction extends AbstractInstruction {
 
         switch (extensionLevel) {
             case 0:
-                return List.of(this);
+                return List.of(this.clone());
             case 1: {
                 Variable v = getVariable();
                 Instruction inst1 = new ZeroVariableInstruction(v,getLabel());

@@ -84,7 +84,7 @@ public class GoToInstruction extends AbstractInstruction {
 
         switch (extensionLevel) {
             case 0:
-                return List.of(this);
+                return List.of(this.clone());
             default: {
                 Variable tempVar1 = vlm.newZVariable();
 

@@ -57,7 +57,7 @@ public class IncreaseInstruction extends AbstractInstruction {
 
     @Override
     public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
-        return List.of(this);
+        return List.of(this.clone());
     }
 
     @Override

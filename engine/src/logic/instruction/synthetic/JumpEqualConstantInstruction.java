@@ -91,7 +91,7 @@ public class JumpEqualConstantInstruction extends AbstractInstruction {
 
         switch (extensionLevel) {
             case 0:
-                return List.of(this);
+                return List.of(this.clone());
             case 1: {
                 Variable z1 =  vlm.newZVariable();
                 Variable v = getVariable();

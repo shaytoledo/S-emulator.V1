@@ -6,12 +6,62 @@ import logic.variable.Variable;
 import logic.variable.VariableImpl;
 import logic.variable.VariableType;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class VariableAndLabelMenger {
+
+    // ---------- add these fields ----------
+    private final Map<Variable, Variable> localVarMap = new HashMap<>();
+    private final Map<Label, Label> localLabelMap = new HashMap<>();
+
+    private final Deque<Map<Variable, Variable>> varMapStack = new ArrayDeque<>();
+    private final Deque<Map<Label, Label>> labelMapStack = new ArrayDeque<>();
+
+
+
+    // ---------- mapping API ----------
+    public void mapVar(Variable from, Variable to) { localVarMap.put(from, to); }
+    public Variable applyVar(Variable v) { return localVarMap.getOrDefault(v, v); }
+
+    public void mapLabel(Label from, Label to) { localLabelMap.put(from, to); }
+    public Label applyLabel(Label l) { return localLabelMap.getOrDefault(l, l); }
+
+    public Map<Variable, Variable> getLocalVarMap() { return localVarMap; }
+    public Map<Label, Label> getLocalLabelMap() { return localLabelMap; }
+
+
+    // ---------- per-instruction local scope ----------
+    public void beginLocalScope() {
+        varMapStack.push(new HashMap<>(localVarMap));
+        labelMapStack.push(new HashMap<>(localLabelMap));
+        localVarMap.clear();
+        localLabelMap.clear();
+    }
+
+    public void endLocalScope() {
+        localVarMap.clear();
+        localLabelMap.clear();
+        if (!varMapStack.isEmpty()) localVarMap.putAll(varMapStack.pop());
+        if (!labelMapStack.isEmpty()) localLabelMap.putAll(labelMapStack.pop());
+    }
+
+    public void clearLocal() {
+        localVarMap.clear();
+        localLabelMap.clear();
+        varMapStack.clear();
+        labelMapStack.clear();
+    }
+
+
+
+
+
+
+
+
+
+
 
     // all the used variable names and label names
     private  Set<String> usedVars;
@@ -42,6 +92,10 @@ public class VariableAndLabelMenger {
     }
 
     public VariableAndLabelMenger() {
+        this.usedVars = new HashSet<>();
+        this.usedLabels = new HashSet<>();
+        this.zCounter = 0;
+        this.lCounter = 0;
 
     }
 

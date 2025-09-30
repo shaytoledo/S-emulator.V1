@@ -83,7 +83,7 @@ public class ZeroVariableInstruction extends AbstractInstruction {
 
         switch (extensionLevel) {
             case 0:
-                return List.of(this);
+                return List.of(this.clone());
             default: {
                 Label label = vlm.newLabel();
                 Instruction instr1 = new NoOpInstruction(getVariable(), getLabel());

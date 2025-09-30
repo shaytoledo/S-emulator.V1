@@ -91,7 +91,7 @@ public class AssignmentInstruction extends AbstractInstruction {
 
         switch (extensionLevel) {
             case 0:
-                return List.of(this);
+                return List.of(this.clone());
             case 1: {
                 Label label1 = vlm.newLabel();
                 Label label2 = vlm.newLabel();
