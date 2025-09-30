@@ -134,33 +134,6 @@ public class FunctionArgument implements Argument {
     }
 
 
-//    @Override
-//    public long evaluate(ExecutionContext context, VariableAndLabelMenger vlm, int cycles) {
-//        // 1) חשב את ערכי הארגומנטים (רק החזרות ערך – אין כתיבה ל-context של הקורא)
-//        List<Long> values = new ArrayList<>(arguments.size());
-//        for (Argument arg : arguments) {
-//            values.add(arg.evaluate(context, vlm, cycles));
-//        }
-//
-//        // 2) צור הקשר פנימי חדש לפונקציה זו והרץ אותה
-//        ExecutionContextImpl functionContext = new ExecutionContextImpl(values, functions);
-//
-//        if (function == null) {
-//            throw new RuntimeException("Function not found: " + name);
-//        }
-//
-//        FunctionExecutor currentExecutor = new FunctionExecutor(function, functions, functionContext);
-//        long result = currentExecutor.run(values);
-//
-//        // 3) ❌ אל תעדכן RESULT בהקשר של הקורא! פשוט החזר את הערך:
-//        // Variable res = new VariableImpl(VariableType.RESULT, 1);
-//        // context.updateVariable(res, result);
-//
-//        return result;
-//    }
-//
-
-
 
 
     public List<Instruction> cloneBody() {

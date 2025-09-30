@@ -10,6 +10,7 @@ import logic.execution.ExecutionContext;
 import logic.instruction.AbstractInstruction;
 import logic.instruction.Instruction;
 import logic.instruction.InstructionData;
+import logic.instruction.basic.NoOpInstruction;
 import logic.label.FixedLabel;
 import logic.label.Label;
 import logic.variable.Variable;
@@ -295,6 +296,9 @@ public class QuoteInstruction extends AbstractInstruction {
 
         // 3) prologue: write arguments into mapped(INPUT_i)
         List<Instruction> prologue = new ArrayList<>();
+        Label label = getLabel() == null ? FixedLabel.EMPTY : getLabel();
+        Instruction noOp = new NoOpInstruction(new VariableImpl(VariableType.RESULT, 1), label);
+        prologue.add(noOp);
         for (int i = 0; i < Math.min(argumentList.size(), inputs.size()); i++) {
             Variable xiTarget = vlm.applyVar(inputs.get(i));
             Argument arg = argumentList.get(i);
