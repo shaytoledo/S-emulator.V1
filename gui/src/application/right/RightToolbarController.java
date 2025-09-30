@@ -240,36 +240,10 @@ public class RightToolbarController {
         // unbold all the table lines
         mainLayoutController.getLeft().clearHighlights();
         endDebugButtons();
+        run();
+        resetVariableTableStyle();
+
     }
-
-//    @FXML
-//    void startDebugListener(ActionEvent event) {
-//        startDebugButtons();
-//        mainLayoutController.getTop().HighlightSelection.getItems().clear();
-//
-//        Pair<Map<String, Long>,Integer> variableState = mainLayoutController.engine.startDebug(
-//                mainLayoutController.getCurrentLevel(),
-//                getCurrVariableState()
-//        );
-//        if (variableState.getKey() == null) {
-//            endOfDebug();
-//            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-//            alert.setTitle("(:");
-//            alert.setHeaderText(null);
-//            alert.setContentText("The Program finished immediately.");
-//            alert.showAndWait();
-//        } else {
-//            // bold 0 index line in table
-//            Set<Integer> index = new HashSet<>();
-//            index.add(0);
-//            mainLayoutController.getLeft().boldRows(index);
-//            fillVariableStateTable(variableState.getKey());
-//            resetVariableTableStyle();
-//
-//            CyclesCounter.setText("0");
-//        }
-//    }
-
 
     @FXML
     void startDebugListener(ActionEvent event) {
@@ -319,6 +293,8 @@ public class RightToolbarController {
 
         if (variableState.getValue() == -1 ) {
             endOfDebug();
+            run();
+
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("(:");
             alert.setHeaderText(null);
