@@ -57,6 +57,9 @@ public class RightToolbarController {
 
     private final Map<String, Long> inputsMap = new LinkedHashMap<>();
 
+    private Integer breakpointIndex = null;
+
+
 
     public void setMainLayoutController(MainLayoutController mainLayoutController) {
         this.mainLayoutController = mainLayoutController;
@@ -121,8 +124,6 @@ public class RightToolbarController {
         if (selected == null) return;
 
         runHiddenPreviewAndPopup(selected.level(), selected.inputs());
-
-
     }
 
     // Hidden run (no UI updates, no history) using the provided level and inputs
@@ -241,33 +242,76 @@ public class RightToolbarController {
         endDebugButtons();
     }
 
+//    @FXML
+//    void startDebugListener(ActionEvent event) {
+//        startDebugButtons();
+//        mainLayoutController.getTop().HighlightSelection.getItems().clear();
+//
+//        Pair<Map<String, Long>,Integer> variableState = mainLayoutController.engine.startDebug(
+//                mainLayoutController.getCurrentLevel(),
+//                getCurrVariableState()
+//        );
+//        if (variableState.getKey() == null) {
+//            endOfDebug();
+//            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+//            alert.setTitle("(:");
+//            alert.setHeaderText(null);
+//            alert.setContentText("The Program finished immediately.");
+//            alert.showAndWait();
+//        } else {
+//            // bold 0 index line in table
+//            Set<Integer> index = new HashSet<>();
+//            index.add(0);
+//            mainLayoutController.getLeft().boldRows(index);
+//            fillVariableStateTable(variableState.getKey());
+//            resetVariableTableStyle();
+//
+//            CyclesCounter.setText("0");
+//        }
+//    }
+
+
     @FXML
     void startDebugListener(ActionEvent event) {
         startDebugButtons();
         mainLayoutController.getTop().HighlightSelection.getItems().clear();
 
-        Pair<Map<String, Long>,Integer> variableState = mainLayoutController.engine.startDebug(
+        Pair<Map<String, Long>,Integer> st = mainLayoutController.engine.startDebug(
                 mainLayoutController.getCurrentLevel(),
                 getCurrVariableState()
         );
-        if (variableState.getKey() == null) {
+        if (st.getKey() == null || st.getValue() == -1) {
             endOfDebug();
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("(:");
-            alert.setHeaderText(null);
-            alert.setContentText("The Program finished immediately.");
-            alert.showAndWait();
-        } else {
-            // bold 0 index line in table
-            Set<Integer> index = new HashSet<>();
-            index.add(0);
-            mainLayoutController.getLeft().boldRows(index);
-            fillVariableStateTable(variableState.getKey());
-            resetVariableTableStyle();
-
-            CyclesCounter.setText("0");
+            new Alert(Alert.AlertType.INFORMATION, "The Program finished immediately.").showAndWait();
+            return;
         }
+
+        Map<String, Long> lastState = st.getKey();
+        int currIdx = st.getValue();
+
+        if (breakpointIndex != null) {
+            while (currIdx != -1 && currIdx != breakpointIndex) {
+                Pair<Map<String, Long>, Integer> step = mainLayoutController.engine.oneStepInDebug();
+                if (step.getKey() != null) lastState = step.getKey();
+                currIdx = step.getValue();
+            }
+            if (currIdx == -1) {
+                endOfDebug();
+                new Alert(Alert.AlertType.INFORMATION, "The Program finished before reaching the breakpoint.").showAndWait();
+                clearBreakpointUI();
+                return;
+            }
+        }
+
+        Set<Integer> index = new HashSet<>();
+        index.add(currIdx);
+        mainLayoutController.getLeft().boldRows(index);
+
+        fillVariableStateTable(lastState);
+        resetVariableTableStyle();
+        CyclesCounter.setText(String.valueOf(mainLayoutController.engine.getCycels()));
     }
+
 
     @FXML
     void stepOverDebugListener(ActionEvent event) {
@@ -315,6 +359,9 @@ public class RightToolbarController {
     }
 
     private void endOfDebug() {
+        try { mainLayoutController.getLeft().clearBreakpoint(); } catch (Exception ignore) {}
+        clearBreakpointUI();
+
         endDebugButtons();
         inputTable.setEditable(true);
         variableTable.getItems().clear();
@@ -668,4 +715,17 @@ public class RightToolbarController {
                 .toList();                // collect everything back into a list
         return inputsByOrder;
     }
+
+
+    public void setBreakpoint(int idx) {
+        this.breakpointIndex = idx;
+    }
+
+    private void clearBreakpointUI() {
+        this.breakpointIndex = null;
+        if (debuggerLabel != null) debuggerLabel.setText("");
+    }
+
+
+
 }

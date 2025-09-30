@@ -51,27 +51,33 @@ public class LeftToolbarController {
     }
 
 
-    // Small helper: re-apply row styles to show breakpoint
+    // קרא לזה אחרי שאתה טוען את הטבלה (נגיד בסוף showProgram או ב-refreshRowStylesWithBreakpoint)
     private void refreshRowStylesWithBreakpoint() {
-        instructionsTable.setRowFactory(tv -> new TableRow<InstructionView>() {
+        colNumber.setCellFactory(col -> new TableCell<InstructionView, Integer>() {
             @Override
-            protected void updateItem(InstructionView item, boolean empty) {
+            protected void updateItem(Integer item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
-                    setStyle("");
+                    setText(null);
+                    setGraphic(null);
                     return;
                 }
+                setText(String.valueOf(item));
+
                 int idx = getIndex();
-                // Breakpoint style (soft red left border)
-                String bpStyle = (breakpointIndex != null && breakpointIndex == idx)
-                        ? "-fx-background-color: rgba(255,0,0,0.08); -fx-border-color: red; -fx-border-width: 0 0 0 3;"
-                        : "";
-                // Keep default otherwise
-                setStyle(bpStyle);
+                if (breakpointIndex != null && breakpointIndex == idx) {
+                    javafx.scene.shape.Circle circle = new javafx.scene.shape.Circle(5, javafx.scene.paint.Color.RED);
+                    setGraphic(circle);
+                    setContentDisplay(ContentDisplay.LEFT);
+                } else {
+                    setGraphic(null);
+                }
             }
         });
+
         instructionsTable.refresh();
     }
+
 
 
     public void clearBreakpoint() {
@@ -123,6 +129,9 @@ public class LeftToolbarController {
     public void showProgram() {
         int level = mainLayoutController.getCurrentLevel();
         showProgram(level);
+        breakpointIndex = null;
+        refreshRowStylesWithBreakpoint();
+
     }
 
     private void summary(List<InstructionView> loadedInstructions) {
@@ -140,8 +149,24 @@ public class LeftToolbarController {
 
     }
 
+
+
+
     @FXML
     private void showHistoryChain(MouseEvent event) {
+
+        if (event.getClickCount() == 2) {
+            InstructionView sel = instructionsTable.getSelectionModel().getSelectedItem();
+            if (sel == null) return;
+            int idx = instructionsTable.getSelectionModel().getSelectedIndex();
+
+            breakpointIndex = idx;
+            refreshRowStylesWithBreakpoint();
+
+            mainLayoutController.getRight().setBreakpoint(idx);
+        }
+
+
         if (event.getClickCount() == 1) {
             InstructionView selected = instructionsTable.getSelectionModel().getSelectedItem();
             if (selected != null) {
