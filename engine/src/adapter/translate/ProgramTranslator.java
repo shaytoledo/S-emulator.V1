@@ -68,6 +68,8 @@ public final class ProgramTranslator {
             functionMap.put(funcName, func);
         }
 
+
+
         // Second pass: Process function instructions now that all functions are registered
         for (int i = 0; i < funcs.size(); i++) {
             Function function = funcs.get(i);
@@ -75,7 +77,7 @@ public final class ProgramTranslator {
             if (sFunction != null) {
                 List<SInstruction> funcInstructions = Optional.ofNullable(sFunction.getSInstructions()).orElse(List.of());
                 // Process instructions and update the function
-                List<Instruction> processedInstructions = extractInstructionsForFuncs(funcInstructions, errors, funcs, varsByName, labelsByName);
+                List<Instruction> processedInstructions = extractInstructionsForFuncs(funcInstructions, errors, funcs);
                 function.setInstructions(processedInstructions);
             }
         }
@@ -428,12 +430,9 @@ public final class ProgramTranslator {
     private static  List<Instruction> extractInstructionsForFuncs(
             List<SInstruction> sInstructions,
             List<Exception> errors,
-            List<Function> funcs, Map<String, Variable> oldVarsByName, Map<String, Label> oldLabelsByName) {
+            List<Function> funcs) {
 
         List<Instruction> code = new ArrayList<>();
-
-//        Map<String, Variable> varsByName = new HashMap(oldVarsByName);
-//        Map<String, Label> labelsByName = new HashMap(oldLabelsByName);
 
         Map<String, Variable> varsByName = new HashMap();
         Map<String, Label> labelsByName = new HashMap();

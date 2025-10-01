@@ -4,6 +4,7 @@ import adapter.translate.JaxbLoader;
 import adapter.translate.ProgramTranslator;
 import core.program.Function;
 import core.program.Program;
+import core.program.ProgramImpl;
 import core.program.VariableAndLabelMenger;
 import dto.*;
 import javafx.util.Pair;
@@ -23,14 +24,59 @@ import java.util.Map;
 public class EngineImpl implements Engine {
 
     private static Program cuurentProgram = null;
+    private static List<Program> functions = new ArrayList<>();
+    private Path xmlPath;
     ProgramExecutorImpl exe;
     private int runCounter = 0;
-    public List<RunSummary> summaries = new ArrayList<>();
+
+    public List<Program> loaded = new ArrayList<>();
+
+    @Override
+    public void loadFunc(String name) {
+
+        for (Program p : loaded) {
+            if (p.getName().equals(name)) {
+                cuurentProgram = p;
+                return;
+            }
+        }
+
+        for (Program func : functions) {
+            if (func.getName().equals(name)) {
+                if (func instanceof Function) {
+                    loaded.add(new Function((Function) func));
+                } else {
+                    loaded.add(new ProgramImpl((ProgramImpl) func) {
+                    });
+                }
+                cuurentProgram = loaded.getLast();
+                return;
+            }
+        }
+
+        loadProgram(xmlPath);
+    }
+
+    private List<Function> getFuncs() {
+        List<Function> funcs = new ArrayList<>();
+        if (cuurentProgram != null) {
+            funcs = cuurentProgram.getFunctions();
+        }
+        return funcs;
+    }
+
+
+    @Override
+    public Program getCuurentProgram() {
+        return cuurentProgram;
+    }
+
 
 
     // Use EngineJaxbLoader to load the XML file and ProgramTranslator to translate it to internal representation
     @Override
     public LoadReport loadProgram(Path xmlPath) {
+        this.xmlPath = xmlPath;
         List<Exception> errors = new ArrayList<>();
         try {
             try {
@@ -50,6 +96,7 @@ public class EngineImpl implements Engine {
             }
 
             if (!errors.isEmpty()) {
+                this.xmlPath = xmlPath;
                 return new LoadReport(false, errors);
             }
 
@@ -66,8 +113,18 @@ public class EngineImpl implements Engine {
                 return new LoadReport(false, currentProgram.errors);
             }
 
-            summaries.clear();
             EngineImpl.cuurentProgram = currentProgram.program;
+            loaded.add(currentProgram.program);
+            //currentProgram.getsummaries().clear();
+
+
+            List<Program> funcss = new ArrayList<>();
+            for (Function f : getFuncs()) {
+                funcss.add(new Function(f));
+            }
+
+
+            this.functions = funcss;
             return new LoadReport(true, List.of());
 
         } catch (Exception e) {
@@ -106,7 +163,7 @@ public class EngineImpl implements Engine {
         int cycles = exe.cycleCount;
 
         RunSummary summary = new RunSummary(++runCounter, level, inputs, y, cycles);
-        summaries.add(summary);
+        cuurentProgram.getsummaries().add(summary);
 
         if (exe != null) {
             var res = new RunResult(y, exe.variablesState(), cycles);
@@ -117,16 +174,18 @@ public class EngineImpl implements Engine {
 
     @Override
     public List<RunSummary> getHistory() {
-        return summaries;
+        return cuurentProgram.getsummaries();
     }
 
     @Override
     public List<List<InstructionView>> expandProgramToLevelForExtend(int level) {
+        //loadProgram(xmlPath);
         return cuurentProgram.expendToLevelForExtend(level);
     }
 
     @Override
     public List<InstructionView> expandProgramToLevelForRun(int level) {
+        //loadProgram(xmlPath);
         List<InstructionView> allInstructions = cuurentProgram.instructionViewsAfterExtendRunShow(level);
         return allInstructions;
     }

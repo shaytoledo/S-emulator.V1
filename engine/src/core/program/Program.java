@@ -1,14 +1,15 @@
 package core.program;
 
 import dto.InstructionView;
+import dto.RunSummary;
 import dto.functionView;
 import logic.instruction.Instruction;
 import logic.label.Label;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public interface Program {
-
 
     int calculateMaxDegree();
     Instruction getNextInstructionLabel(Instruction currentInstruction);
@@ -24,5 +25,8 @@ public interface Program {
     List<List<String>> getInfo(int level);
     List<Function> getFunctions();
     List<functionView> getAllFunctionViews();
+
+
+  List<RunSummary> getsummaries();
 
 }

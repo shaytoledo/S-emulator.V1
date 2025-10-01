@@ -1,5 +1,6 @@
 package core.engine;
 
+import core.program.Program;
 import core.program.VariableAndLabelMenger;
 import dto.*;
 import javafx.util.Pair;
@@ -27,6 +28,8 @@ public interface Engine {
     Map<String, Long> resumeDebug();
     int getCycels();
     List<functionView> getAllFunctionViews();
+    Program getCuurentProgram();
+    void loadFunc(String name);
 
-}
+    }
 

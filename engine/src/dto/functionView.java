@@ -17,14 +17,7 @@ public record functionView(
 
         @Override
         public String toString() {
-                StringBuilder str = new StringBuilder();
-                str.append("(").append(name).append(",");
-                for (String arg : args) {
-                        str.append(arg).append(",");
-                }
-                str.deleteCharAt(str.length() - 1);
-                str.append(")");
-                return str.toString();
+                return name;
         }
 
         public List<InstructionView> getInstructions() {

@@ -1,6 +1,7 @@
 package core.program;
 
 import dto.InstructionView;
+import dto.RunSummary;
 import dto.functionView;
 import logic.instruction.Instruction;
 import logic.instruction.synthetic.JumpEqualFunctionInstruction;
@@ -17,10 +18,23 @@ public class ProgramImpl implements Program {
     private List<Function> functions;
     private List<Instruction> instructions;
     private List<Instruction> extendedInstructions;
-    private final List<Variable> variables;
-    private final List<Label> labels;
+    public final List<Variable> variables;
+    public final List<Label> labels;
+
+    public List<RunSummary> summaries = new ArrayList<>();
 
     public VariableAndLabelMenger vlm ;
+
+    public ProgramImpl(ProgramImpl p) {
+        this.name = p.getName();
+        this.instructions = new ArrayList<>(p.getInstructions());
+        this.variables = new ArrayList<>(p.variables);
+        this.labels = new ArrayList<>(p.labels);
+        this.extendedInstructions = new ArrayList<>(p.getInstructions());
+        this.functions = new ArrayList<>(p.functions);
+        this.vlm = new VariableAndLabelMenger(getAllVariablesNames(), getAllLabelsNames());
+    }
+
 
     public ProgramImpl(String programName, List<Instruction> instructions,List<Function> funcs, Map<String, Variable> varsByName, Map<String, Label> labelsByName) {
         this.name = programName;
@@ -30,6 +44,10 @@ public class ProgramImpl implements Program {
         this.extendedInstructions = new ArrayList<>(instructions);
         this.functions = new ArrayList<>(funcs);
         this.vlm = new VariableAndLabelMenger(getAllVariablesNames(), getAllLabelsNames());
+    }
+
+    public List<RunSummary> getsummaries(){
+        return summaries;
     }
 
 
@@ -151,7 +169,7 @@ public class ProgramImpl implements Program {
         if (level < 0) level = 0;
 
         // Use your existing constructor; if you need to pass initial vars/labels, do so.
-        VariableAndLabelMenger vlm = new VariableAndLabelMenger();
+        VariableAndLabelMenger vlm = new VariableAndLabelMenger(getAllVariablesNames(), getAllLabelsNames());
 
         List<Instruction> out = new ArrayList<>();
         for (Instruction inst : instructions) {
@@ -167,44 +185,13 @@ public class ProgramImpl implements Program {
 
         // Replace the program's current instruction list with the expanded one,
         // or store it to a dedicated field if you keep both.
-        this.instructions = out; // or this.extendedInstructions = out; depends on your design
+
+        this.extendedInstructions = out; // or this.extendedInstructions = out; depends on your design
     }
 
 
 
 
-
-
-
-
-//    // extend Instructions to the given level (with the original instructions)
-//    public void extend (int level) {
-//        if (level < 0) level = 0;
-//
-//        vlm = new VariableAndLabelMenger(variables, labels);
-//
-//        extendedInstructions.clear();
-//
-//
-//
-//
-//        List<Instruction> out = new ArrayList<>();
-//        for (Instruction inst : instructions) {
-//            vlm.beginLocalScope(); // local maps for this single instruction
-//            try {
-//                out.addAll(inst.extend(level, vlm)); // each instruction must return NEW instructions
-//            } finally {
-//                vlm.endLocalScope();
-//            }
-//        }
-//        this.extendedInstructions = out;
-//
-//
-////        for (Instruction inst : instructions) {
-////            List<Instruction> extended = inst.extend(level, vlm);
-////            extendedInstructions.addAll(extended);
-////        }
-//    }
 
     // expand Instructions to the given level and return InstructionView list
     @Override
@@ -307,6 +294,7 @@ public class ProgramImpl implements Program {
                 result.add(views);
             }
         }
+
         return result;
 }
 

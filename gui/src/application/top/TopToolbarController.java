@@ -163,16 +163,20 @@ public class TopToolbarController {
                 mainLayoutController.showProgram();
                 allButtonsEnableAfterLoad();
                 List<functionView> functions = mainLayoutController.engine.getAllFunctionViews();
+                String programName = mainLayoutController.engine.getCuurentProgram().getName();
                 if (functions.size() > 1) {
                     ProgramOrFunctionSelector.getItems().setAll(
                             functions.stream().map(functionView::toString).toList()
                     );
                     ProgramOrFunctionSelector.setDisable(false);
-                    ProgramOrFunctionSelector.getSelectionModel().select(0);
                 } else {
                     ProgramOrFunctionSelector.getItems().clear();
                     ProgramOrFunctionSelector.setDisable(true);
                 }
+                ProgramOrFunctionSelector.getItems().add(0, programName);
+                ProgramOrFunctionSelector.getSelectionModel().select(0);
+
+
 
             }
 
@@ -414,20 +418,20 @@ public class TopToolbarController {
 
     @FXML
     void programOrFunctionChanged(ActionEvent e) {
-        Object selected = ProgramOrFunctionSelector.getSelectionModel().getSelectedItem();
-        if (selected == null) return;
 
-        List<functionView> functions = mainLayoutController.engine.getAllFunctionViews();
-        functionView selectedFunction = functions.stream()
-                .filter(f -> f.toString().equals(selected.toString()))
-                .findFirst()
-                .orElse(null);
+        String selected = ProgramOrFunctionSelector.getSelectionModel().getSelectedItem();
+        if (selected == null || selected.isBlank()) {
+            return;
+        }
 
-        List<InstructionView> functionInstructions = selectedFunction.getInstructions();
+        if (mainLayoutController.engine.getCuurentProgram().getName().equals(selected)) {
+            return;
+        } else {
+            /// program or function changed
+            mainLayoutController.engine.loadFunc(selected);
+            mainLayoutController.showProgram();
 
-
-        mainLayoutController.getLeft().clearHistory();
-        mainLayoutController.showProgram();
+        }
     }
 
 

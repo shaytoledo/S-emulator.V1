@@ -33,46 +33,91 @@ public class QuoteInstruction extends AbstractInstruction {
     List<Function> allFunctions;
 
     String functionArguments;
-    Variable variable;
 
     int cycles = 0;
 
-    public QuoteInstruction(String name, String functionArguments,Variable var,  List<Function> funcs, Label lineLabel) {
+//    public QuoteInstruction(String name, String functionArguments,Variable var,  List<Function> funcs, Label lineLabel) {
+//        super(InstructionData.QUOTE, var, lineLabel);
+//        this.argumentList = new ArrayList<>(toArguments(functionArguments ,funcs));
+//        this.functionArguments = functionArguments;
+//        this.variable = var;
+//        this.arguments = new FunctionArgument(name, argumentList, funcs);
+//        this.allFunctions = funcs;
+//
+//
+//        for (Function f : funcs) {
+//            if (f.getName().equals(name)) {
+//                this.function = f;
+//                break;
+//            }
+//        }
+//    }
+//    public QuoteInstruction(String name, String functionArguments,Variable var,  List<Function> funcs) {
+//        super(InstructionData.QUOTE, var);
+//        List<Argument> arguments = new ArrayList<>(toArguments(functionArguments ,funcs));
+//        this.arguments = new FunctionArgument(name, arguments, funcs);
+//        this.allFunctions = funcs;
+//
+//        for (Function f : funcs) {
+//            if (f.getName().equals(name)) {
+//                this.function = f;
+//                break;
+//            }
+//        }
+//    }
+
+
+    public QuoteInstruction(String name, String functionArguments, Variable var, List<Function> funcs, Label lineLabel) {
         super(InstructionData.QUOTE, var, lineLabel);
-        this.argumentList = new ArrayList<>(toArguments(functionArguments ,funcs));
-        this.functionArguments = functionArguments;
-        this.variable = var;
-        this.arguments = new FunctionArgument(name, argumentList, funcs);
+        this.functionArguments = functionArguments == null ? "" : functionArguments;
+        this.argumentList = new ArrayList<>(toArguments(this.functionArguments, funcs));
+        this.arguments = new FunctionArgument(name, this.argumentList, funcs);
         this.allFunctions = funcs;
-
-
-        for (Function f : funcs) {
-            if (f.getName().equals(name)) {
-                this.function = f;
-                break;
-            }
-        }
+        for (Function f : funcs) if (f.getName().equals(name)) { this.function = f; break; }
     }
-    public QuoteInstruction(String name, String functionArguments,Variable var,  List<Function> funcs) {
+
+    public QuoteInstruction(String name, String functionArguments, Variable var, List<Function> funcs) {
         super(InstructionData.QUOTE, var);
-        List<Argument> arguments = new ArrayList<>(toArguments(functionArguments ,funcs));
-        this.arguments = new FunctionArgument(name, arguments, funcs);
+        this.functionArguments = functionArguments == null ? "" : functionArguments;
+        this.argumentList = new ArrayList<>(toArguments(this.functionArguments, funcs));
+        this.arguments = new FunctionArgument(name, this.argumentList, funcs);
         this.allFunctions = funcs;
+        for (Function f : funcs) if (f.getName().equals(name)) { this.function = f; break; }
+    }
 
-        for (Function f : funcs) {
-            if (f.getName().equals(name)) {
-                this.function = f;
-                break;
+
+    private static String toArgsString(List<Argument> args) {
+        // הפוך את הרשימה ל-"x1,(Foo,x2),z3" וכו' לפי אותו פורמט שמצפה לו toArguments()
+        // דוגמה עקרונית – צריך לממש לפי הטיפוסים שיש לך:
+        List<String> parts = new ArrayList<>();
+        for (Argument a : args) {
+            if (a instanceof VariableArgument va) {
+                Variable v = va.getVariable();
+                String prefix = switch (v.getType()) {
+                    case INPUT -> "x";
+                    case WORK -> "z";
+                    case RESULT -> "y";
+                    default -> throw new IllegalArgumentException("Unsupported variable type: " + v.getType());
+                };
+                parts.add(prefix + v.getIndex());
+            } else if (a instanceof FunctionArgument fa) {
+                parts.add("(" + fa.getName() + (fa.arguments.isEmpty() ? "" : "," + toArgsString(fa.arguments)) + ")");
+            } else {
+                throw new IllegalArgumentException("Unsupported argument kind: " + a.getClass());
             }
         }
+        return String.join(",", parts);
     }
+
+
+
 
     @Override
     public Instruction clone() {
         if(getLabel() == null) {
-            return new QuoteInstruction(function.getName(), functionArguments, variable, allFunctions);
+            return new QuoteInstruction(function.getName(), functionArguments, getVariable(), allFunctions);
         } else {
-            return new QuoteInstruction(function.getName(), functionArguments, variable, allFunctions, getLabel());
+            return new QuoteInstruction(function.getName(), functionArguments, getVariable(), allFunctions, getLabel());
         }
     }
 
@@ -249,6 +294,15 @@ public class QuoteInstruction extends AbstractInstruction {
 
 
 
+
+
+
+
+
+
+
+
+
     @Override
     public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
         if (extensionLevel <= 0) {
@@ -313,17 +367,17 @@ public class QuoteInstruction extends AbstractInstruction {
             Variable xiTarget = vlm.applyVar(inputs.get(i));
             Argument arg = argumentList.get(i);
 
-          if (arg instanceof VariableArgument v) {
+            if (arg instanceof VariableArgument v) {
                 // if your AssignmentInstruction is (target <- source): AssignmentInstruction(source, target, [label])
                 // NOTE: If your constructor order is (target, source) – flip the params accordingly.
                 prologue.add(new AssignmentInstruction(v.getVariable(), xiTarget, FixedLabel.EMPTY));
-          } else if (arg instanceof FunctionArgument f) {
+            } else if (arg instanceof FunctionArgument f) {
                 // Nested function: inline it to level-1 into xiTarget using a forked scope
                 QuoteInstruction nested = new QuoteInstruction(
                         f.getName(),            // function name
                         f.getArgs(),       // build user string of args if you keep it
                         xiTarget,
-                       f.getFunctions(),
+                        f.getFunctions(),
                         FixedLabel.EMPTY
                 );
                 prologue.addAll(nested.extend(extensionLevel - 1, vlm)); // uses same vlm (counters shared), maps are local within nested because extend() will call beginLocalScope at Program-level; if not, we can wrap:
@@ -331,7 +385,7 @@ public class QuoteInstruction extends AbstractInstruction {
                 // vlm.beginLocalScope();
                 // try { prologue.addAll(nested.extend(extensionLevel - 1, vlm)); }
                 // finally { vlm.endLocalScope(); }
-          }
+            }
         }
 
         // 4) remap variables & labels in the cloned body
@@ -379,22 +433,193 @@ public class QuoteInstruction extends AbstractInstruction {
 
 
 
+    public void nothing () {
+        // to avoid warning
+    }
 
 //    @Override
 //    public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
-//        if (extensionLevel == 0) {
+//        // Defensive: never mutate caller state
+//        if (extensionLevel <= 0) {
 //            return List.of(this.clone());
 //        }
 //
+//        // --- Scope isolation for local var/label mappings (void signature) ---
+//        boolean openedScope = false;
+//        try {
+//            if (vlm != null) {
+//                vlm.beginLocalScope();  // void
+//                openedScope = true;
+//            }
 //
-//        // Delegate expansion to the function argument with the appropriate extension level
-//        List<Instruction> expandedResult = arguments.extend(extensionLevel, vlm);
-//        return arguments.addEndInstrucrion(getVariable());
-////        List<Instruction> expandedInstructions = expandedResult.getKey();
-////        Label exitLabel = expandedResult.getValue();
-////
-////        // If there's a valid exit label, add a final instruction to assign the result to the target variable
-////        expandedInstructions.add(new AssignmentInstruction(getVariable(), new VariableImpl(VariableType.RESULT, 1), exitLabel));
+//            // ... rest of extend() logic ...
+//
+//        } finally {
+//            if (openedScope) {
+//                try { vlm.endLocalScope(); } catch (Throwable ignored) {}
+//            }
+//        }
+//
+//
+//        try {
+//            // -------- 0) Compute base, bodyBudget, argBudget --------
+//            int base = function.getInstructions().stream()
+//                    .mapToInt(Instruction::getMaxLevel)
+//                    .max().orElse(0);
+//
+//            int bodyBudget = Math.min(extensionLevel, 1 + base) - 1;
+//            if (bodyBudget < 0) bodyBudget = 0;
+//
+//            int argBudget = Math.max(0, extensionLevel - (1 + base));
+//
+//            // -------- 1) Clone body --------
+//            List<Instruction> originalBody = function.getInstructions();
+//            List<Instruction> body = new ArrayList<>(originalBody.size());
+//            for (Instruction ins : originalBody) body.add(ins.clone());
+//
+//            // -------- 2) Build local mapping in this scope --------
+//
+//            // 2.1 inputs (x_i) -> fresh WORK (z_i)
+//            List<Variable> inputs = FunctionArgument.collectInputsInOrder(body);
+//            for (Variable xin : inputs) {
+//                Variable w = vlm.newZVariable(); // keep Z factory as per your current API
+//                vlm.mapVar(xin, w);
+//            }
+//
+//            // 2.2 result (y) -> fresh (currently also Z per your API; swap to newYVariable if you have it)
+//            Variable resultVar = FunctionArgument.findResultVariable(body);
+//            Variable mappedResult = null;
+//            if (resultVar != null) {
+//                mappedResult = vlm.newZVariable(); // prefer vlm.newYVariable() if available
+//                vlm.mapVar(resultVar, mappedResult);
+//            }
+//
+//            // 2.3 internal WORKs -> fresh WORKs (skip already-mapped inputs)
+//            Set<Variable> internalWorks = new HashSet<>();
+//            for (Instruction ins : body) {
+//                for (Variable v : ins.getAllVariables()) {
+//                    if (v.getType() == VariableType.WORK && !vlm.getLocalVarMap().containsKey(v)) {
+//                        internalWorks.add(v);
+//                    }
+//                }
+//            }
+//            for (Variable w0 : internalWorks) {
+//                vlm.mapVar(w0, vlm.newZVariable());
+//            }
+//
+//            // 2.4 Labels mapping — only for labels that are actually referenced as jump targets
+//            Set<Label> referencedTargets = new HashSet<>();
+//            for (Instruction ins : body) {
+//                // By convention, getAllLabels() returns labels referenced by the instruction (e.g., jump targets)
+//                List<Label> used = ins.getAllLabels();
+//                if (used != null) referencedTargets.addAll(used);
+//            }
+//            for (Label l : referencedTargets) {
+//                if (!vlm.getLocalLabelMap().containsKey(l)) {
+//                    vlm.mapLabel(l, vlm.newLabel());
+//                }
+//            }
+//
+//            // -------- 3) Prologue: place arguments into mapped inputs (xi) --------
+//            List<Instruction> prologue = new ArrayList<>();
+//
+//            // Keep the original line label of this QUOTE by anchoring a harmless NoOp first.
+//            Label anchor = (getLabel() == null ? FixedLabel.EMPTY : getLabel());
+//            Instruction noOp = new NoOpInstruction(new VariableImpl(VariableType.RESULT, 1), anchor);
+//            prologue.add(noOp);
+//
+//            int arity = Math.min(argumentList.size(), inputs.size());
+//
+//            for (int i = 0; i < arity; i++) {
+//                Variable xiTarget = vlm.applyVar(inputs.get(i));
+//                Argument arg = argumentList.get(i);
+//
+//                if (arg instanceof VariableArgument vArg) {
+//                    // Assignment: xi <- var
+//                    // IMPORTANT: verify constructor order in your AssignmentInstruction.
+//                    // Here we use (source, target, label)
+//                    prologue.add(new AssignmentInstruction(vArg.getVariable(), xiTarget, FixedLabel.EMPTY));
+//
+//                } else if (arg instanceof FunctionArgument fArg) {
+//                String nestedArgs = /* עדיף */ fArg.getUserString() /* ואם אין: */ /* toArgsString(fArg.arguments) */;
+//                QuoteInstruction nested = new QuoteInstruction(
+//                        fArg.getName(),
+//                        nestedArgs,
+//                        xiTarget,
+//                        fArg.getFunctions(),
+//                        FixedLabel.EMPTY
+//                );
+//                prologue.addAll(nested.extend(argBudget, vlm));
+//            }
+//
+//            // If you have ConstantArgument and an immediate-load instruction, add it here.
+//                // else if (arg instanceof ConstantArgument cArg) {
+//                //     prologue.add(new SetImmediateInstruction(xiTarget, cArg.getValue(), FixedLabel.EMPTY));
+//                // }
+//            }
+//
+//            // -------- 4) Remap + expand body to bodyBudget --------
+//            List<Instruction> mappedBody = new ArrayList<>(body.size());
+//
+//            for (Instruction ins : body) {
+//                Instruction c = ins.clone();
+//
+//                // replace variables
+//                for (Variable v : ins.getAllVariables()) {
+//                    Variable to = vlm.applyVar(v);
+//                    if (to != v) c.replace(v, to);
+//                }
+//
+//                // replace referenced labels inside the instruction (jump targets)
+//                for (Label used : ins.getAllLabels()) {
+//                    if (referencedTargets.contains(used)) {
+//                        Label to = vlm.applyLabel(used);
+//                        if (to != used) c.replace(used, to);
+//                    }
+//                }
+//
+//                // handle the declared label on the instruction line itself
+//                Label declared = ins.getLabel();
+//                if (declared != null && declared != FixedLabel.EMPTY) {
+//                    if (referencedTargets.contains(declared)) {
+//                        Label to = vlm.applyLabel(declared);
+//                        if (to != declared) c.replace(declared, to);
+//                    } else {
+//                        // not referenced → strip it
+//                        c.replace(declared, FixedLabel.EMPTY);
+//                    }
+//                }
+//
+//                // Expand nested quotes inside the body to bodyBudget
+//                if (c instanceof QuoteInstruction qi && bodyBudget > 0) {
+//                    mappedBody.addAll(qi.extend(bodyBudget, vlm));
+//                } else {
+//                    mappedBody.add(c);
+//                }
+//            }
+//
+//            // -------- 5) Epilogue: mappedResult -> this.variable (y <- RESULT) --------
+//            List<Instruction> epilogue = new ArrayList<>();
+//            if (mappedResult != null) {
+//                // IMPORTANT: keep constructor order consistent across your project.
+//                // Here we use (source, target, label): target is this.getVariable()
+//                epilogue.add(new AssignmentInstruction(this.getVariable(),mappedResult, FixedLabel.EMPTY));
+//            }
+//
+//            // -------- 6) glue all together --------
+//            List<Instruction> out = new ArrayList<>(prologue.size() + mappedBody.size() + epilogue.size());
+//            out.addAll(prologue);
+//            out.addAll(mappedBody);
+//            out.addAll(epilogue);
+//            return out;
+//
+//        } finally {
+//            // close local scope if opened
+//            if (openedScope) {
+//                try { vlm.endLocalScope(); } catch (Throwable ignored) {}
+//            }
+//        }
 //    }
+
 
 }

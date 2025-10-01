@@ -33,6 +33,16 @@ public class Function implements Program {
     public List<Function> myFuncs = new ArrayList<>();
     public VariableAndLabelMenger vlm ;
 
+    public Function(Function f) {
+        this.name = f.getName();;
+        this.userString = f.getUserString();
+        this.instructions = f.getInstructions();
+        this.args = getArgs(f.getInstructions());
+        this.extendedInstructions = new ArrayList<>(f.getInstructions());
+        this.vlm = new VariableAndLabelMenger(f.variables, f.labels);
+        this.variables = getAllVariables(f.getInstructions());
+        this.labels = getAllLabels(f.getInstructions());
+    }
 
     public Function(String name, String userString, List<Instruction> instructions) {
         this.name = name;
@@ -40,6 +50,31 @@ public class Function implements Program {
         this.instructions = instructions;
         this.args = getArgs(instructions);
         this.extendedInstructions = new ArrayList<>(instructions);
+        this.vlm = new VariableAndLabelMenger(variables, labels);
+        this.variables = getAllVariables(instructions);
+        this.labels = getAllLabels(instructions);
+    }
+
+    private List<Label> getAllLabels(List<Instruction> instructions) {
+            Set<Label> unique = new LinkedHashSet<>();
+            for (Instruction instruction : instructions) {
+                List<Label> labels = instruction.getAllLabels();
+                if (labels != null) {
+                    unique.addAll(labels);
+                }
+            }
+            return new ArrayList<>(unique);
+    }
+
+    private List<Variable> getAllVariables(List<Instruction> instructions) {
+        Set<Variable> unique = new LinkedHashSet<>();
+        for (Instruction instruction : instructions) {
+            List<Variable> vars = instruction.getAllVariables();
+            if (vars != null) {
+                unique.addAll(vars);
+            }
+        }
+        return new ArrayList<>(unique);
     }
 
     private List<String> getArgs(List<Instruction> instructions) {
@@ -129,7 +164,9 @@ public class Function implements Program {
     }
 
 
-
+    public List<RunSummary> getsummaries(){
+        return summaries;
+    }
 
     public List<Instruction> getExtendedInstructions(int extensionLevel, VariableAndLabelMenger vlm) {
         List<Instruction> result = new ArrayList<>();
@@ -260,6 +297,8 @@ public class Function implements Program {
             List<Instruction> extended = inst.extend(level, vlm);
             extendedInstructions.addAll(extended);
         }
+        this.variables = getAllVariables(extendedInstructions);
+        this.labels = getAllLabels(extendedInstructions);
     }
 
     // recursive method to expand paths

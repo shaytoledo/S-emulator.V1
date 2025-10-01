@@ -242,6 +242,8 @@ public class RightToolbarController {
         endDebugButtons();
         run();
         resetVariableTableStyle();
+        try { mainLayoutController.getLeft().clearBreakpoint(); } catch (Exception ignore) {}
+        clearBreakpointUI();
 
     }
 
@@ -570,9 +572,11 @@ public class RightToolbarController {
 
     public void showProgram() {
         fillInputTable();
+        fillHistoryTable();
     }
 
     public void fillHistoryTable() {
+        historyTable.getItems().clear();
         // Fetch history from the engine
         List<RunSummary> history = mainLayoutController.engine.getHistory();
 
