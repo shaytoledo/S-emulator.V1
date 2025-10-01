@@ -85,7 +85,7 @@ public class ProgramImpl implements Program {
 
     @Override
     public List<Instruction> getInstructions() {
-        return extendedInstructions;
+        return (extendedInstructions != null) ? extendedInstructions : instructions;
     }
 
     // return the next instruction after the current one, or null if at the end

@@ -144,31 +144,41 @@ public class FunctionArgument implements Argument {
         return copy;
     }
 
-
-    /** Collect function inputs (INPUT1, INPUT2, ...) by first-appearance order. */
+    // FunctionArgument.java
     public static List<Variable> collectInputsInOrder(List<Instruction> body) {
-        List<Variable> inputs = new ArrayList<>();
-        for (Instruction ins : body) {
-            for (Variable v : ins.getAllVariables()) {
-                if (v.getType() == VariableType.INPUT && !inputs.contains(v)) {
-                    inputs.add(v);
+        // Collect unique INPUT vars by index and return sorted ascending.
+        TreeMap<Integer, Variable> byIdx = new TreeMap<>();
+        for (logic.instruction.Instruction ins : body) {
+            List<Variable> vars = ins.getAllVariables();
+            if (vars == null) continue;
+            for (Variable v : vars) {
+                if (v != null && v.getType() == VariableType.INPUT) {
+                    byIdx.putIfAbsent(v.getIndex(), v);
                 }
             }
         }
-        return inputs;
+        return new java.util.ArrayList<>(byIdx.values());
     }
 
 
-    /** Find the RESULT variable used in this function (first occurrence). */
-    public static Variable findResultVariable(List<Instruction> body) {
+    // FunctionArgument.java
+    public static Variable findResultVariable(
+            java.util.List<Instruction> body
+    ) {
+        Variable best = null;
         for (Instruction ins : body) {
-            for (Variable v : ins.getAllVariables()) {
-                if (v.getType() == VariableType.RESULT) return v;
+            java.util.List<Variable> vars = ins.getAllVariables();
+            if (vars == null) continue;
+            for (Variable v : vars) {
+                if (v != null && v.getType() == VariableType.RESULT) {
+                    if (best == null || v.getIndex() < best.getIndex()) {
+                        best = v; // pick the lowest index RESULT (usually y1)
+                    }
+                }
             }
         }
-        return null;
+        return best;
     }
-
 
 
 
