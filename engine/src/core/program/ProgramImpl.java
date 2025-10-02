@@ -18,6 +18,7 @@ public class ProgramImpl implements Program {
     private List<Function> functions;
     private List<Instruction> instructions;
     private List<Instruction> extendedInstructions;
+    private int currentExtensionLevel = -1; // Track the level used for current extendedInstructions
     public final List<Variable> variables;
     public final List<Label> labels;
 
@@ -117,7 +118,7 @@ public class ProgramImpl implements Program {
 
     // convert variables to a String list for display in table
     @Override
-    public List<String> getVariablesPeek() {
+    public List<String> getXVariablesPeek() {
         Set<String> variables = new LinkedHashSet<>();
 
         for (Instruction instr : extendedInstructions) {
@@ -129,6 +130,22 @@ public class ProgramImpl implements Program {
         }
 
         return new ArrayList<>(variables);
+    }
+
+    @Override
+    public List<String> getVariablesPeek() {
+        Set<String> variables = new LinkedHashSet<>();
+
+        for (Instruction instr : extendedInstructions) {
+            List<Variable> info = instr.getAllVariables();
+            for (Variable s : info) {
+                variables.add(s.getRepresentation());
+            }
+        }
+
+        List <String> varList = new ArrayList<>(variables);
+        varList.sort(String::compareTo);
+        return varList;
     }
 
     public static void addIfStartsWithX(Set<String> variables, String curr) {
@@ -168,6 +185,11 @@ public class ProgramImpl implements Program {
     public void extend(int level) {
         if (level < 0) level = 0;
 
+        // Only re-extend if the level has changed
+        if (currentExtensionLevel == level && extendedInstructions != null) {
+            return; // Already extended to this level
+        }
+
         // Use your existing constructor; if you need to pass initial vars/labels, do so.
         VariableAndLabelMenger vlm = new VariableAndLabelMenger(getAllVariablesNames(), getAllLabelsNames());
 
@@ -185,8 +207,9 @@ public class ProgramImpl implements Program {
 
         // Replace the program's current instruction list with the expanded one,
         // or store it to a dedicated field if you keep both.
-
-        this.extendedInstructions = out; // or this.extendedInstructions = out; depends on your design
+        this.extendedInstructions = out;
+        this.currentExtensionLevel = level; // Track the level used for this extension
+        this.vlm = vlm; // Update the VLM with the one used for extension
     }
 
 
@@ -225,6 +248,11 @@ public class ProgramImpl implements Program {
     // note that this method use the extended instructions
     @Override
     public List<InstructionView> getInstructionsPeek() {
+        // Ensure we have extended instructions - if not, use level 0 as default
+        if (extendedInstructions == null || currentExtensionLevel == -1) {
+            extend(0);
+        }
+
         List<InstructionView> instructionViews = new ArrayList<>(extendedInstructions.size());
 
         int size = extendedInstructions.size();
@@ -280,6 +308,7 @@ public class ProgramImpl implements Program {
         vlm = new VariableAndLabelMenger(variables, labels);
         List<List<InstructionView>> result = new ArrayList<>();
 
+
         for (Instruction root : instructions) {
 
             List<List<Instruction>> paths = expandPaths(root, level, vlm);
@@ -294,9 +323,12 @@ public class ProgramImpl implements Program {
                 result.add(views);
             }
         }
+        extend(level);
 
         return result;
 }
+
+
 
     // recursive method to expand paths
     private List<List<Instruction>> expandPaths(Instruction inst, int level, VariableAndLabelMenger vlm) {

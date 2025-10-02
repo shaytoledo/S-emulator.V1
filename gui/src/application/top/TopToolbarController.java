@@ -4,6 +4,7 @@ import application.main.MainLayoutController;
 import core.program.VariableAndLabelMenger;
 import dto.InstructionView;
 import dto.LoadReport;
+import dto.VariablesAndLabels;
 import dto.functionView;
 import javafx.animation.PauseTransition;
 import javafx.beans.Observable;
@@ -349,45 +350,58 @@ public class TopToolbarController {
     }
 
     private void updateHighlighting() {
-        /// all the variable and label in the expended program, now need to know where is each label and variable
-        /// X Y Z
-        VariableAndLabelMenger vlm = mainLayoutController.engine.getVlm();
-        List<String> allVariables = vlm.getAll();
 
-        List<String> xVariables = allVariables.stream()
-                .filter(Objects::nonNull)
-                .filter(s -> s.regionMatches(true, 0, "x", 0, 1))
-                .sorted(String.CASE_INSENSITIVE_ORDER)
-                .toList();
+        VariablesAndLabels vlm = mainLayoutController.engine.getProgramInfo(getCurrentLevel());
 
-        List<String> zVariables = allVariables.stream()
-                .filter(Objects::nonNull)
-                .filter(s -> s.regionMatches(true, 0, "z", 0, 1))
-                .sorted(String.CASE_INSENSITIVE_ORDER)
-                .toList();
-
-        List<String> yVariables = allVariables.stream()
-                .filter(Objects::nonNull)
-                .filter(s -> s.regionMatches(true, 0, "y", 0, 1))
-                .sorted(String.CASE_INSENSITIVE_ORDER)
-                .toList();
-
-
-        // L*
-        List<String> lLabels = allVariables.stream()
-                .filter(Objects::nonNull)
-                .filter(s -> s.regionMatches(true, 0, "l", 0, 1))
-                .sorted(String.CASE_INSENSITIVE_ORDER)
-                .toList();
-
-        List<String> options = new ArrayList<>(yVariables);
-        options.addAll(xVariables);
-        options.addAll(zVariables);
-        options.addAll(lLabels);
+        List<String> options = new ArrayList<>(vlm.yVariables());
+        options.addAll(vlm.xVariables());
+        options.addAll(vlm.ZVariables());
+        options.addAll(vlm.labels());
 
         HighlightSelection.getItems().setAll(options);
         HighlightSelection.setPromptText("Choose variable/label…");
         HighlightSelection.getSelectionModel().clearSelection();
+
+
+//        /// all the variable and label in the expended program, now need to know where is each label and variable
+//        /// X Y Z
+//        VariableAndLabelMenger vlm = mainLayoutController.engine.getVlm();
+//        List<String> allVariables = vlm.getAll();
+//
+//        List<String> xVariables = allVariables.stream()
+//                .filter(Objects::nonNull)
+//                .filter(s -> s.regionMatches(true, 0, "x", 0, 1))
+//                .sorted(String.CASE_INSENSITIVE_ORDER)
+//                .toList();
+//
+//        List<String> zVariables = allVariables.stream()
+//                .filter(Objects::nonNull)
+//                .filter(s -> s.regionMatches(true, 0, "z", 0, 1))
+//                .sorted(String.CASE_INSENSITIVE_ORDER)
+//                .toList();
+//
+//        List<String> yVariables = allVariables.stream()
+//                .filter(Objects::nonNull)
+//                .filter(s -> s.regionMatches(true, 0, "y", 0, 1))
+//                .sorted(String.CASE_INSENSITIVE_ORDER)
+//                .toList();
+//
+//
+//        // L*
+//        List<String> lLabels = allVariables.stream()
+//                .filter(Objects::nonNull)
+//                .filter(s -> s.regionMatches(true, 0, "l", 0, 1))
+//                .sorted(String.CASE_INSENSITIVE_ORDER)
+//                .toList();
+//
+//        List<String> options = new ArrayList<>(yVariables);
+//        options.addAll(xVariables);
+//        options.addAll(zVariables);
+//        options.addAll(lLabels);
+//
+//        HighlightSelection.getItems().setAll(options);
+//        HighlightSelection.setPromptText("Choose variable/label…");
+//        HighlightSelection.getSelectionModel().clearSelection();
     }
 
     @FXML

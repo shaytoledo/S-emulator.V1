@@ -78,8 +78,6 @@ public class LeftToolbarController {
         instructionsTable.refresh();
     }
 
-
-
     public void clearBreakpoint() {
         breakpointIndex = null;
         refreshRowStylesWithBreakpoint();
@@ -88,10 +86,6 @@ public class LeftToolbarController {
     public Integer getBreakpointIndex() {
         return breakpointIndex;
     }
-
-
-
-
 
     public void clearHistory() {
         instructionsHistoryTable.getItems().clear();

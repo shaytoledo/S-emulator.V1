@@ -57,6 +57,64 @@ public class EngineImpl implements Engine {
         loadProgram(xmlPath);
     }
 
+    @Override
+    public VariablesAndLabels getProgramInfo(int level) {
+        cuurentProgram.expendToLevelForExtend(level);
+
+        // Fetch all variable names and labels as strings
+        List<String> allVars = cuurentProgram.getVariablesPeek();
+        List<String> labels = cuurentProgram.getLabelsPeek(); // If this is List<Label>, map to string below.
+
+        // Split and sort variables by prefix X/Y/Z (case-insensitive), ordered by numeric suffix
+        List<String> xVars = sortVarsByIndex(filterByPrefix(allVars, 'x'));
+        List<String> yVars = sortVarsByIndex(filterByPrefix(allVars, 'y'));
+        List<String> zVars = sortVarsByIndex(filterByPrefix(allVars, 'z'));
+
+        // If labels come as List<Label>, uncomment this line instead:
+        // List<String> labels = cuurentProgram.getLabelsPeek().stream().map(Label::toString).toList();
+
+        return new VariablesAndLabels(xVars, yVars, zVars, labels);
+    }
+
+    /* ---------- helpers ---------- */
+
+    private static List<String> filterByPrefix(List<String> names, char prefix) {
+        char p = Character.toLowerCase(prefix);
+        return names.stream()
+                .filter(s -> s != null && !s.isBlank())
+                .map(String::trim)
+                .filter(s -> !s.isEmpty() && Character.toLowerCase(s.charAt(0)) == p)
+                .distinct()
+                .toList();
+    }
+
+    private static List<String> sortVarsByIndex(List<String> vars) {
+        return vars.stream()
+                .sorted((a, b) -> Integer.compare(extractFirstNumber(a), extractFirstNumber(b)))
+                .toList();
+    }
+
+    private static int extractFirstNumber(String name) {
+        // Extract the first number inside the string (e.g., x12 -> 12). If none, place at end.
+        for (int i = 0; i < name.length(); i++) {
+            if (Character.isDigit(name.charAt(i))) {
+                int j = i;
+                while (j < name.length() && Character.isDigit(name.charAt(j))) j++;
+                try {
+                    return Integer.parseInt(name.substring(i, j));
+                } catch (NumberFormatException ignore) {
+                    return Integer.MAX_VALUE;
+                }
+            }
+        }
+        return Integer.MAX_VALUE;
+    }
+
+
+
+
+
+
     private List<Function> getFuncs() {
         List<Function> funcs = new ArrayList<>();
         if (cuurentProgram != null) {
@@ -145,7 +203,7 @@ public class EngineImpl implements Engine {
         if (cuurentProgram != null) {
             return new ProgramSummary(
                     cuurentProgram.getName(),
-                    cuurentProgram.getVariablesPeek(),
+                    cuurentProgram.getXVariablesPeek(),
                     cuurentProgram.getLabelsPeek(),
                     cuurentProgram.getInstructionsPeek()
             );
@@ -179,13 +237,11 @@ public class EngineImpl implements Engine {
 
     @Override
     public List<List<InstructionView>> expandProgramToLevelForExtend(int level) {
-        //loadProgram(xmlPath);
         return cuurentProgram.expendToLevelForExtend(level);
     }
 
     @Override
     public List<InstructionView> expandProgramToLevelForRun(int level) {
-        //loadProgram(xmlPath);
         List<InstructionView> allInstructions = cuurentProgram.instructionViewsAfterExtendRunShow(level);
         return allInstructions;
     }

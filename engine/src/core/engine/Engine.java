@@ -31,5 +31,7 @@ public interface Engine {
     Program getCuurentProgram();
     void loadFunc(String name);
 
+    VariablesAndLabels getProgramInfo(int level);
+
     }
 

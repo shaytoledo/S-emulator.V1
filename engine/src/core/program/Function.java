@@ -24,6 +24,7 @@ public class Function implements Program {
     private final String userString;
     private List<Instruction> instructions;
     private List<Instruction> extendedInstructions;
+    private int currentExtensionLevel = -1; // Track the level used for current extendedInstructions
     private final List<String> args;
     public List<RunSummary> summaries = new ArrayList<>();
 
@@ -192,7 +193,7 @@ public class Function implements Program {
     /// No have really variables labels and vlm
 
     @Override
-    public List<String> getVariablesPeek() {
+    public List<String> getXVariablesPeek() {
         Set<String> variables = new LinkedHashSet<>();
 
         for (Instruction instr : extendedInstructions) {
@@ -203,7 +204,24 @@ public class Function implements Program {
             }
         }
 
-        return new ArrayList<>(variables);    }
+        return new ArrayList<>(variables);
+    }
+
+    @Override
+    public List<String> getVariablesPeek() {
+        Set<String> variables = new LinkedHashSet<>();
+
+        for (Instruction instr : extendedInstructions) {
+            List<String> info = instr.getAllInfo();
+            for (String s : info) {
+                variables.add(s);
+            }
+        }
+
+        List <String> varList = new ArrayList<>(variables);
+        varList.sort(String::compareTo);
+        return varList;
+    }
 
     @Override
     public List<String> getLabelsPeek() {
@@ -252,6 +270,11 @@ public class Function implements Program {
 
     @Override
     public List<InstructionView> getInstructionsPeek() {
+        // Ensure we have extended instructions - if not, use level 0 as default
+        if (extendedInstructions == null || extendedInstructions.isEmpty() || currentExtensionLevel == -1) {
+            extend(0);
+        }
+
         List<InstructionView> instructionViews = new ArrayList<>(extendedInstructions.size());
 
         int size = extendedInstructions.size();
@@ -290,6 +313,13 @@ public class Function implements Program {
 
     // extend Instructions to the given level (with the original instructions)
     public void extend (int level) {
+        if (level < 0) level = 0;
+
+        // Only re-extend if the level has changed
+        if (currentExtensionLevel == level && extendedInstructions != null && !extendedInstructions.isEmpty()) {
+            return; // Already extended to this level
+        }
+
         vlm = new VariableAndLabelMenger(variables, labels);
 
         extendedInstructions.clear();
@@ -299,6 +329,7 @@ public class Function implements Program {
         }
         this.variables = getAllVariables(extendedInstructions);
         this.labels = getAllLabels(extendedInstructions);
+        this.currentExtensionLevel = level; // Track the level used for this extension
     }
 
     // recursive method to expand paths

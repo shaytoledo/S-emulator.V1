@@ -54,7 +54,7 @@ public class JumpEqualVariableInstruction extends AbstractInstruction {
 
     @Override
     public String toDisplayString() {
-        return "JE " + getVariable().getRepresentation() + " == " + other.getRepresentation() + " -> " + jnzLabel.getLabelRepresentation();
+        return "IF " + getVariable().getRepresentation() + " = " + other.getRepresentation() + " GOTO " + jnzLabel.getLabelRepresentation();
     }
 
     @Override

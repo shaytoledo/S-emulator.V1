@@ -6,7 +6,6 @@ import dto.functionView;
 import logic.instruction.Instruction;
 import logic.label.Label;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public interface Program {
@@ -16,6 +15,7 @@ public interface Program {
     Instruction getInstructionByLabel(Label nextLabel);
     String getName();
     List<Instruction> getInstructions();
+    List<String> getXVariablesPeek();
     List<String> getVariablesPeek();
     List<String> getLabelsPeek();
     List<List<InstructionView>> expendToLevelForExtend(int level);
