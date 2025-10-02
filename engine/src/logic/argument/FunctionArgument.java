@@ -111,7 +111,6 @@ public class FunctionArgument implements Argument {
         return best;
     }
 
-
     @Override
     public long evaluate(ExecutionContext context, VariableAndLabelMenger vlm, int cycles) {
         // Evaluate all child arguments in the *current* context to numeric values
@@ -133,9 +132,6 @@ public class FunctionArgument implements Argument {
         return result;
     }
 
-
-
-
     public List<Instruction> cloneBody() {
         List<Instruction> copy = new ArrayList<>();
         for (Instruction i : function.getInstructions()) { // if you hold 'instructions'; otherwise use function.getInstructions()
@@ -144,11 +140,10 @@ public class FunctionArgument implements Argument {
         return copy;
     }
 
-    // FunctionArgument.java
     public static List<Variable> collectInputsInOrder(List<Instruction> body) {
         // Collect unique INPUT vars by index and return sorted ascending.
         TreeMap<Integer, Variable> byIdx = new TreeMap<>();
-        for (logic.instruction.Instruction ins : body) {
+        for (Instruction ins : body) {
             List<Variable> vars = ins.getAllVariables();
             if (vars == null) continue;
             for (Variable v : vars) {
@@ -157,17 +152,13 @@ public class FunctionArgument implements Argument {
                 }
             }
         }
-        return new java.util.ArrayList<>(byIdx.values());
+        return new ArrayList<>(byIdx.values());
     }
 
-
-    // FunctionArgument.java
-    public static Variable findResultVariable(
-            java.util.List<Instruction> body
-    ) {
+    public static Variable findResultVariable(List<Instruction> body) {
         Variable best = null;
         for (Instruction ins : body) {
-            java.util.List<Variable> vars = ins.getAllVariables();
+            List<Variable> vars = ins.getAllVariables();
             if (vars == null) continue;
             for (Variable v : vars) {
                 if (v != null && v.getType() == VariableType.RESULT) {
@@ -181,7 +172,19 @@ public class FunctionArgument implements Argument {
     }
 
 
+    @Override
+    public List<String> getAllInfo() {
+        return List.of();
+    }
 
+    @Override
+    public List<Variable> getAllVariables() {
+        List<Variable> vars = new ArrayList<>();
+        for (Argument arg : arguments) {
+            vars.addAll(arg.getAllVariables());
+        }
+        return vars;
+    }
 
     // 1. Change inputs of instructions to new work variables
     // 2. Change all old input variables to the new work variables
@@ -189,7 +192,6 @@ public class FunctionArgument implements Argument {
     // 4. Replace all old labels to new labels
 
     @Override
-    //public Pair<List<Instruction>, Label> extend(int extensionLevel, VariableAndLabelMenger vlm) {
     public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
 
         if (extensionLevel <= 0) {
@@ -340,126 +342,6 @@ public class FunctionArgument implements Argument {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//    public List<Instruction> addEndInstrucrion(Variable var) {
-//        function.getInstructions().add(new AssignmentInstruction(newResultVar, var, exitLabel));
-//        return function.getInstructions();
-//    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
-//        List<Instruction> instructions = new ArrayList<>();
-//        Label exitLabel = vlm.newLabel();
-//
-//        // 1. Create new variables for function arguments and map them
-//        // and extend the instructions for each argument
-//        List<Pair<Variable, Variable>> variableMapping = new ArrayList<>();
-//        for (int i = 0; i < arguments.size(); i++) {
-//            Variable oldVar = new VariableImpl(VariableType.INPUT, i + 1);
-//            Variable newVar = vlm.newZVariable();
-//            variableMapping.add(new Pair<>(oldVar, newVar));
-//            // 1) Prepare fresh Z-vars for each function argument (x1..xk -> zArg[i])
-//            List<Pair<Variable, Variable>> xToZArg = new ArrayList<>();
-//
-//
-//
-//            // 2. Replace variables in function instructions with our new variables
-//            Map<Label, Label> labelMapping = new HashMap<>();
-//            List<Instruction> functionInstructions = new ArrayList<>();
-//
-//            // Clone all function instructions
-//            for (Instruction instr : function.getInstructions()) {
-//                Instruction clonedInstr = instr;
-//                functionInstructions.add(clonedInstr);
-//            }
-//
-//            // 3. Replace all labels in the function with new labels
-//            for (Instruction instr : functionInstructions) {
-//                for (Label label : instr.getAllLabels()) {
-//                    if (label != null && !label.equals(FixedLabel.EMPTY)) {
-//                        if (!labelMapping.containsKey(label)) {
-//                            labelMapping.put(label, vlm.newLabel());
-//                        }
-//                        instr.replace(label, labelMapping.get(label));
-//                    }
-//                }
-//            }
-//
-//            // 4. Replace all variables in the function instructions
-//            for (Instruction instr : functionInstructions) {
-//                // Replace input variables with our new variables
-//                for (Pair<Variable, Variable> mapping : variableMapping) {
-//                    instr.replace(mapping.getKey(), mapping.getValue());
-//                }
-//            }
-//
-//            // Add function's instructions to our list
-//            instructions.addAll(functionInstructions);
-//
-//            // 5. Add an instruction at the end to assign the result to y
-//            Variable resultVar = new VariableImpl(VariableType.RESULT, 1);
-//            instructions.add(new AssignmentInstruction(resultVar, resultVar, exitLabel));
-//
-//            return new Pair<>(instructions, exitLabel);
-//        }
-//    }
-
-
-    @Override
-    public List<String> getAllInfo() {
-        return List.of();
-    }
 }
 
 

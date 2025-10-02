@@ -2,6 +2,7 @@ package logic.instruction.synthetic;
 
 import core.program.Function;
 import core.program.VariableAndLabelMenger;
+import javafx.scene.control.Alert;
 import javafx.util.Pair;
 import logic.argument.Argument;
 import logic.argument.FunctionArgument;
@@ -35,37 +36,6 @@ public class QuoteInstruction extends AbstractInstruction {
     String functionArguments;
 
     int cycles = 0;
-
-//    public QuoteInstruction(String name, String functionArguments,Variable var,  List<Function> funcs, Label lineLabel) {
-//        super(InstructionData.QUOTE, var, lineLabel);
-//        this.argumentList = new ArrayList<>(toArguments(functionArguments ,funcs));
-//        this.functionArguments = functionArguments;
-//        this.variable = var;
-//        this.arguments = new FunctionArgument(name, argumentList, funcs);
-//        this.allFunctions = funcs;
-//
-//
-//        for (Function f : funcs) {
-//            if (f.getName().equals(name)) {
-//                this.function = f;
-//                break;
-//            }
-//        }
-//    }
-//    public QuoteInstruction(String name, String functionArguments,Variable var,  List<Function> funcs) {
-//        super(InstructionData.QUOTE, var);
-//        List<Argument> arguments = new ArrayList<>(toArguments(functionArguments ,funcs));
-//        this.arguments = new FunctionArgument(name, arguments, funcs);
-//        this.allFunctions = funcs;
-//
-//        for (Function f : funcs) {
-//            if (f.getName().equals(name)) {
-//                this.function = f;
-//                break;
-//            }
-//        }
-//    }
-
 
     public QuoteInstruction(String name, String functionArguments, Variable var, List<Function> funcs, Label lineLabel) {
         super(InstructionData.QUOTE, var, lineLabel);
@@ -108,9 +78,6 @@ public class QuoteInstruction extends AbstractInstruction {
         return String.join(",", parts);
     }
 
-
-
-
     @Override
     public Instruction clone() {
         String name = function.getName();
@@ -121,7 +88,6 @@ public class QuoteInstruction extends AbstractInstruction {
                 ? new QuoteInstruction(name, args, target, allFunctions)
                 : new QuoteInstruction(name, args, target, allFunctions, lbl);
     }
-
 
     private List<String> splitArguments(String input) {
         List<String> stringArgs = new ArrayList<>();
@@ -208,8 +174,6 @@ public class QuoteInstruction extends AbstractInstruction {
 
     @Override
     public int getMaxLevel() {
-
-
         return arguments.getMaxLevel();
     }
 
@@ -237,10 +201,24 @@ public class QuoteInstruction extends AbstractInstruction {
 
     @Override
     public List<Variable> getAllVariables() {
-        if(getVariable() != null) {
-            return List.of(getVariable());
+        List<Variable> all = new ArrayList<>();
+
+        for(Argument arg : argumentList) {
+            List<Variable> vars = arg.getAllVariables();
+            if(vars != null) {
+                for(Variable v : vars) {
+                    if(!all.contains(v)) {
+                        all.add(v);
+                    }
+                }
+            }
         }
-        return List.of();
+
+
+        if(getVariable() != null) {
+            all.add(getVariable());
+        }
+        return all;
     }
 
     @Override
@@ -317,20 +295,30 @@ public class QuoteInstruction extends AbstractInstruction {
                 openedScope = true;
             }
 
+            // Base it's the max depth of the function body (only instructions)
             // -------- 0) Compute base, bodyBudget, argBudget --------
             int base = function.getInstructions().stream()
                     .mapToInt(Instruction::getMaxLevel)
                     .max().orElse(0);
 
+
+            // Base + 1 for the instruction extend and the qute extend (to show the function instructions)\
+            // bodyBudget is how deep we can expand the function body because we can expend the body only to level 1 + base maximum, and if extensionLevel is less than that, we can only expand to extensionLevel
             int bodyBudget = Math.min(extensionLevel, 1 + base) - 1;
             if (bodyBudget < 0) bodyBudget = 0;
 
+            // argBudget is how deep we can expand the arguments (nested quotes)
             int argBudget = Math.max(0, extensionLevel - (1 + base));
 
+
             // -------- 1) Clone body --------
+            // 1.1 get function body (function instructions)
             List<Instruction> originalBody = function.getInstructions();
+
             List<Instruction> body = new ArrayList<>(originalBody.size());
+            // 1.2 clone function body (each instruction)
             for (Instruction ins : originalBody) body.add(ins.clone());
+
 
             // -------- 2) Build local mapping --------
 
@@ -364,26 +352,39 @@ public class QuoteInstruction extends AbstractInstruction {
                 vlm.mapVar(w0, vlm.newZVariable());
             }
 
-            // 2.4 Labels mapping — map BOTH declared and referenced labels
-            Set<Label> declared = new HashSet<>();
-            Set<Label> referenced = new HashSet<>();
+            // -------- 2.4 Labels mapping — map BOTH declared and referenced labels (non-empty only) --------
+            Set<Label> toMap = new java.util.LinkedHashSet<>();
+
             for (Instruction ins : body) {
+                // declared label (line label)
                 Label decl = ins.getLabel();
-                if (decl != null && decl != FixedLabel.EMPTY) declared.add(decl);
+                if (decl != null && decl != FixedLabel.EMPTY) {
+                    toMap.add(decl);
+                }
+
+                // referenced labels (jump targets)
                 List<Label> used = ins.getAllLabels();
-                if (used != null) referenced.addAll(used);
+                if (used != null) {
+                    for (Label u : used) {
+                        if (u != null && u != FixedLabel.EMPTY) {
+                            toMap.add(u);
+                        }
+                    }
+                }
             }
-            Set<Label> allLabels = new HashSet<>();
-            allLabels.addAll(declared);
-            allLabels.addAll(referenced);
-            for (Label l : allLabels) {
+
+            // create mappings only for non-empty labels that don't have a local mapping yet
+            for (Label l : toMap) {
                 if (!vlm.getLocalLabelMap().containsKey(l)) {
                     vlm.mapLabel(l, vlm.newLabel());
                 }
             }
 
+
             // -------- 3) Prologue: write arguments into mapped x_i --------
             List<Instruction> prologue = new ArrayList<>();
+
+            // no-op with this instruction's label (if any)
             Label anchor = (getLabel() == null ? FixedLabel.EMPTY : getLabel());
             Instruction noOp = new NoOpInstruction(new VariableImpl(VariableType.RESULT, 1), anchor);
             prologue.add(noOp);
@@ -395,21 +396,59 @@ public class QuoteInstruction extends AbstractInstruction {
 
                 if (arg instanceof VariableArgument vArg) {
                     // IMPORTANT: ensure ctor is (source, target, label)
-                    prologue.add(new AssignmentInstruction(vArg.getVariable(), xiTarget, FixedLabel.EMPTY));
+                    prologue.add(new AssignmentInstruction(xiTarget, vArg.getVariable(), FixedLabel.EMPTY));
+
+
+
+
+
+
+
+
+//                } else if (arg instanceof FunctionArgument fArg) {
+//                    // Build nested QUOTE with serialized call-site args (do NOT use getUserString)
+//                    String nestedArgs = toArgsString(fArg.arguments);
+//                    QuoteInstruction nested = new QuoteInstruction(
+//                            fArg.getName(),
+//                            nestedArgs,
+//                            xiTarget,
+//                            fArg.getFunctions(),
+//                            FixedLabel.EMPTY
+//                    );
+//                    prologue.addAll(nested.extend(argBudget, vlm));
+//                }
 
                 } else if (arg instanceof FunctionArgument fArg) {
-                    // Build nested QUOTE with serialized call-site args (do NOT use getUserString)
+                    // Evaluate the function-argument into a fresh WORK temp, then assign temp -> xiTarget.
+                    // This avoids later dependency on fArg.functions and stabilizes nested expansion.
+
+                    // 1) Allocate a fresh WORK temp (prefer via VLM to keep scoping consistent)
+                    Variable temp = vlm.newZVariable();
+
+                    // 2) Serialize nested call-site arguments (do NOT rely on userString)
                     String nestedArgs = toArgsString(fArg.arguments);
+
+                    // 3) Be defensive about the functions list (avoid nulls)
+                    List<Function> fns = fArg.getFunctions();
+
+                    // 4) Build QUOTE that writes its result into temp (not into xiTarget!)
                     QuoteInstruction nested = new QuoteInstruction(
                             fArg.getName(),
                             nestedArgs,
-                            xiTarget,
-                            fArg.getFunctions(),
+                            temp,                    // <<< write result into temp
+                            fns,
                             FixedLabel.EMPTY
                     );
+
+                    // 5) Expand the nested quote with the argument budget
                     prologue.addAll(nested.extend(argBudget, vlm));
+
+                    // 6) Explicit assignment: temp -> mapped Xi slot
+                    if (temp != xiTarget) {
+                        prologue.add(new AssignmentInstruction(xiTarget, temp, FixedLabel.EMPTY));
+                    }
                 }
-                // else if (arg instanceof ConstantArgument cArg) { ... }
+
             }
 
             // -------- 4) Remap + expand body to bodyBudget --------
@@ -454,7 +493,7 @@ public class QuoteInstruction extends AbstractInstruction {
             List<Instruction> epilogue = new ArrayList<>();
             if (mappedResult != null && this.getVariable() != null) {
                 // IMPORTANT: ensure (source, target, label)
-                epilogue.add(new AssignmentInstruction(mappedResult, this.getVariable(), FixedLabel.EMPTY));
+                epilogue.add(new AssignmentInstruction(this.getVariable(), mappedResult, FixedLabel.EMPTY));
             }
 
             // -------- 6) glue --------

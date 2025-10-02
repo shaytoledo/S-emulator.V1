@@ -37,6 +37,7 @@ public class AssignmentInstruction extends AbstractInstruction {
         } else {
             return new AssignmentInstruction(getVariable(), assignedVariable, getLabel());
         }
+
     }
 
     public Variable getAssignedVariable() {
@@ -132,7 +133,6 @@ public class AssignmentInstruction extends AbstractInstruction {
                 Variable v = this.getVariable();
                 Variable vTag = assignedVariable;
                 Variable z1 = vlm.newZVariable();
-                //Instruction instr1 = new NoOpInstruction(v, getLabel());
                 Instruction instr2 = new ZeroVariableInstruction(v,getLabel());
                 List<Instruction> zeroExtend = instr2.extend(1, vlm);
 

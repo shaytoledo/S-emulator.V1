@@ -5,6 +5,7 @@ import javafx.util.Pair;
 import logic.execution.ExecutionContext;
 import logic.instruction.Instruction;
 import logic.label.Label;
+import logic.variable.Variable;
 
 import java.util.List;
 
@@ -25,5 +26,8 @@ public interface Argument {
 
     // Get all the labels and variables in this section
     List<String> getAllInfo();
+
+    List<Variable> getAllVariables();
+
 
 }
