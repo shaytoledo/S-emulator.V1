@@ -11,6 +11,7 @@
       <element id="extracted-dir" path="$PROJECT_DIR$/resources/jaxb/jaxb-impl.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/resources/jaxb/jaxb-jxc.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/resources/jaxb/jakarta.activation-api.jar" path-in-jar="/" />
+      <element id="artifact" artifact-name="Gui2JAR" />
     </root>
   </artifact>
 </component>

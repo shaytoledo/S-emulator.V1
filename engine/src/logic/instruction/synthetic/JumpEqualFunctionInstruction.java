@@ -165,7 +165,7 @@ public class JumpEqualFunctionInstruction extends AbstractInstruction {
 
     @Override
     public int getMaxLevel() {
-        return arguments.getMaxLevel();
+        return arguments.getMaxLevel() + 2;
     }
 
     @Override

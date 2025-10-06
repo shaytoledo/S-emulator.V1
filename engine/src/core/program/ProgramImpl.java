@@ -179,38 +179,48 @@ public class ProgramImpl implements Program {
 
 
 
+    // extend Instructions to the given level (with the original instructions)
+    public void extend (int level) {
+        vlm = new VariableAndLabelMenger(variables, labels);
 
-
-
-    public void extend(int level) {
-        if (level < 0) level = 0;
-
-        // Only re-extend if the level has changed
-        if (currentExtensionLevel == level && extendedInstructions != null) {
-            return; // Already extended to this level
-        }
-
-        // Use your existing constructor; if you need to pass initial vars/labels, do so.
-        VariableAndLabelMenger vlm = new VariableAndLabelMenger(getAllVariablesNames(), getAllLabelsNames());
-
-        List<Instruction> out = new ArrayList<>();
+        extendedInstructions.clear();
         for (Instruction inst : instructions) {
-            // Local maps for this single instruction expansion
-            vlm.beginLocalScope();
-            try {
-                // Each instruction is responsible to return NEW instructions (no in-place mutation)
-                out.addAll(inst.extend(level, vlm));
-            } finally {
-                vlm.endLocalScope(); // clear local maps, keep global counters
-            }
+            List<Instruction> extended = inst.extend(level, vlm);
+            extendedInstructions.addAll(extended);
         }
-
-        // Replace the program's current instruction list with the expanded one,
-        // or store it to a dedicated field if you keep both.
-        this.extendedInstructions = out;
-        this.currentExtensionLevel = level; // Track the level used for this extension
-        this.vlm = vlm; // Update the VLM with the one used for extension
     }
+
+
+
+//    public void extend(int level) {
+//        if (level < 0) level = 0;
+//
+//        // Only re-extend if the level has changed
+//        if (currentExtensionLevel == level && extendedInstructions != null) {
+//            return; // Already extended to this level
+//        }
+//
+//        // Use your existing constructor; if you need to pass initial vars/labels, do so.
+//        VariableAndLabelMenger vlm = new VariableAndLabelMenger(getAllVariablesNames(), getAllLabelsNames());
+//
+//        List<Instruction> out = new ArrayList<>();
+//        for (Instruction inst : instructions) {
+//            // Local maps for this single instruction expansion
+//            vlm.beginLocalScope();
+//            try {
+//                // Each instruction is responsible to return NEW instructions (no in-place mutation)
+//                out.addAll(inst.extend(level, vlm));
+//            } finally {
+//                vlm.endLocalScope(); // clear local maps, keep global counters
+//            }
+//        }
+//
+//        // Replace the program's current instruction list with the expanded one,
+//        // or store it to a dedicated field if you keep both.
+//        this.extendedInstructions = out;
+//        this.currentExtensionLevel = level; // Track the level used for this extension
+//        this.vlm = vlm; // Update the VLM with the one used for extension
+//    }
 
 
 
@@ -307,6 +317,7 @@ public class ProgramImpl implements Program {
 
         vlm = new VariableAndLabelMenger(variables, labels);
         List<List<InstructionView>> result = new ArrayList<>();
+
 
 
         for (Instruction root : instructions) {
