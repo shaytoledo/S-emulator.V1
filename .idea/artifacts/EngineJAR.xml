@@ -1,16 +1,11 @@
 <component name="ArtifactManager">
   <artifact type="jar" name="EngineJAR">
     <output-path>$PROJECT_DIR$/out/artifacts/EngineJAR</output-path>
-    <root id="archive" name="engine.jar">
+    <root id="archive" name="EngineJAR.jar">
       <element id="module-output" name="engine" />
-      <element id="module-output" name="gui" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/resources/jaxb/jaxb-xjc.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/resources/jaxb/jakarta.xml.bind-api.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/resources/jaxb/jaxb-core.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/resources/jaxb/angus-activation.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/resources/jaxb/jaxb-impl.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/resources/jaxb/jaxb-jxc.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/resources/jaxb/jakarta.activation-api.jar" path-in-jar="/" />
+      <element id="library" level="project" name="Gson" />
+      <element id="library" level="project" name="javaFX" />
+      <element id="library" level="project" name="jaxb" />
     </root>
   </artifact>
 </component>

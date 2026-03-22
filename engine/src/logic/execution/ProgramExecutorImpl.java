@@ -24,7 +24,9 @@ public class ProgramExecutorImpl implements ProgramExecutor {
     private ExecutionContext context;
     public int cycleCount = 0;
     public int debugIndexCounter = 0;
+    private volatile boolean cancelled = false;
 
+    public void cancel() { cancelled = true; }
 
     public ProgramExecutorImpl(Program program) {
         this.program = program;
@@ -60,6 +62,9 @@ public class ProgramExecutorImpl implements ProgramExecutor {
 
         Label nextLabel;
         do {
+            if (cancelled || Thread.currentThread().isInterrupted()) {
+                break;
+            }
             nextLabel = currentInstruction.execute(context, new VariableAndLabelMenger());
             // sum cycles
             cycleCount += currentInstruction.cycles();
@@ -71,7 +76,9 @@ public class ProgramExecutorImpl implements ProgramExecutor {
                 }
             } else if (!isExit(nextLabel)) {
                 currentInstruction = program.getInstructionByLabel(nextLabel);
-
+                if (currentInstruction == null) {
+                    nextLabel = FixedLabel.EXIT;
+                }
             }
         } while (!isExit(nextLabel));
 
@@ -190,7 +197,9 @@ public class ProgramExecutorImpl implements ProgramExecutor {
                 }
             } else if (!isExit(nextLabel)) {
                 currentInstruction = program.getInstructionByLabel(nextLabel);
-
+                if (currentInstruction == null) {
+                    nextLabel = FixedLabel.EXIT;
+                }
             }
         } while (!isExit(nextLabel));
 

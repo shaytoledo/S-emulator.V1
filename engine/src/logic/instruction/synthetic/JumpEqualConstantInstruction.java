@@ -134,7 +134,7 @@ public class JumpEqualConstantInstruction extends AbstractInstruction {
                 myInstructions.addAll(assExte1);
 
                  for(int i = 0; i < k; i++) {
-                     Instruction instr2 = new JumpZeroInstruction(z1, target);
+                     Instruction instr2 = new JumpZeroInstruction(z1, label1);
                      List<Instruction> re = instr2.extend(1, vlm);
                      myInstructions.addAll(re);
 
@@ -167,7 +167,7 @@ public class JumpEqualConstantInstruction extends AbstractInstruction {
                 myInstructions.addAll(assExte1);
 
                 for(int i = 0; i < k; i++) {
-                    Instruction instr2 = new JumpZeroInstruction(z1, target);
+                    Instruction instr2 = new JumpZeroInstruction(z1, label1);
                     List<Instruction> re = instr2.extend(2, vlm);
                     myInstructions.addAll(re);
 
@@ -198,7 +198,7 @@ public class JumpEqualConstantInstruction extends AbstractInstruction {
 
     @Override
     public void replace(Label oldLabel, Label newLabel) {
-        if(getLabel().equals(oldLabel)) {
+        if(getLabel() != null && getLabel().equals(oldLabel)) {
             setLabel(newLabel);
         }
         if(target.equals(oldLabel)) {

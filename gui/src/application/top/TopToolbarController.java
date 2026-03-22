@@ -164,7 +164,7 @@ public class TopToolbarController {
                 mainLayoutController.showProgram();
                 allButtonsEnableAfterLoad();
                 List<functionView> functions = mainLayoutController.engine.getAllFunctionViews();
-                String programName = mainLayoutController.engine.getCuurentProgram().getName();
+                String programName = mainLayoutController.engine.getCurrentProgram().getName();
                 if (functions.size() > 1) {
                     ProgramOrFunctionSelector.getItems().setAll(
                             functions.stream().map(functionView::toString).toList()
@@ -438,7 +438,7 @@ public class TopToolbarController {
             return;
         }
 
-        if (mainLayoutController.engine.getCuurentProgram().getName().equals(selected)) {
+        if (mainLayoutController.engine.getCurrentProgram().getName().equals(selected)) {
             return;
         } else {
             /// program or function changed

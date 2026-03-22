@@ -2,8 +2,6 @@ package logic.instruction.synthetic;
 
 import core.program.Function;
 import core.program.VariableAndLabelMenger;
-import javafx.scene.control.Alert;
-import javafx.util.Pair;
 import logic.argument.Argument;
 import logic.argument.FunctionArgument;
 import logic.argument.VariableArgument;
@@ -353,6 +351,10 @@ public class QuoteInstruction extends AbstractInstruction {
             }
 
             // -------- 2.4 Labels mapping — map BOTH declared and referenced labels (non-empty only) --------
+            // exitLabel: all "EXIT" labels in the function body remap here so GOTO/JNZ EXIT
+            // inside the body jumps to the epilogue instead of terminating the outer program.
+            Label exitLabel = vlm.newLabel();
+
             Set<Label> toMap = new java.util.LinkedHashSet<>();
 
             for (Instruction ins : body) {
@@ -376,7 +378,13 @@ public class QuoteInstruction extends AbstractInstruction {
             // create mappings only for non-empty labels that don't have a local mapping yet
             for (Label l : toMap) {
                 if (!vlm.getLocalLabelMap().containsKey(l)) {
-                    vlm.mapLabel(l, vlm.newLabel());
+                    // EXIT in function body → jump to epilogue (not outer program exit)
+                    if (l.getLabelRepresentation() != null
+                            && l.getLabelRepresentation().equalsIgnoreCase("EXIT")) {
+                        vlm.mapLabel(l, exitLabel);
+                    } else {
+                        vlm.mapLabel(l, vlm.newLabel());
+                    }
                 }
             }
 
@@ -490,10 +498,13 @@ public class QuoteInstruction extends AbstractInstruction {
             }
 
             // -------- 5) Epilogue: mappedResult -> this.variable --------
+            // exitLabel is placed here so GOTO/JNZ EXIT inside the function body lands here.
             List<Instruction> epilogue = new ArrayList<>();
             if (mappedResult != null && this.getVariable() != null) {
-                // IMPORTANT: ensure (source, target, label)
-                epilogue.add(new AssignmentInstruction(this.getVariable(), mappedResult, FixedLabel.EMPTY));
+                epilogue.add(new AssignmentInstruction(this.getVariable(), mappedResult, exitLabel));
+            } else {
+                // No result to assign — still need exitLabel to be reachable
+                epilogue.add(new NoOpInstruction(new VariableImpl(VariableType.RESULT, 1), exitLabel));
             }
 
             // -------- 6) glue --------
@@ -515,131 +526,5 @@ public class QuoteInstruction extends AbstractInstruction {
 
 
 
-
-//    @Override
-//    public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
-//        if (extensionLevel <= 0) {
-//            return List.of(this.clone());
-//        }
-//
-//        // 1) clone function body
-//        List<Instruction> body = new ArrayList<>();
-//        for (Instruction ins : function.getInstructions()) body.add(ins.clone());
-//
-//        // 2) build local mapping in this scope
-//        // 2.1 inputs -> fresh WORK
-//        List<Variable> inputs = FunctionArgument.collectInputsInOrder(body);
-//        for (Variable xin : inputs) {
-//            Variable w = vlm.newZVariable();     // use your factory for WORK (z)
-//            vlm.mapVar(xin, w);
-//        }
-//
-//        // 2.2 result -> fresh RESULT
-//        Variable resultVar = FunctionArgument.findResultVariable(body);
-//        Variable mappedResult = vlm.newZVariable(); // use your factory for RESULT (y)
-//        if (resultVar != null) vlm.mapVar(resultVar, mappedResult);
-//
-//        // 2.3 internal WORKs -> fresh WORKs (skip already-mapped inputs)
-//        Set<Variable> internalWorks = new HashSet<>();
-//        for (Instruction ins : body) {
-//            for (Variable v : ins.getAllVariables()) {
-//                if (v.getType() == VariableType.WORK && !vlm.getLocalVarMap().containsKey(v)) {
-//                    internalWorks.add(v);
-//                }
-//            }
-//        }
-//        for (Variable w0 : internalWorks) {
-//            vlm.mapVar(w0, vlm.newZVariable());
-//        }
-//
-//        // 2.4 labels -> fresh labels
-//        // Only map labels that are referenced by functions (i.e., labels that are jump targets)
-//        Set<Label> referencedLabels = new HashSet<>();
-//        // First identify which labels are referenced by functions in the body
-//        for (Instruction ins : body) {
-//            // Add logic to identify referenced labels here
-//            // For now, we'll treat all existing labels as potentially referenced
-//            if (ins.getLabel() != null && ins.getLabel() != FixedLabel.EMPTY) {
-//                referencedLabels.add(ins.getLabel());
-//            }
-//        }
-//
-//        // Only map labels that are referenced
-//        for (Label l : referencedLabels) {
-//            if (!vlm.getLocalLabelMap().containsKey(l)) {
-//                vlm.mapLabel(l, vlm.newLabel());
-//            }
-//        }
-//
-//        // 3) prologue: write arguments into mapped(INPUT_i)
-//        List<Instruction> prologue = new ArrayList<>();
-//        Label label = getLabel() == null ? FixedLabel.EMPTY : getLabel();
-//        Instruction noOp = new NoOpInstruction(new VariableImpl(VariableType.RESULT, 1), label);
-//        prologue.add(noOp);
-//        for (int i = 0; i < Math.min(argumentList.size(), inputs.size()); i++) {
-//            Variable xiTarget = vlm.applyVar(inputs.get(i));
-//            Argument arg = argumentList.get(i);
-//
-//            if (arg instanceof VariableArgument v) {
-//                // if your AssignmentInstruction is (target <- source): AssignmentInstruction(source, target, [label])
-//                // NOTE: If your constructor order is (target, source) – flip the params accordingly.
-//                prologue.add(new AssignmentInstruction(v.getVariable(), xiTarget, FixedLabel.EMPTY));
-//            } else if (arg instanceof FunctionArgument f) {
-//                // Nested function: inline it to level-1 into xiTarget using a forked scope
-//                QuoteInstruction nested = new QuoteInstruction(
-//                        f.getName(),            // function name
-//                        f.getArgs(),       // build user string of args if you keep it
-//                        xiTarget,
-//                        f.getFunctions(),
-//                        FixedLabel.EMPTY
-//                );
-//                prologue.addAll(nested.extend(extensionLevel - 1, vlm)); // uses same vlm (counters shared), maps are local within nested because extend() will call beginLocalScope at Program-level; if not, we can wrap:
-//                // Alternative safe local mapping:
-//                // vlm.beginLocalScope();
-//                // try { prologue.addAll(nested.extend(extensionLevel - 1, vlm)); }
-//                // finally { vlm.endLocalScope(); }
-//            }
-//        }
-//
-//        // 4) remap variables & labels in the cloned body
-//        List<Instruction> mappedBody = new ArrayList<>(body.size());
-//        for (Instruction ins : body) {
-//            Instruction c = ins.clone();
-//            for (Variable v : ins.getAllVariables()) {
-//                Variable to = vlm.applyVar(v);
-//                if (to != v) c.replace(v, to);
-//            }
-//
-//            // Only remap labels that are referenced by functions
-//            // If the instruction has a label but it's not referenced, set it to EMPTY
-//            Label currentLabel = ins.getLabel();
-//            if (currentLabel != null && currentLabel != FixedLabel.EMPTY) {
-//                if (referencedLabels.contains(currentLabel)) {
-//                    // This label is referenced, so apply the mapping
-//                    Label to = vlm.applyLabel(currentLabel);
-//                    if (to != currentLabel) c.replace(currentLabel, to);
-//                } else {
-//                    // This label is not referenced, so remove it by setting to EMPTY
-//                    c.replace(currentLabel, FixedLabel.EMPTY);
-//                }
-//            }
-//
-//            mappedBody.add(c);
-//        }
-//
-//        // 5) epilogue: mappedResult -> this.variable  (y <- RESULT)
-//        List<Instruction> epilogue = new ArrayList<>();
-//        if (mappedResult != null) {
-//            // If ctor is (source, target): AssignmentInstruction(mappedResult, this.getVariable(), null)
-//            epilogue.add(new AssignmentInstruction( this.getVariable(),mappedResult, FixedLabel.EMPTY));
-//        }
-//
-//        // 6) return full sequence
-//        List<Instruction> out = new ArrayList<>(prologue.size() + mappedBody.size() + epilogue.size());
-//        out.addAll(prologue);
-//        out.addAll(mappedBody);
-//        out.addAll(epilogue);
-//        return out;
-//    }
 
 }

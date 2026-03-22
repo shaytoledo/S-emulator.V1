@@ -181,7 +181,7 @@ public class ProgramImpl implements Program {
 
     // extend Instructions to the given level (with the original instructions)
     public void extend (int level) {
-        vlm = new VariableAndLabelMenger(variables, labels);
+        vlm = new VariableAndLabelMenger(getAllVariablesNames(), getAllLabelsNames());
 
         extendedInstructions.clear();
         for (Instruction inst : instructions) {
@@ -315,7 +315,7 @@ public class ProgramImpl implements Program {
     @Override
     public List<List<InstructionView>> expendToLevelForExtend(int level) {
 
-        vlm = new VariableAndLabelMenger(variables, labels);
+        vlm = new VariableAndLabelMenger(getAllVariablesNames(), getAllLabelsNames());
         List<List<InstructionView>> result = new ArrayList<>();
 
 

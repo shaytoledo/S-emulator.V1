@@ -2,7 +2,6 @@ package logic.argument;
 
 import core.program.Function;
 import core.program.VariableAndLabelMenger;
-import javafx.util.Pair;
 import logic.execution.ExecutionContext;
 import logic.execution.ExecutionContextImpl;
 import logic.execution.FunctionExecutor;
@@ -16,19 +15,18 @@ import logic.variable.VariableImpl;
 import logic.variable.VariableType;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class FunctionArgument implements Argument {
 
     // The name of the function to call
     private String name;
-    // The function
+    // The function (cloned in constructor to protect the original)
     private Function function;
     // The user string of the function (for display purposes)
     private String userString;
     // The list of arguments to pass to the function
     public List<Argument> arguments;
-    // function instruction
+    // function instructions (original, not modified)
     public List<Instruction> instructions;
 
     int cycles = 0;
@@ -56,7 +54,6 @@ public class FunctionArgument implements Argument {
             sb.setLength(sb.length() - 1); // remove last comma
         }
         return sb.toString();
-
     }
 
     public FunctionArgument(String name, List<Argument> arguments, List<Function> funcs) {
@@ -68,13 +65,10 @@ public class FunctionArgument implements Argument {
             if (f.getName().equals(name)) {
                 this.instructions = new ArrayList<>(f.getInstructions());
                 this.userString = f.getUserString();
-//                this.function = f;
-                this.function = f.clone();
-
+                this.function = f.clone(); // always clone to protect original
                 break;
             }
         }
-
     }
 
     @Override
@@ -84,25 +78,22 @@ public class FunctionArgument implements Argument {
             sb.append(",");
             sb.append(arg.toDisplayString());
         }
-
         return "(" + userString + sb + ")";
     }
 
     @Override
     public int getMaxLevel() {
-
         int base = 0;
-
         for (Function func : functions) {
             if (func.getName().equals(name)) {
-                base = func.calculateMaxDegree(); // ensure its calculated
+                base = func.calculateMaxDegree();
             }
         }
 
         int best = base + 1; // +1 for the function call itself
         for (Argument arg : arguments) {
             if (arg instanceof FunctionArgument) {
-                int sub = 1 + ((FunctionArgument) arg).getMaxLevel(); // +1 for the argument function call itself
+                int sub = 1 + ((FunctionArgument) arg).getMaxLevel();
                 if (sub > best) {
                     best = sub;
                 }
@@ -113,10 +104,9 @@ public class FunctionArgument implements Argument {
 
     @Override
     public long evaluate(ExecutionContext context, VariableAndLabelMenger vlm, int cycles) {
-        // Evaluate all child arguments in the *current* context to numeric values
+        // Evaluate all child arguments in the current context to numeric values
         List<Long> values = new ArrayList<>(arguments.size());
         for (Argument arg : arguments) {
-            // Use the original context as base to ensure proper variable resolution
             ExecutionContextImpl argContext = new ExecutionContextImpl(context);
             long v = arg.evaluate(argContext, vlm, cycles);
             values.add(v);
@@ -127,21 +117,18 @@ public class FunctionArgument implements Argument {
 
         // Execute the function with the evaluated arguments
         FunctionExecutor currentExecutor = new FunctionExecutor(function, functions, functionContext);
-        long result = currentExecutor.run(values, cycles);
-
-        return result;
+        return currentExecutor.run(values, cycles);
     }
 
     public List<Instruction> cloneBody() {
         List<Instruction> copy = new ArrayList<>();
-        for (Instruction i : function.getInstructions()) { // if you hold 'instructions'; otherwise use function.getInstructions()
+        for (Instruction i : function.getInstructions()) {
             copy.add(i.clone());
         }
         return copy;
     }
 
     public static List<Variable> collectInputsInOrder(List<Instruction> body) {
-        // Collect unique INPUT vars by index and return sorted ascending.
         TreeMap<Integer, Variable> byIdx = new TreeMap<>();
         for (Instruction ins : body) {
             List<Variable> vars = ins.getAllVariables();
@@ -163,14 +150,13 @@ public class FunctionArgument implements Argument {
             for (Variable v : vars) {
                 if (v != null && v.getType() == VariableType.RESULT) {
                     if (best == null || v.getIndex() < best.getIndex()) {
-                        best = v; // pick the lowest index RESULT (usually y1)
+                        best = v;
                     }
                 }
             }
         }
         return best;
     }
-
 
     @Override
     public List<String> getAllInfo() {
@@ -186,345 +172,82 @@ public class FunctionArgument implements Argument {
         return vars;
     }
 
-    // 1. Change inputs of instructions to new work variables
-    // 2. Change all old input variables to the new work variables
-    // 3. Replace all old work variables to new work variables
-    // 4. Replace all old labels to new labels
-
+    // Expand this function-argument into instructions.
+    // Works on a fresh clone of the function body — never mutates the original.
     @Override
     public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
-
         if (extensionLevel <= 0) {
-            //return new Pair<>(List.of(), null);\
             return List.of();
         }
-        else {
-            extensionLevel--;
-        }
 
+        // Work on a fresh clone of the function body — never mutate the original.
+        Function cloned = function.clone();
+        List<Instruction> body = cloned.getInstructions();
 
-        List<Instruction> instructions = new ArrayList<>();
+        List<Instruction> result = new ArrayList<>();
 
+        // (1+2) Assign arguments to fresh work variables and remap inputs in the cloned body.
         List<Variable> newInputs = new ArrayList<>();
-        // (1+2) Replace all input variables with new work variables and add assignment instructions from input to new work variables
         for (int i = 0; i < arguments.size(); i++) {
             Variable newVar = vlm.newZVariable();
             newInputs.add(newVar);
-            //assign new work variable to the input variable
-            instructions.add(new AssignmentInstruction(newVar, new VariableImpl(VariableType.INPUT, i + 1)));
-            // replace all input variables with new work variables
-//            for (Instruction inst : function.getInstructions()) {
-//                inst.replace(new VariableImpl(VariableType.INPUT, i + 1), newVar);
-//            }
+            result.add(new AssignmentInstruction(newVar, new VariableImpl(VariableType.INPUT, i + 1)));
         }
-
-        // Use Set to avoid duplicates
-        Set<Label> labelsInFunction = new HashSet<>();
-        Set<Variable> workVariablesInFunction = new HashSet<>();
-
-        // Get all Labels and Variables in the function
-        for (Instruction inst : function.getInstructions()) {
-            // add all labels (duplicates automatically ignored in the Set)
-            labelsInFunction.addAll(
-                    inst.getAllLabels().stream()
-                            .filter(l -> l != null && !l.equals(FixedLabel.EMPTY))
-                            .collect(Collectors.toSet())
-            );
-
-            // add only work variables
-            workVariablesInFunction.addAll(
-                    inst.getAllVariables().stream()
-                            .filter(v -> v.getType() == VariableType.WORK)
-                            .collect(Collectors.toSet())
-            );
-        }
-
-        // (3) Replace all old work variables with new work variables
-        List<Pair<Variable, Variable>> oldNewWorkVars = new ArrayList<>();
-        for (Variable oldVar : workVariablesInFunction) {
-            Variable newVar = vlm.newZVariable();
-            oldNewWorkVars.add(new Pair<>(oldVar, newVar));
-            // replace all old work variables with new work variables
-            for (Instruction inst : function.getInstructions()) {
-                inst.replace(oldVar, newVar);
-            }
-        }
-
-        // (4) Replace all old labels with new labels
-        List<Pair<Label, Label>> oldNewLabels = new ArrayList<>();
-        for (Label oldLabel : labelsInFunction) {
-            Label newLabel = vlm.newLabel();
-            if (oldLabel.equals(new LabelImpl(FixedLabel.EXIT.getLabelRepresentation()))) {
-                oldNewLabels.add(new Pair<>(oldLabel, newLabel));
-                exitLabel = newLabel;
-            } else {
-                oldNewLabels.add(new Pair<>(oldLabel, newLabel));
-            }
-            // replace all old labels with new labels
-            for (Instruction inst : function.getInstructions()) {
-                inst.replace(oldLabel, newLabel);
-            }
-        }
-
-        // Create a new result variable
-        newResultVar = vlm.newZVariable();
-        // (5) Replace the result variable with a new work variable
-        for( Instruction inst : function.getInstructions()) {
-            inst.replace(new VariableImpl(VariableType.RESULT, 1),newResultVar);
-        }
-
-        // Add an instruction at the end to assign the result to resultVar
-        // in extend method in qute instruction
-
-
-
-
-        // (1+2) Replace all input variables with new work variables and add assignment instructions from input to new work variables
         for (int i = 0; i < arguments.size(); i++) {
-//            Variable newVar = vlm.newZVariable();
-//            //assign new work variable to the input variable
-//            instructions.add(new AssignmentInstruction(newVar, new VariableImpl(VariableType.INPUT, i + 1)));
-//            // replace all input variables with new work variables
-            for (Instruction inst : function.getInstructions()) {
+            for (Instruction inst : body) {
                 inst.replace(new VariableImpl(VariableType.INPUT, i + 1), newInputs.get(i));
             }
         }
 
-
-
-        // now in instructions we have the new assignment instructions of the arguments to new work variables,
-        // function instructions with replaced variables and labels
-        instructions.addAll(function.getInstructions());
-
-        // update function instructions
-        function.setInstructions(instructions);
-
-
-        // Get the maximum instruction level of the function after all changes
-        int maxInstructionLevel = function.calculateMaxDegree();
-
-
-
-
-
-
-        /// To check if we need to extend further
-        // Check if we need to extend further
-        if (extensionLevel > 0) {
-
-            // need to extend only the instructions
-            List<Instruction> extended = new ArrayList<>();
-            if (extensionLevel <= maxInstructionLevel) {
-                for (Instruction inst : function.getInstructions()) {
-                    extended.addAll(inst.extend(extensionLevel, vlm));
-                }
-            }
-            // need to extend the arguments too
-            else {
-                // extend of the instructions to the max level
-                for (Instruction inst : function.getInstructions()) {
-                    extended.addAll(inst.extend(extensionLevel, vlm));
-                }
-                extensionLevel = extensionLevel - maxInstructionLevel;
-
-                // extend the arguments
-                for (Argument arg : arguments) {
-                    extended.addAll(arg.extend(extensionLevel, vlm));
-                }
-            }
-            function.setInstructions(extended);
-            return extended;
-        } else {
-            // just return the instructions as they are now
-            return function.getInstructions();
+        // (3) Replace work variables with fresh ones.
+        Set<Variable> workVars = new HashSet<>();
+        for (Instruction inst : body) {
+            inst.getAllVariables().stream()
+                    .filter(v -> v.getType() == VariableType.WORK)
+                    .forEach(workVars::add);
         }
+        for (Variable oldVar : workVars) {
+            Variable newVar = vlm.newZVariable();
+            for (Instruction inst : body) {
+                inst.replace(oldVar, newVar);
+            }
+        }
+
+        // (4) Replace labels with fresh ones.
+        Set<Label> labelsInFunction = new HashSet<>();
+        for (Instruction inst : body) {
+            inst.getAllLabels().stream()
+                    .filter(l -> l != null && !l.equals(FixedLabel.EMPTY))
+                    .forEach(labelsInFunction::add);
+        }
+        for (Label oldLabel : labelsInFunction) {
+            Label newLabel = vlm.newLabel();
+            if (oldLabel.equals(new LabelImpl(FixedLabel.EXIT.getLabelRepresentation()))) {
+                exitLabel = newLabel;
+            }
+            for (Instruction inst : body) {
+                inst.replace(oldLabel, newLabel);
+            }
+        }
+
+        // (5) Replace result variable with a fresh work variable.
+        newResultVar = vlm.newZVariable();
+        for (Instruction inst : body) {
+            inst.replace(new VariableImpl(VariableType.RESULT, 1), newResultVar);
+        }
+
+        result.addAll(body);
+
+        // Expand further if requested.
+        int remaining = extensionLevel - 1;
+        if (remaining > 0) {
+            List<Instruction> extended = new ArrayList<>();
+            for (Instruction inst : result) {
+                extended.addAll(inst.extend(remaining, vlm));
+            }
+            return extended;
+        }
+
+        return result;
     }
-
-
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//    private  List<Instruction> inIt(List<Instruction> instructions, VariableAndLabelMenger vlm, List<Long> values, ExecutionContext context) {
-//        //in all pairs <old, new>
-//
-//        // what inputs variable to change to what work variable
-//        List<Pair<Variable, Variable>> xWhatToChange = replaceX(instructions, vlm);
-//        // what works variable to change to what work variable because they already used
-//        List<Pair<Variable, Variable>> zWhatToChange = replaceZ(instructions, vlm);
-//        // what labels to change to what labels
-//        List<Pair<Label, Label>> labelWhatToChange = replaceL(instructions, vlm);
-//        // the new result variable
-//        List<Pair<Variable, Variable>> yWhatToChange = replaceY(instructions, vlm);
-//
-//        List<Instruction> result = new ArrayList<>(instructions.size());
-//
-//        result.add(new NoOpInstruction(Variable.RESULT, instructions.get(0).getLabel()));
-//
-//        for (Pair<Variable, Variable> pair : xWhatToChange) {
-//            result.add(new AssignmentInstruction(pair.getValue(), pair.getKey()));
-//        }
-//
-//        for (Pair<Variable, Variable> pair : zWhatToChange) {
-//            result.add(new AssignmentInstruction(pair.getValue(), pair.getKey()));
-//        }
-//
-//
-//
-//        // replace all the necessary parameters
-//        for (Instruction instr : instructions) {
-//            final List<Variable> varsInInstr = instr.getAllVariables();
-//            final List<Label> labelsInInstr = instr.getAllLabels();
-//
-//            for (Pair<Variable, Variable> p : xWhatToChange) {
-//                final Variable oldVar = p.getKey();
-//                final Variable newVar = p.getValue();
-//                if (varsInInstr.contains(oldVar)) {
-//                    instr.replace(oldVar, newVar); // assume overloaded replace(Variable, Variable)
-//                }
-//            }
-//
-//            // Apply Z replacements
-//            for (Pair<Variable, Variable> p : zWhatToChange) {
-//                final Variable oldVar = p.getKey();
-//                final Variable newVar = p.getValue();
-//                if (varsInInstr.contains(oldVar)) {
-//                    instr.replace(oldVar, newVar);
-//                }
-//            }
-//
-//            // Apply label replacements (if any)
-//            for (Pair<Label, Label> p : labelWhatToChange) {
-//                final Label oldLabel = p.getKey();
-//                final Label newLabel = p.getValue();
-//                if (labelsInInstr.contains(oldLabel)) {
-//                    instr.replace(oldLabel, newLabel); // assume overloaded replace(Label, Label)
-//                }
-//            }
-//
-//
-//            // Apply Y/result replacement (if any)
-//            for (Pair<Variable, Variable> p : yWhatToChange) {
-//                final Variable oldVar = p.getKey();
-//                final Variable newVar = p.getValue();
-//                if (varsInInstr.contains(oldVar)) {
-//                    instr.replace(oldVar, newVar);
-//                }
-//
-//
-//                result.add(instr);
-//            }
-//            // add instructions that take the args into the new works variable
-//
-//        }
-//        return result;
-//    }
-//
-//
-//    private List<Pair<Variable,Variable>> replaceX(List<Instruction> instructions, VariableAndLabelMenger vlm) {
-//
-//        // get all the variable
-//        List<Variable> x = new ArrayList<>();
-//        for (Instruction i : instructions) {
-//            List<Variable> currVariables = i.getAllVariables();
-//            x.addAll(currVariables);
-//        }
-//        // sort and get all the input variable
-//        x = x.stream()
-//                .filter(v -> v.getType() == VariableType.INPUT)
-//                .sorted()
-//                .collect(Collectors.toList()
-//                )
-//        ;
-//        int size = x.size();
-//        // create new work variable to change x
-//        List<Pair<Variable,Variable>> whatToChange = new ArrayList<>();
-//        for (int i = 0; i < size; i++) {
-//            whatToChange.add(new Pair<>(vlm.newZVariable(),x.get(i)));
-//        }
-//        return whatToChange;
-//
-//
-//    }
-//    private List<Pair<Variable,Variable>> replaceZ(List<Instruction> instructions, VariableAndLabelMenger vlm) {
-//
-//        // get all the variable
-//        List<Variable> z = new ArrayList<>();
-//        for (Instruction i : instructions) {
-//            List<Variable> currVariables = i.getAllVariables();
-//            z.addAll(currVariables);
-//        }
-//        // sort and get all the input variable
-//        z = z.stream()
-//                .filter(v -> v.getType() == VariableType.WORK)
-//                .sorted()
-//                .collect(Collectors.toList()
-//                )
-//        ;
-//        int size = z.size();
-//        // create new work variable to change z
-//        List<Pair<Variable,Variable>> whatToChange = new ArrayList<>();
-//        for (int i = 0; i < size; i++) {
-//            if (!vlm.existsVar(z.get(i))) {
-//                whatToChange.add(new Pair<>(vlm.newZVariable(), z.get(i)));
-//            }
-//        }
-//        return whatToChange;
-//
-//
-//
-//    }
-//    private List<Pair<Label,Label>> replaceL(List<Instruction> instructions, VariableAndLabelMenger vlm) {
-//        List<Label> L = new ArrayList<>();
-//        for (Instruction i : instructions) {
-//            List<Label> currVariables = i.getAllLabels();
-//            L.addAll(currVariables);
-//        }
-//
-//        // create new labels to change from the old labels
-//        int size = L.size();
-//        List<Pair<Label,Label>> whatToChange = new ArrayList<>();
-//        for (int i = 0; i < size; i++) {
-//            if (!vlm.existsLabel(L.get(i))) {
-//                whatToChange.add(new Pair<>(vlm.newLabel(), L.get(i)));
-//            }
-//        }
-//        return whatToChange;
-//    }
-//    private  List<Pair<Variable,Variable>> replaceY(List<Instruction> instructions, VariableAndLabelMenger vlm) {
-//        // get all the variable
-//        List<Variable> y = new ArrayList<>();
-//        for (Instruction i : instructions) {
-//            List<Variable> currVariables = i.getAllVariables();
-//            y.addAll(currVariables);
-//        }
-//        // sort and get all the input variable
-//        y = y.stream()
-//                .filter(v -> v.getType() == VariableType.RESULT)
-//                .sorted()
-//                .collect(Collectors.toList()
-//                )
-//        ;
-//        int size = y.size();
-//        // create new work variable to change z
-//        List<Pair<Variable,Variable>> whatToChange = new ArrayList<>();
-//        for (int i = 0; i < size; i++) {
-//            if (!vlm.existsVar(y.get(i))) {
-//                whatToChange.add(new Pair<>(vlm.newZVariable(), y.get(i)));
-//            }
-//        }
-//        return whatToChange;    }
-//}

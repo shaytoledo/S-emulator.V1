@@ -28,10 +28,12 @@ public interface Engine {
     Map<String, Long> resumeDebug();
     int getCycels();
     List<functionView> getAllFunctionViews();
-    Program getCuurentProgram();
+    Program getCurrentProgram();
     void loadFunc(String name);
 
     VariablesAndLabels getProgramInfo(int level);
+
+    void cancelRun();
 
     }
 

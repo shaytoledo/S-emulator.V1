@@ -59,6 +59,9 @@ public class NoOpInstruction extends AbstractInstruction {
         if (getLabel() != null) {
             list.add(getLabel().getLabelRepresentation());
         }
+        if (getVariable() != null) {
+            list.add(getVariable().getRepresentation());
+        }
         return list;
     }
     @Override
@@ -84,7 +87,7 @@ public class NoOpInstruction extends AbstractInstruction {
 
     @Override
     public void replace(Label oldLabel, Label newLabel) {
-        if(getLabel().equals(oldLabel)) {
+        if(getLabel() != null && getLabel().equals(oldLabel)) {
             setLabel(newLabel);
         }
     }

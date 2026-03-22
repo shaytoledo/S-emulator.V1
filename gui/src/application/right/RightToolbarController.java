@@ -240,7 +240,7 @@ public class RightToolbarController {
         // unbold all the table lines
         mainLayoutController.getLeft().clearHighlights();
         endDebugButtons();
-        run();
+        fillHistoryTable();
         resetVariableTableStyle();
         try { mainLayoutController.getLeft().clearBreakpoint(); } catch (Exception ignore) {}
         clearBreakpointUI();
@@ -295,7 +295,7 @@ public class RightToolbarController {
 
         if (variableState.getValue() == -1 ) {
             endOfDebug();
-            run();
+            fillHistoryTable();
 
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("(:");
@@ -512,16 +512,64 @@ public class RightToolbarController {
     @FXML
     void startListener(ActionEvent event) {
         resetVariableTableStyle();
-        run();
-        startButtons();
+        runAsync();
     }
 
-    private void run () {
+    private void runAsync() {
         List<Long> inputsByOrder = getCurrVariableState();
-        RunResult res = mainLayoutController.engine.run(
-                mainLayoutController.getCurrentLevel(),
-                inputsByOrder
-        );
+        int level = mainLayoutController.getCurrentLevel();
+
+        // Disable controls while running; repurpose startButton as cancel
+        startButton.setDisable(false);
+        startButton.setText("Cancel");
+        initButton.setDisable(true);
+        reRun.setDisable(true);
+        show.setDisable(true);
+        CyclesCounter.setText("Running...");
+
+        javafx.concurrent.Task<RunResult> task = new javafx.concurrent.Task<>() {
+            @Override
+            protected RunResult call() {
+                return mainLayoutController.engine.run(level, inputsByOrder);
+            }
+        };
+
+        // Wire startButton as cancel during the run
+        startButton.setOnAction(ev -> {
+            mainLayoutController.engine.cancelRun();
+            task.cancel(true);
+        });
+
+        task.setOnSucceeded(e -> {
+            restoreStartButton();
+            applyRunResult(task.getValue());
+            startButtons();
+        });
+
+        task.setOnFailed(e -> {
+            restoreStartButton();
+            CyclesCounter.setText("Error");
+            startButtons();
+        });
+
+        task.setOnCancelled(e -> {
+            restoreStartButton();
+            CyclesCounter.setText("Cancelled");
+            startButtons();
+        });
+
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    private void restoreStartButton() {
+        startButton.setText("Run");
+        startButton.setOnAction(this::startListener);
+        initButton.setDisable(false);
+    }
+
+    private void applyRunResult(RunResult res) {
         CyclesCounter.setText(String.valueOf(res.totalCycles()));
         Map<String, Long> resultVars = new LinkedHashMap<>(res.variables());
         resultVars.putIfAbsent("y", res.y());
@@ -549,7 +597,6 @@ public class RightToolbarController {
             return la.compareTo(lb);
         });
 
-
         variableState.setCellValueFactory(cd -> new ReadOnlyStringWrapper(cd.getValue()));
 
         valueState.setCellValueFactory(cd -> {
@@ -566,8 +613,6 @@ public class RightToolbarController {
 
         variableTable.getItems().setAll(keys);
         fillHistoryTable();
-
-
     }
 
     public void showProgram() {
@@ -656,7 +701,37 @@ public class RightToolbarController {
             return new ReadOnlyStringWrapper(val == null ? "" : String.valueOf(val));
         });
 
-        valueInput.setCellFactory(TextFieldTableCell.forTableColumn());
+        valueInput.setCellFactory(col -> new TextFieldTableCell<String, String>(new javafx.util.converter.DefaultStringConverter()) {
+            @Override
+            public void startEdit() {
+                super.startEdit();
+                javafx.scene.Node graphic = getGraphic();
+                if (graphic instanceof javafx.scene.control.TextField tf) {
+                    tf.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
+                        if (!isFocused && isEditing()) {
+                            commitEdit(tf.getText());
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void cancelEdit() {
+                if (isEditing()) {
+                    javafx.scene.Node graphic = getGraphic();
+                    if (graphic instanceof javafx.scene.control.TextField tf) {
+                        String text = tf.getText() == null ? "" : tf.getText().trim();
+                        String varName = getTableRow() != null ? getTableRow().getItem() : null;
+                        if (varName != null && !text.isEmpty()) {
+                            try {
+                                inputsMap.put(varName, Long.parseLong(text));
+                            } catch (NumberFormatException ignore) {}
+                        }
+                    }
+                }
+                super.cancelEdit();
+            }
+        });
 
         valueInput.setOnEditCommit(ev -> {
             String varName = ev.getRowValue();

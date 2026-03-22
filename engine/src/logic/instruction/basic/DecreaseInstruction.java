@@ -95,7 +95,7 @@ public class DecreaseInstruction extends AbstractInstruction {
 
     @Override
     public void replace(Label oldLabel, Label newLabel) {
-        if(getLabel().equals(oldLabel)) {
+        if(getLabel() != null && getLabel().equals(oldLabel)) {
             setLabel(newLabel);
         }
     }

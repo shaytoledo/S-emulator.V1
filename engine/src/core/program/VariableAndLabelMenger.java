@@ -67,7 +67,7 @@ public class VariableAndLabelMenger {
     private  Set<String> usedVars;
     private  Set<String> usedLabels;
 
-    //The counters start from the next largest index
+    // Counters always start from 1; newZVariable/newLabel skip any already-used names
     private int zCounter;
     private int lCounter;
 
@@ -87,16 +87,15 @@ public class VariableAndLabelMenger {
                 .map(Label::getLabelRepresentation)
                 .collect(Collectors.toSet());
 
-        this.zCounter = nextIndexStartingFrom("z", usedVars);
-        this.lCounter = nextIndexStartingFrom("L", usedLabels);
+        this.zCounter = 1;
+        this.lCounter = 1;
     }
 
     public VariableAndLabelMenger() {
         this.usedVars = new HashSet<>();
         this.usedLabels = new HashSet<>();
-        this.zCounter = 0;
-        this.lCounter = 0;
-
+        this.zCounter = 1;
+        this.lCounter = 1;
     }
 
     // find the largest index used with the given prefix, and return next

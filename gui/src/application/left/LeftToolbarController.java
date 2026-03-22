@@ -93,13 +93,17 @@ public class LeftToolbarController {
 
     public void showProgram(int level) {
         try {
-            List<List<InstructionView>> extendInstructions =
-                    mainLayoutController.engine.expandProgramToLevelForExtend(level);
-
+            // Use the flat execution-ordered list so that row N always matches
+            // extendedInstructions[N] used by the executor.
+            // expandProgramToLevelForExtend is still called (it sets extendedInstructions)
+            // but we display the flat run-order list here.
+            mainLayoutController.engine.expandProgramToLevelForExtend(level); // build paths + set extendedInstructions
+            List<InstructionView> instructionViews =
+                    mainLayoutController.engine.expandProgramToLevelForRun(level);
 
             // table columns
             colNumber.setCellValueFactory(cell ->
-                    new ReadOnlyObjectWrapper<>(instructionsTable.getItems().indexOf(cell.getValue()) + 1));
+                    new ReadOnlyObjectWrapper<>(cell.getValue().number())); // use pre-assigned sequential number
             colBS.setCellValueFactory(cell ->
                     new ReadOnlyStringWrapper(String.valueOf(cell.getValue().type())));
             colInstruction.setCellValueFactory(cell ->
@@ -109,13 +113,8 @@ public class LeftToolbarController {
             colLabel.setCellValueFactory(cell ->
                     new ReadOnlyStringWrapper(cell.getValue().label()));
 
-            List<InstructionView> needed = extendInstructions.stream()
-                    .filter(list -> list != null && !list.isEmpty())
-                    .map(list -> list.get(list.size() - 1))
-                    .toList();
-
-            instructionsTable.getItems().setAll(needed);
-            summary(needed);
+            instructionsTable.getItems().setAll(instructionViews);
+            summary(instructionViews);
         } catch (LoadProgramException e) {
             System.out.println(e.getMessage());
         }

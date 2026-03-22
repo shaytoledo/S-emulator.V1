@@ -23,8 +23,8 @@ import java.util.Map;
 // implementation of the Engine interface (methods of the engine)
 public class EngineImpl implements Engine {
 
-    private static Program cuurentProgram = null;
-    private static List<Program> functions = new ArrayList<>();
+    private Program currentProgram = null;
+    private List<Program> functions = new ArrayList<>();
     private Path xmlPath;
     ProgramExecutorImpl exe;
     private int runCounter = 0;
@@ -36,7 +36,7 @@ public class EngineImpl implements Engine {
 
         for (Program p : loaded) {
             if (p.getName().equals(name)) {
-                cuurentProgram = p;
+                currentProgram = p;
                 return;
             }
         }
@@ -49,7 +49,7 @@ public class EngineImpl implements Engine {
                     loaded.add(new ProgramImpl((ProgramImpl) func) {
                     });
                 }
-                cuurentProgram = loaded.getLast();
+                currentProgram = loaded.getLast();
                 return;
             }
         }
@@ -59,11 +59,11 @@ public class EngineImpl implements Engine {
 
     @Override
     public VariablesAndLabels getProgramInfo(int level) {
-        cuurentProgram.expendToLevelForExtend(level);
+        currentProgram.expendToLevelForExtend(level);
 
         // Fetch all variable names and labels as strings
-        List<String> allVars = cuurentProgram.getVariablesPeek();
-        List<String> labels = cuurentProgram.getLabelsPeek(); // If this is List<Label>, map to string below.
+        List<String> allVars = currentProgram.getVariablesPeek();
+        List<String> labels = currentProgram.getLabelsPeek(); // If this is List<Label>, map to string below.
 
         // Split and sort variables by prefix X/Y/Z (case-insensitive), ordered by numeric suffix
         List<String> xVars = sortVarsByIndex(filterByPrefix(allVars, 'x'));
@@ -71,9 +71,9 @@ public class EngineImpl implements Engine {
         List<String> zVars = sortVarsByIndex(filterByPrefix(allVars, 'z'));
 
         // If labels come as List<Label>, uncomment this line instead:
-        // List<String> labels = cuurentProgram.getLabelsPeek().stream().map(Label::toString).toList();
+        // List<String> labels = currentProgram.getLabelsPeek().stream().map(Label::toString).toList();
 
-        return new VariablesAndLabels(xVars, yVars, zVars, labels);
+        return new VariablesAndLabels(xVars, zVars, yVars, labels);
     }
 
     /* ---------- helpers ---------- */
@@ -117,16 +117,16 @@ public class EngineImpl implements Engine {
 
     private List<Function> getFuncs() {
         List<Function> funcs = new ArrayList<>();
-        if (cuurentProgram != null) {
-            funcs = cuurentProgram.getFunctions();
+        if (currentProgram != null) {
+            funcs = currentProgram.getFunctions();
         }
         return funcs;
     }
 
 
     @Override
-    public Program getCuurentProgram() {
-        return cuurentProgram;
+    public Program getCurrentProgram() {
+        return currentProgram;
     }
 
 
@@ -163,16 +163,16 @@ public class EngineImpl implements Engine {
 
 
             //Translate the loaded SProgram to internal Program representation
-            var currentProgram = ProgramTranslator.translate(sprogram);
+            var translationResult = ProgramTranslator.translate(sprogram);
 
             // If there are errors during translation, return them in the LoadReport (errors that define in the specification document)
-            if (!currentProgram.errors.isEmpty()) {
+            if (!translationResult.errors.isEmpty()) {
                 // return the errors
-                return new LoadReport(false, currentProgram.errors);
+                return new LoadReport(false, translationResult.errors);
             }
 
-            EngineImpl.cuurentProgram = currentProgram.program;
-            loaded.add(currentProgram.program);
+            this.currentProgram = translationResult.program;
+            loaded.add(translationResult.program);
             //currentProgram.getsummaries().clear();
 
 
@@ -192,36 +192,41 @@ public class EngineImpl implements Engine {
 
     @Override
     public ProgramSummary getProgramSummaryForShow() {
-        List<InstructionView> instructionViews = cuurentProgram
+        List<InstructionView> instructionViews = currentProgram
                 .instructionViewsAfterExtendRunShow(0);
         // there isn't valid load program
-        if (cuurentProgram == null) {
+        if (currentProgram == null) {
             throw new LoadProgramException("No program is loaded. Please load a file to display a program.");
         }
 
         //note gets the extend info
-        if (cuurentProgram != null) {
+        if (currentProgram != null) {
             return new ProgramSummary(
-                    cuurentProgram.getName(),
-                    cuurentProgram.getXVariablesPeek(),
-                    cuurentProgram.getLabelsPeek(),
-                    cuurentProgram.getInstructionsPeek()
+                    currentProgram.getName(),
+                    currentProgram.getXVariablesPeek(),
+                    currentProgram.getLabelsPeek(),
+                    currentProgram.getInstructionsPeek()
             );
         }
         return null;
     }
 
     @Override
+    public void cancelRun() {
+        if (exe != null) exe.cancel();
+    }
+
+    @Override
     public RunResult run(int level, List<Long> inputs) {
 
-        List<InstructionView> instructionViews = cuurentProgram
+        List<InstructionView> instructionViews = currentProgram
                 .instructionViewsAfterExtendRunShow(level);
-        exe = new ProgramExecutorImpl(cuurentProgram);
+        exe = new ProgramExecutorImpl(currentProgram);
         long y = exe.run(inputs);
         int cycles = exe.cycleCount;
 
         RunSummary summary = new RunSummary(++runCounter, level, inputs, y, cycles);
-        cuurentProgram.getsummaries().add(summary);
+        currentProgram.getsummaries().add(summary);
 
         if (exe != null) {
             var res = new RunResult(y, exe.variablesState(), cycles);
@@ -232,45 +237,45 @@ public class EngineImpl implements Engine {
 
     @Override
     public List<RunSummary> getHistory() {
-        return cuurentProgram.getsummaries();
+        return currentProgram.getsummaries();
     }
 
     @Override
     public List<List<InstructionView>> expandProgramToLevelForExtend(int level) {
-        return cuurentProgram.expendToLevelForExtend(level);
+        return currentProgram.expendToLevelForExtend(level);
     }
 
     @Override
     public List<InstructionView> expandProgramToLevelForRun(int level) {
-        List<InstructionView> allInstructions = cuurentProgram.instructionViewsAfterExtendRunShow(level);
+        List<InstructionView> allInstructions = currentProgram.instructionViewsAfterExtendRunShow(level);
         return allInstructions;
     }
 
     public int getMaxExpandLevel() {
-        if (cuurentProgram == null) {
+        if (currentProgram == null) {
             throw new LoadProgramException("No program is loaded. Please load a file to display a program.");
         }
 
-        return cuurentProgram.calculateMaxDegree()  ;
+        return currentProgram.calculateMaxDegree()  ;
     }
 
     public VariableAndLabelMenger getVlm(){
-        return cuurentProgram.getvlm();
+        return currentProgram.getvlm();
     }
 
     @Override
     public List<List<String>> getInfoForEachInstruction(int level) {
-        return cuurentProgram.getInfo(level);
+        return currentProgram.getInfo(level);
     }
 
     @Override
     public  Pair<Map<String, Long>,Integer> startDebug(int level, List<Long> inputs) {
         // expend the program to the specified level
-        List<InstructionView> instructionViews = cuurentProgram
+        List<InstructionView> instructionViews = currentProgram
                 .instructionViewsAfterExtendRunShow(level);
 
         //create the executor
-        exe = new ProgramExecutorImpl(cuurentProgram);
+        exe = new ProgramExecutorImpl(currentProgram);
 
         // intialize all the variables iin context
         exe.init(inputs);
@@ -320,16 +325,16 @@ public class EngineImpl implements Engine {
 
     @Override
     public List<functionView> getAllFunctionViews() {
-        List<functionView> funcs = cuurentProgram.getAllFunctionViews();
+        List<functionView> funcs = currentProgram.getAllFunctionViews();
         return funcs;
     }
 
 
 //    @Override
 //    public RunResult runFunc (int level, List<Long> inputs, Function funcName) {
-//        List<InstructionView> instructionViews = cuurentProgram
+//        List<InstructionView> instructionViews = currentProgram
 //                .instructionViewsAfterExtendRunShow(level);
-//        exe = new ProgramExecutorImpl(cuurentProgram);
+//        exe = new ProgramExecutorImpl(currentProgram);
 //        long y = exe.runFunc(inputs, funcName);
 //        int cycles = exe.cycleCount;
 //

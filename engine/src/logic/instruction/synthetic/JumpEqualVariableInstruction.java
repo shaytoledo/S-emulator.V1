@@ -112,12 +112,12 @@ public class JumpEqualVariableInstruction extends AbstractInstruction {
                 Instruction instr2 = new AssignmentInstruction(z1, v,getLabel());
                 Instruction instr3 = new AssignmentInstruction(z2, vTag);
                 Instruction instr4 = new JumpZeroInstruction(z1, label3, label2);
-                Instruction instr5 = new JumpZeroInstruction(z2, label3);
+                Instruction instr5 = new JumpZeroInstruction(z2, label1);
                 Instruction instr6 = new DecreaseInstruction(z1);
                 Instruction instr7 = new DecreaseInstruction(z2);
-                Instruction instr8 = new GoToInstruction(z1, jnzLabel);
-                Instruction instr9 = new JumpZeroInstruction(z2, label1);
-                Instruction instr10 = new NoOpInstruction(v);
+                Instruction instr8 = new GoToInstruction(z1, label2);
+                Instruction instr9 = new JumpZeroInstruction(z2, jnzLabel, label3);
+                Instruction instr10 = new NoOpInstruction(v, label1);
 
 
                 myInstructions.add(instr2);
@@ -153,18 +153,18 @@ public class JumpEqualVariableInstruction extends AbstractInstruction {
                 Instruction instr4 = new JumpZeroInstruction(z1, label3, label2);
                 List<Instruction> jumpZerExt1 = instr4.extend(1, vlm);
 
-                Instruction instr5 = new JumpZeroInstruction(z2, label3);
+                Instruction instr5 = new JumpZeroInstruction(z2, label1);
                 List<Instruction> jumpZerExt2 = instr5.extend(1, vlm);
 
                 Instruction instr6 = new DecreaseInstruction(z1);
                 Instruction instr7 = new DecreaseInstruction(z2);
-                Instruction instr8 = new GoToInstruction(z1, jnzLabel);
+                Instruction instr8 = new GoToInstruction(z1, label2);
                 List<Instruction> gotoExt1 = instr8.extend(1, vlm);
 
-                Instruction instr9 = new JumpZeroInstruction(z2, label1);
+                Instruction instr9 = new JumpZeroInstruction(z2, jnzLabel, label3);
                 List<Instruction> jumpZerExt3 = instr9.extend(1, vlm);
 
-                Instruction instr10 = new NoOpInstruction(v);
+                Instruction instr10 = new NoOpInstruction(v, label1);
 
 
                 myInstructions.addAll(assignExt1);
@@ -200,18 +200,18 @@ public class JumpEqualVariableInstruction extends AbstractInstruction {
                 Instruction instr4 = new JumpZeroInstruction(z1, label3, label2);
                 List<Instruction> jumpZerExt1 = instr4.extend(2, vlm);
 
-                Instruction instr5 = new JumpZeroInstruction(z2, label3);
+                Instruction instr5 = new JumpZeroInstruction(z2, label1);
                 List<Instruction> jumpZerExt2 = instr5.extend(2, vlm);
 
                 Instruction instr6 = new DecreaseInstruction(z1);
                 Instruction instr7 = new DecreaseInstruction(z2);
-                Instruction instr8 = new GoToInstruction(z1, jnzLabel);
+                Instruction instr8 = new GoToInstruction(z1, label2);
                 List<Instruction> gotoExt1 = instr8.extend(1, vlm);
 
-                Instruction instr9 = new JumpZeroInstruction(z2, label1);
+                Instruction instr9 = new JumpZeroInstruction(z2, jnzLabel, label3);
                 List<Instruction> jumpZerExt3 = instr9.extend(2, vlm);
 
-                Instruction instr10 = new NoOpInstruction(v);
+                Instruction instr10 = new NoOpInstruction(v, label1);
 
                 myInstructions.addAll(assignExt1);
                 myInstructions.addAll(assignExt2);
@@ -240,7 +240,7 @@ public class JumpEqualVariableInstruction extends AbstractInstruction {
 
     @Override
     public void replace(Label oldLabel, Label newLabel) {
-        if(getLabel().equals(oldLabel)) {
+        if(getLabel() != null && getLabel().equals(oldLabel)) {
             setLabel(newLabel);
         }
         if(jnzLabel.equals(oldLabel)) {

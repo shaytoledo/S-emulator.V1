@@ -2,7 +2,6 @@ package logic.instruction.synthetic;
 
 import core.program.Function;
 import core.program.VariableAndLabelMenger;
-import javafx.util.Pair;
 import logic.argument.Argument;
 import logic.argument.FunctionArgument;
 import logic.argument.VariableArgument;
@@ -165,7 +164,8 @@ public class JumpEqualFunctionInstruction extends AbstractInstruction {
 
     @Override
     public int getMaxLevel() {
-        return arguments.getMaxLevel() + 2;
+        // +3 because epilogue contains JumpEqualVariableInstruction (maxLevel=3)
+        return arguments.getMaxLevel() + 3;
     }
 
     @Override
@@ -218,7 +218,7 @@ public class JumpEqualFunctionInstruction extends AbstractInstruction {
 
     @Override
     public void replace(Label oldLabel, Label newLabel) {
-        if(getLabel().equals(oldLabel)) {
+        if(getLabel() != null && getLabel().equals(oldLabel)) {
             setLabel(newLabel);
         }
         if (jnzLabel.equals(oldLabel)) {
@@ -317,6 +317,9 @@ public class JumpEqualFunctionInstruction extends AbstractInstruction {
             }
 
             // 2.4 labels: only referenced jump targets
+            // exitLabel: EXIT inside function body jumps to the epilogue, not outer program exit
+            Label exitLabel = vlm.newLabel();
+
             java.util.Set<Label> referencedTargets = new java.util.HashSet<>();
             for (Instruction ins : body) {
                 List<Label> used = ins.getAllLabels();
@@ -324,7 +327,12 @@ public class JumpEqualFunctionInstruction extends AbstractInstruction {
             }
             for (Label l : referencedTargets) {
                 if (!vlm.getLocalLabelMap().containsKey(l)) {
-                    vlm.mapLabel(l, vlm.newLabel());
+                    if (l.getLabelRepresentation() != null
+                            && l.getLabelRepresentation().equalsIgnoreCase("EXIT")) {
+                        vlm.mapLabel(l, exitLabel);
+                    } else {
+                        vlm.mapLabel(l, vlm.newLabel());
+                    }
                 }
             }
 
@@ -407,19 +415,23 @@ public class JumpEqualFunctionInstruction extends AbstractInstruction {
                 mappedResult = vlm.newZVariable();
             }
 
-            // new variable to hold the (final) function result explicitly, as you requested
+            // new variable to hold the (final) function result explicitly
             Variable compareVar = vlm.newZVariable();
 
-            // explicit assignment: compareVar <- mappedResult     (target, source, label)
-            epilogue.add(new AssignmentInstruction(
-                    compareVar, mappedResult, FixedLabel.EMPTY));
+            // Build epilogue instructions — exitLabel placed here so function-body EXIT lands here
+            Instruction assignInst = new AssignmentInstruction(
+                    compareVar, mappedResult, exitLabel);
+            Instruction jevInst = new JumpEqualVariableInstruction(
+                    this.getVariable(), jnzLabel, compareVar);
 
-            // Jump if EQUAL: IF getVariable() == compareVar GOTO jnzLabel
-            epilogue.add(new logic.instruction.synthetic.JumpEqualVariableInstruction(
-                    this.getVariable(),
-                    jnzLabel,
-                    compareVar
-                    ));
+            // Expand epilogue instructions using argBudget so they reach basic level
+            if (argBudget > 0) {
+                epilogue.addAll(assignInst.extend(argBudget, vlm));
+                epilogue.addAll(jevInst.extend(argBudget, vlm));
+            } else {
+                epilogue.add(assignInst);
+                epilogue.add(jevInst);
+            }
 
             // -------- 6) Glue --------
             List<Instruction> out = new ArrayList<>(prologue.size() + mappedBody.size() + epilogue.size());
@@ -434,181 +446,6 @@ public class JumpEqualFunctionInstruction extends AbstractInstruction {
             }
         }
     }
-
-
-
-//    @Override
-//    public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
-//        if (extensionLevel <= 0) {
-//            return List.of(this.clone());
-//        }
-//
-//        boolean openedScope = false;
-//        try {
-//            if (vlm != null) {
-//                vlm.beginLocalScope();
-//                openedScope = true;
-//            }
-//
-//            // -------- 0) Budgets --------
-//            int base = function.getInstructions().stream()
-//                    .mapToInt(Instruction::getMaxLevel)
-//                    .max().orElse(0);
-//
-//            int bodyBudget = Math.min(extensionLevel, 1 + base) - 1;
-//            if (bodyBudget < 0) bodyBudget = 0;
-//
-//            int argBudget = Math.max(0, extensionLevel - (1 + base));
-//
-//            // -------- 1) Clone body --------
-//            List<Instruction> originalBody = function.getInstructions();
-//            List<Instruction> body = new ArrayList<>(originalBody.size());
-//            for (Instruction ins : originalBody) body.add(ins.clone());
-//
-//            // -------- 2) Build local mappings --------
-//
-//            // 2.1 inputs (x_i) -> fresh WORK (z_i)
-//            List<Variable> inputs = FunctionArgument.collectInputsInOrder(body);
-//            for (Variable xin : inputs) {
-//                Variable w = vlm.newZVariable();
-//                vlm.mapVar(xin, w);
-//            }
-//
-//            // 2.2 result (y) -> fresh WORK (mappedResult)  **THIS replaces Y**
-//            Variable resultVar = FunctionArgument.findResultVariable(body);
-//            Variable mappedResult = null;
-//            if (resultVar != null) {
-//                mappedResult = vlm.newZVariable();  // או vlm.newYVariable() אם קיים אצלך
-//                vlm.mapVar(resultVar, mappedResult);
-//            }
-//
-//            // 2.3 internal WORKs -> fresh WORKs (skip already-mapped inputs)
-//            java.util.Set<Variable> internalWorks = new java.util.HashSet<>();
-//            for (Instruction ins : body) {
-//                for (Variable v : ins.getAllVariables()) {
-//                    if (v.getType() == VariableType.WORK && !vlm.getLocalVarMap().containsKey(v)) {
-//                        internalWorks.add(v);
-//                    }
-//                }
-//            }
-//            for (Variable w0 : internalWorks) {
-//                vlm.mapVar(w0, vlm.newZVariable());
-//            }
-//
-//            // 2.4 labels: only referenced jump targets
-//            java.util.Set<Label> referencedTargets = new java.util.HashSet<>();
-//            for (Instruction ins : body) {
-//                List<Label> used = ins.getAllLabels();
-//                if (used != null) referencedTargets.addAll(used);
-//            }
-//            for (Label l : referencedTargets) {
-//                if (!vlm.getLocalLabelMap().containsKey(l)) {
-//                    vlm.mapLabel(l, vlm.newLabel());
-//                }
-//            }
-//
-//            // -------- 3) Prologue: anchor + write args into mapped x_i --------
-//            List<Instruction> prologue = new ArrayList<>();
-//            Label anchor = (getLabel() == null ? FixedLabel.EMPTY : getLabel());
-//            Instruction noOp = new logic.instruction.basic.NoOpInstruction(
-//                    new VariableImpl(VariableType.RESULT, 1), anchor);
-//            prologue.add(noOp);
-//
-//            // רשימת הארגומנטים של הפונקציה הזו (מתוך FunctionArgument)
-//            List<Argument> argumentList = this.arguments.arguments; // השתמש ב-getter אם יש
-//
-//            int arity = Math.min(argumentList.size(), inputs.size());
-//            for (int i = 0; i < arity; i++) {
-//                Variable xiTarget = vlm.applyVar(inputs.get(i));
-//                Argument arg = argumentList.get(i);
-//
-//                if (arg instanceof VariableArgument vArg) {
-//                    // (source, target, label) – ודא סדר פרמטרים תואם למחלקה שלך
-//                    prologue.add(new AssignmentInstruction(
-//                             xiTarget,vArg.getVariable(), FixedLabel.EMPTY));
-//
-//                } else if (arg instanceof FunctionArgument fArg) {
-//                    // inline nested function into xiTarget
-//                    QuoteInstruction nested = new QuoteInstruction(
-//                            fArg.getName(),
-//                            fArg.getArgs(),
-//                            xiTarget,
-//                            fArg.getFunctions(),
-//                            FixedLabel.EMPTY
-//                    );
-//                    prologue.addAll(nested.extend(argBudget, vlm));
-//                }
-//                // TODO: ConstantArgument -> SetImmediateInstruction אם קיים אצלך
-//            }
-//
-//            // -------- 4) Remap + expand body to bodyBudget --------
-//            List<Instruction> mappedBody = new ArrayList<>(body.size());
-//            for (Instruction ins : body) {
-//                Instruction c = ins.clone();
-//
-//                // variables
-//                for (Variable v : ins.getAllVariables()) {
-//                    Variable to = vlm.applyVar(v);
-//                    if (to != v) c.replace(v, to);
-//                }
-//
-//                // referenced labels inside instruction
-//                for (Label used : ins.getAllLabels()) {
-//                    if (referencedTargets.contains(used)) {
-//                        Label to = vlm.applyLabel(used);
-//                        if (to != used) c.replace(used, to);
-//                    }
-//                }
-//
-//                // declared line label: keep only if referenced
-//                Label declared = ins.getLabel();
-//                if (declared != null && declared != FixedLabel.EMPTY) {
-//                    if (referencedTargets.contains(declared)) {
-//                        Label to = vlm.applyLabel(declared);
-//                        if (to != declared) c.replace(declared, to);
-//                    } else {
-//                        c.replace(declared, FixedLabel.EMPTY);
-//                    }
-//                }
-//
-//                // expand nested quotes inside body
-//                if (c instanceof QuoteInstruction qi && bodyBudget > 0) {
-//                    mappedBody.addAll(qi.extend(bodyBudget, vlm));
-//                } else {
-//                    mappedBody.add(c);
-//                }
-//            }
-//
-//            // -------- 5) Epilogue: JUMP if NOT EQUAL to jnzLabel --------
-//            List<Instruction> epilogue = new ArrayList<>();
-//            if (mappedResult == null) {
-//                // מקרה קצה: אם לפונקציה אין Y מוצהר, עדיין נשווה מול z חדש
-//                mappedResult = vlm.newZVariable();
-//            }
-//
-//            // כאן הקפיצה היא "אם לא שווה" כפי שביקשת:
-//            epilogue.add(new logic.instruction.synthetic.JumpEqualVariableInstruction(
-//                    this.getVariable(),   // current instruction's variable
-//                    jnzLabel,              // label to jump if NOT equal
-//                    mappedResult          // the (remapped) function output
-//
-//            ));
-//
-//            // -------- 6) Glue --------
-//            List<Instruction> out = new ArrayList<>(prologue.size() + mappedBody.size() + epilogue.size());
-//            out.addAll(prologue);
-//            out.addAll(mappedBody);
-//            out.addAll(epilogue);
-//            return out;
-//
-//        } finally {
-//            if (openedScope) {
-//                try { vlm.endLocalScope(); } catch (Throwable ignored) {}
-//            }
-//        }
-//    }
-
-
 
     private boolean isValidFunction(String name, List<Function> funcs) {
         for (Function func : funcs) {
