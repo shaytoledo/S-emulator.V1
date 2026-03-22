@@ -1,18 +1,32 @@
 package logic.execution;
 
+import core.program.Program;
+import core.program.VariableAndLabelMenger;
 import logic.instruction.Instruction;
+import logic.instruction.synthetic.QuoteInstruction;
 import logic.label.FixedLabel;
 import logic.label.Label;
-import core.program.Program;
-import java.util.*;
+import logic.variable.Variable;
+import logic.variable.VariableImpl;
+import logic.variable.VariableType;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+
 import static java.util.Collections.emptyList;
 
 public class ProgramExecutorImpl implements ProgramExecutor {
 
-    private final Program program;
+    private Program program;
     private ExecutionContext context;
+    public int cycleCount = 0;
+    public int debugIndexCounter = 0;
+    private volatile boolean cancelled = false;
 
+    public void cancel() { cancelled = true; }
 
     public ProgramExecutorImpl(Program program) {
         this.program = program;
@@ -21,7 +35,8 @@ public class ProgramExecutorImpl implements ProgramExecutor {
     @Override
     public long run(List<Long> inputs) {
 
-        final List<Long> safeInputs;
+        // safe inputs
+        List<Long> safeInputs;
         if (inputs == null || inputs.isEmpty()) {
             safeInputs = emptyList();
         } else {
@@ -31,19 +46,28 @@ public class ProgramExecutorImpl implements ProgramExecutor {
             }
         }
 
-        context = new ExecutionContextImpl(safeInputs); // create the context with inputs.
+        context = new ExecutionContextImpl(safeInputs, program.getFunctions()); // create the context with inputs.
+        Variable res = new VariableImpl(VariableType.RESULT, 1);
+        context.updateVariable(res, 0); // initialize the result variable to 0.
 
-        Instruction currentInstruction = program.getInstructions().isEmpty()
-                ? null
-                : program.getInstructions().getFirst();
+        enterAllVariabalesInContext();
 
+        // get the first instruction
+        Instruction currentInstruction = program.getInstructions().isEmpty() ? null : program.getInstructions().getFirst();
+
+        // if null, return result
         if (currentInstruction == null) {
-            return context.getVariableValue("y");
+            return context.getVariableValue(res);
         }
 
         Label nextLabel;
         do {
-            nextLabel = currentInstruction.execute(context);
+            if (cancelled || Thread.currentThread().isInterrupted()) {
+                break;
+            }
+            nextLabel = currentInstruction.execute(context, new VariableAndLabelMenger());
+            // sum cycles
+            cycleCount += currentInstruction.cycles();
 
             if (isEmpty(nextLabel)) {
                 currentInstruction = program.getNextInstructionLabel(currentInstruction);
@@ -52,25 +76,24 @@ public class ProgramExecutorImpl implements ProgramExecutor {
                 }
             } else if (!isExit(nextLabel)) {
                 currentInstruction = program.getInstructionByLabel(nextLabel);
-
+                if (currentInstruction == null) {
+                    nextLabel = FixedLabel.EXIT;
+                }
             }
         } while (!isExit(nextLabel));
 
-
-        return context.getVariableValue("y");
-
-
+        // return result
+        return context.getVariableValue(res);
     }
 
     @Override
     public Map<String, Long> variablesState() {
-
-        Map<String, Long> onlyXSorted = context.getVariablesState().entrySet().stream()
-                .filter(e -> e.getKey() != null && e.getKey().startsWith("x"))
-                .sorted(Comparator.comparingInt(e -> Integer.parseInt(e.getKey().substring(1))))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a,b)->a, LinkedHashMap::new));
-
-        return onlyXSorted;
+        Map<String, Long> allVariables = context.getVariablesState().entrySet().stream()
+                .collect(Collectors.toMap(
+                        e -> e.getKey().getRepresentation(),Map.Entry::getValue,
+                        (a, b) -> a, LinkedHashMap::new
+                ));
+        return allVariables;
     }
 
     private static boolean isExit(Label l) {
@@ -85,5 +108,102 @@ public class ProgramExecutorImpl implements ProgramExecutor {
         if (l == FixedLabel.EMPTY) return true;
         String rep = l.getLabelRepresentation();
         return rep != null && rep.equalsIgnoreCase("EMPTY");
+    }
+
+    private void enterAllVariabalesInContext() {
+        List<Instruction> instructions = program.getInstructions();
+        for (Instruction instruction : instructions) {
+            List<String> infos = instruction.getAllInfo();
+            for (String info : infos) {
+                if (info != null && info.startsWith("z")) {
+                    VariableImpl var = new VariableImpl(VariableType.WORK, Integer.parseInt(info.substring(1)));
+                    context.updateVariable(var,0L);
+                }
+            }
+
+        }
+    }
+
+    public void init(List<Long> inputs) {
+        // safe inputs
+        List<Long> safeInputs;
+        if (inputs == null || inputs.isEmpty()) {
+            safeInputs = emptyList();
+        } else {
+            safeInputs = new ArrayList<>(inputs.size());
+            for (Long v : inputs) {
+                safeInputs.add(v != null ? v : 0L);
+            }
+        }
+        context = new ExecutionContextImpl(inputs, program.getFunctions()); // create the context with inputs.
+
+        Variable res = new VariableImpl(VariableType.RESULT, 1);
+        context.updateVariable(res, 0); // initialize the result variable to 0.
+
+        enterAllVariabalesInContext();
+    }
+
+    public int runOneStep() {
+        // get the first instruction
+        Instruction currentInstruction = program.getInstructions().get(debugIndexCounter);
+
+        Label nextLabel;
+
+        // get the instruction next label if take you there
+        nextLabel = currentInstruction.execute(context, new VariableAndLabelMenger());
+
+        // sum cycles
+        cycleCount += currentInstruction.cycles();
+
+        // if not take you there, go to the next instruction
+        if (isEmpty(nextLabel)) {
+            currentInstruction = program.getNextInstructionLabel(currentInstruction);
+            debugIndexCounter = program.getInstructions().indexOf(currentInstruction);
+            // return the next index of the next instruction
+            return debugIndexCounter;
+
+            // if take you there and there is no exit, go to that instruction
+        } else if (!isExit(nextLabel)) {
+            currentInstruction = program.getInstructionByLabel(nextLabel);
+            debugIndexCounter = program.getInstructions().indexOf(currentInstruction);
+            // return the index of the instruction that it took you to
+            return debugIndexCounter;
+        }
+        else { // if (isExit(nextLabel))
+            // -1 signifies the end of the program
+            debugIndexCounter = -1;
+            return debugIndexCounter;
+        }
+    }
+
+    public void resume() {
+        Instruction currentInstruction = program.getInstructions().get(debugIndexCounter);
+
+        // if null, return result
+        if (currentInstruction == null) {
+            return;
+        }
+
+        Label nextLabel;
+        do {
+            nextLabel = currentInstruction.execute(context, new VariableAndLabelMenger());
+            // sum cycles
+            cycleCount += currentInstruction.cycles();
+
+            if (isEmpty(nextLabel)) {
+                currentInstruction = program.getNextInstructionLabel(currentInstruction);
+                if (currentInstruction == null) {
+                    nextLabel = FixedLabel.EXIT;
+                }
+            } else if (!isExit(nextLabel)) {
+                currentInstruction = program.getInstructionByLabel(nextLabel);
+                if (currentInstruction == null) {
+                    nextLabel = FixedLabel.EXIT;
+                }
+            }
+        } while (!isExit(nextLabel));
+
+        // end of program
+        return;
     }
 }

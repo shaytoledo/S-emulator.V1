@@ -1,5 +1,6 @@
 package logic.instruction.synthetic;
 
+import core.program.VariableAndLabelMenger;
 import logic.execution.ExecutionContext;
 import logic.instruction.AbstractInstruction;
 import logic.instruction.Instruction;
@@ -7,29 +8,36 @@ import logic.instruction.InstructionData;
 import logic.instruction.basic.IncreaseInstruction;
 import logic.instruction.basic.JumpNotZeroInstruction;
 import logic.label.Label;
-import core.program.VariableAndLabelMenger;
 import logic.variable.Variable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class GoToInstruction extends AbstractInstruction {
 
-    private final Label target;
+    private Label target;
 
-    public GoToInstruction(Variable var, Label target, Map<String,String> argsMap) {
-        super(InstructionData.GOTO_LABEL, var, argsMap);
+    public GoToInstruction(Variable var, Label target) {
+        super(InstructionData.GOTO_LABEL, var);
         this.target = target;
     }
 
-    public GoToInstruction(Variable var, Label target, Label lineLabel, Map<String,String> argsMap) {
-        super(InstructionData.GOTO_LABEL, var, lineLabel, argsMap);
+    public GoToInstruction(Variable var, Label target, Label lineLabel) {
+        super(InstructionData.GOTO_LABEL, var, lineLabel);
         this.target = target;
     }
 
     @Override
-    public Label execute(ExecutionContext context) {
+    public Instruction clone() {
+        if(getLabel() == null) {
+            return new GoToInstruction(getVariable(), target);
+        } else {
+            return new GoToInstruction(getVariable(), target, getLabel());
+        }
+    }
+
+    @Override
+    public Label execute(ExecutionContext context, VariableAndLabelMenger vlm) {
         return target;
     }
 
@@ -40,13 +48,34 @@ public class GoToInstruction extends AbstractInstruction {
     }
 
     @Override
-    public Map<String, String> args() {
-        return argsMap;
+    public int getMaxLevel() {
+        return 1;
+    }
+
+    public List<String> getAllInfo() {
+        List<String> list = new ArrayList<>();
+        if (getLabel() != null) {
+            list.add(getLabel().getLabelRepresentation());
+        }
+        if (getVariable() != null) {
+            list.add(getVariable().getRepresentation());
+        }
+        list.add(target.getLabelRepresentation());
+        return list;
     }
 
     @Override
-    public int getMaxLevel() {
-        return 1;
+    public List<Variable> getAllVariables() {
+        return List.of(getVariable());
+    }
+
+    @Override
+    public List<Label> getAllLabels() {
+        if (getLabel() == null) {
+            return List.of(target);
+        } else {
+            return List.of(getLabel(), target);
+        }
     }
 
     @Override
@@ -55,12 +84,12 @@ public class GoToInstruction extends AbstractInstruction {
 
         switch (extensionLevel) {
             case 0:
-                return List.of(this);
+                return List.of(this.clone());
             default: {
                 Variable tempVar1 = vlm.newZVariable();
 
-                Instruction instr2 = new IncreaseInstruction(tempVar1,getLabel(), argsMap);
-                Instruction instr3 = new JumpNotZeroInstruction(tempVar1, target, argsMap);
+                Instruction instr2 = new IncreaseInstruction(tempVar1,getLabel());
+                Instruction instr3 = new JumpNotZeroInstruction(tempVar1, target);
 
 
                 myInstructions.add(instr2);
@@ -68,6 +97,23 @@ public class GoToInstruction extends AbstractInstruction {
                 return myInstructions;
 
             }
+        }
+    }
+
+    @Override
+    public void replace(Variable oldVar, Variable newVar) {
+        if(getVariable().equals(oldVar)) {
+            setVariable(newVar);
+        }
+    }
+
+    @Override
+    public void replace(Label oldLabel, Label newLabel) {
+        if(getLabel() != null && getLabel().equals(oldLabel)) {
+            setLabel(newLabel);
+        }
+        if(target.equals(oldLabel)) {
+            target = newLabel;
         }
     }
 }

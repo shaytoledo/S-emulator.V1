@@ -6,21 +6,77 @@ import logic.variable.Variable;
 import logic.variable.VariableImpl;
 import logic.variable.VariableType;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class VariableAndLabelMenger {
 
-    // all the used variable names and label names
-    private final Set<String> usedVars;
-    private final Set<String> usedLabels;
+    // ---------- add these fields ----------
+    private final Map<Variable, Variable> localVarMap = new HashMap<>();
+    private final Map<Label, Label> localLabelMap = new HashMap<>();
 
-    //The counters start from the next largest index
+    private final Deque<Map<Variable, Variable>> varMapStack = new ArrayDeque<>();
+    private final Deque<Map<Label, Label>> labelMapStack = new ArrayDeque<>();
+
+
+
+    // ---------- mapping API ----------
+    public void mapVar(Variable from, Variable to) { localVarMap.put(from, to); }
+    public Variable applyVar(Variable v) { return localVarMap.getOrDefault(v, v); }
+
+    public void mapLabel(Label from, Label to) { localLabelMap.put(from, to); }
+    public Label applyLabel(Label l) { return localLabelMap.getOrDefault(l, l); }
+
+    public Map<Variable, Variable> getLocalVarMap() { return localVarMap; }
+    public Map<Label, Label> getLocalLabelMap() { return localLabelMap; }
+
+
+    // ---------- per-instruction local scope ----------
+    public void beginLocalScope() {
+        varMapStack.push(new HashMap<>(localVarMap));
+        labelMapStack.push(new HashMap<>(localLabelMap));
+        localVarMap.clear();
+        localLabelMap.clear();
+    }
+
+    public void endLocalScope() {
+        localVarMap.clear();
+        localLabelMap.clear();
+        if (!varMapStack.isEmpty()) localVarMap.putAll(varMapStack.pop());
+        if (!labelMapStack.isEmpty()) localLabelMap.putAll(labelMapStack.pop());
+    }
+
+    public void clearLocal() {
+        localVarMap.clear();
+        localLabelMap.clear();
+        varMapStack.clear();
+        labelMapStack.clear();
+    }
+
+
+
+
+
+
+
+
+
+
+
+    // all the used variable names and label names
+    private  Set<String> usedVars;
+    private  Set<String> usedLabels;
+
+    // Counters always start from 1; newZVariable/newLabel skip any already-used names
     private int zCounter;
     private int lCounter;
 
     VariableAndLabelMenger(List<Variable> variables, List<Label> labels) {
+        zCounter = 0;
+        lCounter = 0;
+//        usedVars.clear();
+//        usedLabels.clear();
+
         this.usedVars = variables.stream()
                 .filter(v -> v != null && v.getRepresentation() != null)
                 .map(Variable::getRepresentation)
@@ -31,12 +87,19 @@ public class VariableAndLabelMenger {
                 .map(Label::getLabelRepresentation)
                 .collect(Collectors.toSet());
 
-        this.zCounter = nextIndexStartingFrom("z", usedVars);
-        this.lCounter = nextIndexStartingFrom("L", usedLabels);
+        this.zCounter = 1;
+        this.lCounter = 1;
+    }
+
+    public VariableAndLabelMenger() {
+        this.usedVars = new HashSet<>();
+        this.usedLabels = new HashSet<>();
+        this.zCounter = 1;
+        this.lCounter = 1;
     }
 
     // find the largest index used with the given prefix, and return next
-    static int nextIndexStartingFrom(String prefix, Set<String> used) {
+    private static int nextIndexStartingFrom(String prefix, Set<String> used) {
         int max = 0;
         for (String s : used) {
             if (s != null && s.startsWith(prefix)) {
@@ -69,5 +132,28 @@ public class VariableAndLabelMenger {
         }
     }
 
+    public List<String> getAll() {
+        List<String> all = new ArrayList<>();
+        all.addAll(usedVars);
+        all.addAll(usedLabels);
+        return all;
+    }
 
+    public boolean existsVar(Variable v) {
+        if (usedVars.contains(v.getRepresentation())) {
+            return true;
+        }
+        return false;
+    }
+
+    public boolean existsLabel(Label L) {
+        if (usedLabels.contains(L.getLabelRepresentation())) {
+            return true;
+        }
+        return false;
+    }
 }
+
+
+
+

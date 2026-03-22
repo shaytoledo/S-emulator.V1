@@ -1,36 +1,46 @@
 package logic.instruction.basic;
 
+import core.program.VariableAndLabelMenger;
 import logic.execution.ExecutionContext;
 import logic.instruction.AbstractInstruction;
 import logic.instruction.Instruction;
 import logic.instruction.InstructionData;
 import logic.label.FixedLabel;
 import logic.label.Label;
-import core.program.VariableAndLabelMenger;
 import logic.variable.Variable;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class IncreaseInstruction extends AbstractInstruction {
 
 
-    public IncreaseInstruction(Variable var, Label lineLabel, Map<String,String> argsMap) {
-        super(InstructionData.INCREASE, var, lineLabel, argsMap);
+    public IncreaseInstruction(Variable var, Label lineLabel) {
+        super(InstructionData.INCREASE, var, lineLabel);
         basic = true;
     }
 
-    public IncreaseInstruction(Variable var, Map<String,String> argsMap) {
-        super(InstructionData.INCREASE, var, argsMap);
+    public IncreaseInstruction(Variable var) {
+        super(InstructionData.INCREASE, var);
         basic = true;
     }
 
     @Override
-    public Label execute(ExecutionContext context) {
+    public Instruction clone() {
+        if(getLabel() != null) {
+            return new IncreaseInstruction(getVariable(), getLabel());
+        }
+        else {
+            return new IncreaseInstruction(getVariable());
+        }
+    }
 
-        long variableValue = context.getVariableValue(getVariable().getRepresentation());
+    @Override
+    public Label execute(ExecutionContext context, VariableAndLabelMenger vlm) {
+
+        long variableValue = context.getVariableValue(getVariable());
         variableValue++;
-        context.updateVariable(getVariable().getRepresentation(), variableValue);
+        context.updateVariable(getVariable(), variableValue);
 
         return FixedLabel.EMPTY;
     }
@@ -41,19 +51,53 @@ public class IncreaseInstruction extends AbstractInstruction {
     }
 
     @Override
-    public Map<String, String> args() {
-        return Map.of();
-    }
-
-    @Override
     public int getMaxLevel() {
         return 0;
     }
 
     @Override
     public List<Instruction> extend(int extensionLevel, VariableAndLabelMenger vlm) {
-        return List.of(this);
+        return List.of(this.clone());
     }
 
+    @Override
+    public List<String> getAllInfo() {
+        List<String> list = new ArrayList<>();
+        if (getLabel() != null) {
+            list.add(getLabel().getLabelRepresentation());
+        }
+        if (getVariable() != null) {
+            list.add(getVariable().getRepresentation());
+        }
+        return list;
+    }
+
+    @Override
+    public List<Variable> getAllVariables() {
+        return List.of(getVariable());
+    }
+
+    @Override
+    public List<Label> getAllLabels() {
+        if (getLabel() == null) {
+            return List.of();
+        } else {
+            return List.of(getLabel());
+        }
+    }
+
+    @Override
+    public void replace(Variable oldVar, Variable newVar) {
+        if(getVariable().equals(oldVar)) {
+            setVariable(newVar);
+        }
+    }
+
+    @Override
+    public void replace(Label oldLabel, Label newLabel) {
+        if(getLabel() != null && getLabel().equals(oldLabel)) {
+            setLabel(newLabel);
+        }
+    }
 
 }

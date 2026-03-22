@@ -1,5 +1,6 @@
 package logic.instruction.synthetic;
 
+import core.program.VariableAndLabelMenger;
 import logic.execution.ExecutionContext;
 import logic.instruction.AbstractInstruction;
 import logic.instruction.Instruction;
@@ -9,33 +10,40 @@ import logic.instruction.basic.JumpNotZeroInstruction;
 import logic.instruction.basic.NoOpInstruction;
 import logic.label.FixedLabel;
 import logic.label.Label;
-import core.program.VariableAndLabelMenger;
 import logic.variable.Variable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class JumpEqualConstantInstruction extends AbstractInstruction {
 
-    private final Label target;
+    private Label target;
     private final long constant;
 
-    public JumpEqualConstantInstruction(Variable var, Label target, long constant, Map<String,String> argsMap) {
-        super(InstructionData.JUMP_EQUAL_CONSTANT, var, argsMap);
+    public JumpEqualConstantInstruction(Variable var, Label target, long constant) {
+        super(InstructionData.JUMP_EQUAL_CONSTANT, var);
         this.target = target;
         this.constant = constant;
     }
 
-    public JumpEqualConstantInstruction(Variable var, Label target, long constant, Label lineLabel, Map<String,String> argsMap) {
-        super(InstructionData.JUMP_EQUAL_CONSTANT, var, lineLabel, argsMap);
+    public JumpEqualConstantInstruction(Variable var, Label target, long constant, Label lineLabel) {
+        super(InstructionData.JUMP_EQUAL_CONSTANT, var, lineLabel);
         this.target = target;
         this.constant = constant;
     }
 
     @Override
-    public Label execute(ExecutionContext context) {
-        if (context.getVariableValue(getVariable().getRepresentation()) == constant) {
+    public Instruction clone() {
+        if(getLabel() == null) {
+            return new JumpEqualConstantInstruction(getVariable(), target, constant);
+        } else {
+            return new JumpEqualConstantInstruction(getVariable(), target, constant, getLabel());
+        }
+    }
+
+    @Override
+    public Label execute(ExecutionContext context, VariableAndLabelMenger vlm) {
+        if (context.getVariableValue(getVariable()) == constant) {
             return target;
         }
         return FixedLabel.EMPTY;
@@ -47,13 +55,34 @@ public class JumpEqualConstantInstruction extends AbstractInstruction {
     }
 
     @Override
-    public Map<String, String> args() {
-        return argsMap;
+    public int getMaxLevel() {
+        return 3;
+    }
+
+    public List<String> getAllInfo() {
+        List<String> list = new ArrayList<>();
+        if (getLabel() != null) {
+            list.add(getLabel().getLabelRepresentation());
+        }
+        if (getVariable() != null) {
+            list.add(getVariable().getRepresentation());
+        }
+        list.add(target.getLabelRepresentation());
+        return list;
     }
 
     @Override
-    public int getMaxLevel() {
-        return 3;
+    public List<Variable> getAllVariables() {
+        return List.of(getVariable());
+    }
+
+    @Override
+    public List<Label> getAllLabels() {
+        if (getLabel() == null) {
+            return List.of(target);
+        } else {
+            return List.of(getLabel(), target);
+        }
     }
 
     @Override
@@ -62,7 +91,7 @@ public class JumpEqualConstantInstruction extends AbstractInstruction {
 
         switch (extensionLevel) {
             case 0:
-                return List.of(this);
+                return List.of(this.clone());
             case 1: {
                 Variable z1 =  vlm.newZVariable();
                 Variable v = getVariable();
@@ -71,19 +100,19 @@ public class JumpEqualConstantInstruction extends AbstractInstruction {
                 Label label1 = vlm.newLabel();
 
 
-                Instruction instr1 = new AssignmentInstruction(z1, v,getLabel(), argsMap);
+                Instruction instr1 = new AssignmentInstruction(z1, v,getLabel());
                 myInstructions.add(instr1);
 
                 for(int i = 0; i < k; i++) {
-                    Instruction jz = new JumpZeroInstruction(z1, label1, argsMap);
-                    Instruction dec = new DecreaseInstruction(z1, argsMap);
+                    Instruction jz = new JumpZeroInstruction(z1, label1);
+                    Instruction dec = new DecreaseInstruction(z1);
                     myInstructions.add(jz);
                     myInstructions.add(dec);
                 }
 
-                Instruction instr4 = new JumpNotZeroInstruction(z1, label1, argsMap);
-                Instruction instr5 = new GoToInstruction(v, target, argsMap);
-                Instruction instr6 = new NoOpInstruction(v, label1, argsMap);
+                Instruction instr4 = new JumpNotZeroInstruction(z1, label1);
+                Instruction instr5 = new GoToInstruction(v, target);
+                Instruction instr6 = new NoOpInstruction(v, label1);
                 myInstructions.add(instr4);
                 myInstructions.add(instr5);
                 myInstructions.add(instr6);
@@ -100,25 +129,25 @@ public class JumpEqualConstantInstruction extends AbstractInstruction {
                 Label label1 = vlm.newLabel();
 
 
-                Instruction instr1 = new AssignmentInstruction(z1, v,getLabel(), argsMap);
+                Instruction instr1 = new AssignmentInstruction(z1, v,getLabel());
                 List<Instruction> assExte1 = instr1.extend(1, vlm);
                 myInstructions.addAll(assExte1);
 
                  for(int i = 0; i < k; i++) {
-                     Instruction instr2 = new JumpZeroInstruction(z1, target, argsMap);
+                     Instruction instr2 = new JumpZeroInstruction(z1, label1);
                      List<Instruction> re = instr2.extend(1, vlm);
                      myInstructions.addAll(re);
 
-                     Instruction dec = new DecreaseInstruction(z1, argsMap);
+                     Instruction dec = new DecreaseInstruction(z1);
                      myInstructions.add(dec);
                 }
 
 
-                Instruction instr4 = new JumpNotZeroInstruction(z1, label1, argsMap);
-                Instruction instr5 = new GoToInstruction(v, target, argsMap);
+                Instruction instr4 = new JumpNotZeroInstruction(z1, label1);
+                Instruction instr5 = new GoToInstruction(v, target);
                 List<Instruction> gotoExte1 = instr5.extend(1, vlm);
 
-                Instruction instr6 = new NoOpInstruction(v, label1, argsMap);
+                Instruction instr6 = new NoOpInstruction(v, label1);
                 myInstructions.add(instr4);
                 myInstructions.addAll(gotoExte1);
                 myInstructions.add(instr6);
@@ -133,30 +162,47 @@ public class JumpEqualConstantInstruction extends AbstractInstruction {
                 Label label1 = vlm.newLabel();
 
 
-                Instruction instr1 = new AssignmentInstruction(z1, v,getLabel(), argsMap);
+                Instruction instr1 = new AssignmentInstruction(z1, v,getLabel());
                 List<Instruction> assExte1 = instr1.extend(2, vlm);
                 myInstructions.addAll(assExte1);
 
                 for(int i = 0; i < k; i++) {
-                    Instruction instr2 = new JumpZeroInstruction(z1, target, argsMap);
+                    Instruction instr2 = new JumpZeroInstruction(z1, label1);
                     List<Instruction> re = instr2.extend(2, vlm);
                     myInstructions.addAll(re);
 
-                    Instruction dec = new DecreaseInstruction(z1, argsMap);
+                    Instruction dec = new DecreaseInstruction(z1);
                     myInstructions.add(dec);
                 }
 
-                Instruction instr4 = new JumpNotZeroInstruction(z1, label1, argsMap);
-                Instruction instr5 = new GoToInstruction(v, target, argsMap);
+                Instruction instr4 = new JumpNotZeroInstruction(z1, label1);
+                Instruction instr5 = new GoToInstruction(v, target);
                 List<Instruction> gotoExte1 = instr5.extend(1, vlm);
 
-                Instruction instr6 = new NoOpInstruction(v, label1, argsMap);
+                Instruction instr6 = new NoOpInstruction(v, label1);
                 myInstructions.add(instr4);
                 myInstructions.addAll(gotoExte1);
                 myInstructions.add(instr6);
                 return myInstructions;
             }
 
+        }
+    }
+
+    @Override
+    public void replace(Variable oldVar, Variable newVar) {
+        if(getVariable().equals(oldVar)) {
+            setVariable(newVar);
+        }
+    }
+
+    @Override
+    public void replace(Label oldLabel, Label newLabel) {
+        if(getLabel() != null && getLabel().equals(oldLabel)) {
+            setLabel(newLabel);
+        }
+        if(target.equals(oldLabel)) {
+            target = newLabel;
         }
     }
 }

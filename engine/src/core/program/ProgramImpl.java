@@ -1,7 +1,11 @@
 package core.program;
 
 import dto.InstructionView;
+import dto.RunSummary;
+import dto.functionView;
 import logic.instruction.Instruction;
+import logic.instruction.synthetic.JumpEqualFunctionInstruction;
+import logic.instruction.synthetic.QuoteInstruction;
 import logic.label.Label;
 import logic.variable.Variable;
 
@@ -11,141 +15,69 @@ import java.util.*;
 public class ProgramImpl implements Program {
 
     private final String name;
+    private List<Function> functions;
     private List<Instruction> instructions;
-    private final List<Variable> variables;
-    private final List<Label> labels;
-    private final Label exitLabel;
+    private List<Instruction> extendedInstructions;
+    private int currentExtensionLevel = -1; // Track the level used for current extendedInstructions
+    public final List<Variable> variables;
+    public final List<Label> labels;
 
+    public List<RunSummary> summaries = new ArrayList<>();
 
-    public static final class Builder {
-        private String name;
-        private final List<Instruction> instructions = new ArrayList<>();
-        private final List<Variable> variables = new ArrayList<>();
-        private final List<Label> labels = new ArrayList<>();
-        private Label exitLabel;
+    public VariableAndLabelMenger vlm ;
 
-        public Builder withName(String name) {
-            this.name = name;
-            return this;
-        }
-
-        //------Instructions------
-        public Builder withInstructions(Collection<? extends Instruction> newInstructions) {
-            this.instructions.clear();
-            if (newInstructions != null) {
-                this.instructions.addAll(newInstructions);
-            }
-            return this;
-        }
-
-        public Builder addInstruction(Instruction instruction) {
-            if (instruction != null) {
-                this.instructions.add(instruction);
-            }
-            return this;
-        }
-
-        public Builder addInstructions(Instruction... instruction) {
-            if (instruction != null) {
-                this.instructions.addAll(Arrays.asList(instruction));
-            }
-            return this;
-        }
-
-        //------Variables------
-        public Builder withVariables(Collection<? extends Variable> newVariables) {
-            this.variables.clear();
-            if (newVariables != null) {
-                this.variables.addAll(newVariables);
-            }
-            return this;
-        }
-
-        public Builder addVariable(Variable variable) {
-            if (variable != null) {
-                this.variables.add(variable);
-            }
-            return this;
-        }
-
-        public Builder addVariables(Variable... vars) {
-            if (vars != null) {
-                this.variables.addAll(Arrays.asList(vars));
-            }
-            return this;
-        }
-
-        //-----Labels------
-        public Builder withLabels(Collection<? extends Label> newLabels) {
-            this.labels.clear();
-            if (newLabels != null) {
-                this.labels.addAll(newLabels);
-            }
-            return this;
-        }
-
-        public Builder addLabel(Label label) {
-            if (label != null) {
-                this.labels.add(label);
-            }
-            return this;
-        }
-
-        public Builder addLabels(Label... lbs) {
-            if (lbs != null) {
-                this.labels.addAll(Arrays.asList(lbs));
-            }
-            return this;
-        }
-
-        public Builder withExitLabel(Label exitLabel) {
-            this.exitLabel = exitLabel;
-            return this;
-        }
-
-
-        public ProgramImpl build() {
-            return new ProgramImpl(this);
-        }
-
+    public ProgramImpl(ProgramImpl p) {
+        this.name = p.getName();
+        this.instructions = new ArrayList<>(p.getInstructions());
+        this.variables = new ArrayList<>(p.variables);
+        this.labels = new ArrayList<>(p.labels);
+        this.extendedInstructions = new ArrayList<>(p.getInstructions());
+        this.functions = new ArrayList<>(p.functions);
+        this.vlm = new VariableAndLabelMenger(getAllVariablesNames(), getAllLabelsNames());
     }
 
-    public static Builder from(Program program) {
-        Builder b = new Builder();
-        if (program == null) return b;
-        b.withName(program.getName());
-        b.withInstructions(program.getInstructions());
-        b.withVariables(program.getVariables());
-        b.withLabels(program.getLabels());
-        b.withExitLabel(program.getExitLabel());
-        return b;
+
+    public ProgramImpl(String programName, List<Instruction> instructions,List<Function> funcs, Map<String, Variable> varsByName, Map<String, Label> labelsByName) {
+        this.name = programName;
+        this.instructions = new ArrayList<>(instructions);
+        this.variables = new ArrayList<>(varsByName.values());
+        this.labels = new ArrayList<>(labelsByName.values());
+        this.extendedInstructions = new ArrayList<>(instructions);
+        this.functions = new ArrayList<>(funcs);
+        this.vlm = new VariableAndLabelMenger(getAllVariablesNames(), getAllLabelsNames());
     }
 
-    private ProgramImpl(Builder builder) {
-        this.name = (builder.name == null || builder.name.isBlank()) ? "Unnamed Program" : builder.name;
-
-        this.instructions = List.copyOf(builder.instructions);
-
-        //Add all variables to map (from X1 to the real variable)
-        Map<String, Variable> variablesByName = new LinkedHashMap<>();
-        for (Variable variable : builder.variables) {
-            if (variable != null && variable.getRepresentation() != null) {
-                variablesByName.put(variable.getRepresentation(), variable);
-            }
-        }
-        this.variables = List.copyOf(variablesByName.values());
-
-        //Add all labels to map (from L1 to the real label)
-        Map<String, Label> labelsByName = new LinkedHashMap<>();
-        for (Label label : builder.labels) {
-            if (label != null && label.getLabelRepresentation() != null) {
-                labelsByName.put(label.getLabelRepresentation(), label);
-            }
-        }
-        this.labels = List.copyOf(labelsByName.values());
-
-        this.exitLabel = builder.exitLabel;
+    public List<RunSummary> getsummaries(){
+        return summaries;
     }
+
+
+    public List<Variable> getAllVariablesNames() {
+        List<Variable> varNames = new ArrayList<>();
+        for (Instruction instruction : instructions) {
+            List<Variable> info = instruction.getAllVariables();
+            for (Variable s : info) {
+                if (s != null && !varNames.contains(s) && s.getRepresentation().startsWith("x")) {
+                    varNames.add(s);
+                }
+            }
+        }
+        return varNames;
+    }
+
+    private List<Label> getAllLabelsNames() {
+        List<Label> labelNames = new ArrayList<>();
+        for (Instruction instruction : instructions) {
+            List<Label> info = instruction.getAllLabels();
+            for (Label s : info) {
+                if (s != null) {
+                    labelNames.add(s);
+                }
+            }
+        }
+        return labelNames;
+    }
+
 
     @Override
     public String getName() {
@@ -153,136 +85,260 @@ public class ProgramImpl implements Program {
     }
 
     @Override
-    public void addInstruction(Instruction instruction) { instructions.add(instruction); }
-
-    @Override
     public List<Instruction> getInstructions() {
-        return instructions;
+        return (extendedInstructions != null) ? extendedInstructions : instructions;
     }
 
-    @Override
-    public List<Label> getLabels() {
-        return labels;
-    }
-
-    @Override
-    public Label getExitLabel() {
-        return exitLabel;
-    }
-
-    @Override
-    public List<Variable> getVariables() {
-        return variables;
-    }
-
+    // return the next instruction after the current one, or null if at the end
     @Override
     public Instruction getNextInstructionLabel(Instruction currentInstruction) {
-        int currentIndex = instructions.indexOf(currentInstruction);
-        if (currentIndex >= 0 && currentIndex + 1 < instructions.size()) {
-            return instructions.get(currentIndex + 1);
+        int currentIndex = extendedInstructions.indexOf(currentInstruction);
+        if (currentIndex >= 0 && currentIndex + 1 < extendedInstructions.size()) {
+            return extendedInstructions.get(currentIndex + 1);
         }
         else {
             return null;
         }
     }
 
+    // return the instruction with the given label
     @Override
     public Instruction getInstructionByLabel(Label nextLabel) {
-        for (Instruction instruction : instructions) {
+        for (Instruction instruction : extendedInstructions) {
             if(instruction.getLabel() != null) {
                 if (instruction.getLabel().equals(nextLabel)) {
                     return instruction;
                 }
             }
-
         }
         //It always finds the instruction by label because in load program it checks the label jumps
         return null; // or throw an exception if label not found
 
     }
 
+    // convert variables to a String list for display in table
     @Override
-    public List<String> getVariablesPeek() {
+    public List<String> getXVariablesPeek() {
         Set<String> variables = new LinkedHashSet<>();
 
-        for (Instruction instr : instructions) {
-            Variable v = instr.getVariable();
-            addIfStartsWithX(variables, v != null ? v.getRepresentation() : null);
-
-            Map<String, String> args = instr.args();
-            if (args != null && !args.isEmpty()) {
-                for (String val : args.values()) {
-                    addIfStartsWithX(variables, val);
-                }
+        for (Instruction instr : extendedInstructions) {
+            List<String> info = instr.getAllInfo();
+            for (String s : info) {
+                //addIfStartsWithXOrZOry(variables, s);
+                addIfStartsWithX(variables, s);
             }
         }
 
         return new ArrayList<>(variables);
     }
 
-    private static void addIfStartsWithX(Set<String> acc, String s) {
-        if (s == null) return;
-        String t = s.trim();
+    @Override
+    public List<String> getVariablesPeek() {
+        Set<String> variables = new LinkedHashSet<>();
+
+        for (Instruction instr : extendedInstructions) {
+            List<Variable> info = instr.getAllVariables();
+            for (Variable s : info) {
+                variables.add(s.getRepresentation());
+            }
+        }
+
+        List <String> varList = new ArrayList<>(variables);
+        varList.sort(String::compareTo);
+        return varList;
+    }
+
+    public static void addIfStartsWithX(Set<String> variables, String curr) {
+        if (curr == null) return;
+        String t = curr.trim().toLowerCase();
         if (t.startsWith("x")) {
-            acc.add(t);
+            variables.add(t);
         }
     }
 
     // convert labels to a String list for display in table
     @Override
     public List<String> getLabelsPeek() {
-        return labels.stream()
-                .map(Label::getLabelRepresentation)
-                .filter(Objects::nonNull)
-                .map(String::toUpperCase)
+        List<String> info = new ArrayList<>();
+        for (Instruction instr : extendedInstructions) {
+            List<String> curr = instr.getAllInfo();
+            for (String s : curr) {
+                if (s != null && !s.isBlank() && !s.equalsIgnoreCase("EXIT") &&s.startsWith("L")) {
+                    info.add(s.toUpperCase());
+                }
+            }
+        }
+        info.sort(String::compareTo);
+
+        List<String> uniqueInfo = info.stream()
                 .distinct()
-                .sorted((a, b) -> {
-                    if (a.equals("EXIT")) return 1; // EXIT in the end
-                    if (b.equals("EXIT")) return -1;
-                    try {
-                        return Integer.compare(
-                                Integer.parseInt(a.substring(1)),
-                                Integer.parseInt(b.substring(1))
-                        );
-                    } catch (NumberFormatException e) {
-                        return a.compareTo(b);
-                    }
-                })
                 .toList();
+
+        return uniqueInfo;
     }
 
 
-//     expand Instructions to the given level (without the original instructions) fit fo run extend
-//     notice: this method replaces the original instructions with the expanded ones
 
+    // extend Instructions to the given level (with the original instructions)
+    public void extend (int level) {
+        vlm = new VariableAndLabelMenger(getAllVariablesNames(), getAllLabelsNames());
 
-
-    @Override
-    public List<List<InstructionView>> expendToLevelForExtend(int level) {
-    VariableAndLabelMenger vlm = new VariableAndLabelMenger(variables, labels);
-
-    List<List<InstructionView>> result = new ArrayList<>();
-
-    for (Instruction root : instructions) {
-
-        List<List<Instruction>> paths = expandPaths(root, level, vlm);
-
-
-        for (List<Instruction> path : paths) {
-            int number = 1;
-
-            List<InstructionView> views = new ArrayList<>(path.size());
-            for (Instruction inst : path) {
-
-                views.add(toView(inst, number));
-                number++;
-            }
-            result.add(views);
+        extendedInstructions.clear();
+        for (Instruction inst : instructions) {
+            List<Instruction> extended = inst.extend(level, vlm);
+            extendedInstructions.addAll(extended);
         }
     }
 
-    return result;
+
+
+//    public void extend(int level) {
+//        if (level < 0) level = 0;
+//
+//        // Only re-extend if the level has changed
+//        if (currentExtensionLevel == level && extendedInstructions != null) {
+//            return; // Already extended to this level
+//        }
+//
+//        // Use your existing constructor; if you need to pass initial vars/labels, do so.
+//        VariableAndLabelMenger vlm = new VariableAndLabelMenger(getAllVariablesNames(), getAllLabelsNames());
+//
+//        List<Instruction> out = new ArrayList<>();
+//        for (Instruction inst : instructions) {
+//            // Local maps for this single instruction expansion
+//            vlm.beginLocalScope();
+//            try {
+//                // Each instruction is responsible to return NEW instructions (no in-place mutation)
+//                out.addAll(inst.extend(level, vlm));
+//            } finally {
+//                vlm.endLocalScope(); // clear local maps, keep global counters
+//            }
+//        }
+//
+//        // Replace the program's current instruction list with the expanded one,
+//        // or store it to a dedicated field if you keep both.
+//        this.extendedInstructions = out;
+//        this.currentExtensionLevel = level; // Track the level used for this extension
+//        this.vlm = vlm; // Update the VLM with the one used for extension
+//    }
+
+
+
+
+
+    // expand Instructions to the given level and return InstructionView list
+    @Override
+    public List<InstructionView> instructionViewsAfterExtendRunShow(int level) {
+        extend(level); // extend the program to the given level
+
+        List<InstructionView> result = new ArrayList<>();
+
+        int number = 1;
+        for (Instruction inst : extendedInstructions) {
+            result.add(toView(inst, number));
+            number++;
+        }
+        return result;
+    }
+
+    // convert Instruction to InstructionView for display in table
+    public static InstructionView toView(Instruction ins, int index) {
+        int number = index;
+        String type = ins.isBasic() ? "B" : "S";
+        String label = (ins.getLabel() == null)
+                ? ""
+                : ins.getLabel().getLabelRepresentation();
+        String command = ins.toDisplayString();
+        int midCycles = ins.cycles();
+        String cycles = ((ins instanceof QuoteInstruction) || (ins instanceof JumpEqualFunctionInstruction))  ? String.valueOf(midCycles) + "+": String.valueOf(midCycles);
+        return new InstructionView(number, type, label, command, cycles);
+    }
+
+    // convert instructions to InstructionView list for display in table
+    // note that this method use the extended instructions
+    @Override
+    public List<InstructionView> getInstructionsPeek() {
+        // Ensure we have extended instructions - if not, use level 0 as default
+        if (extendedInstructions == null || currentExtensionLevel == -1) {
+            extend(0);
+        }
+
+        List<InstructionView> instructionViews = new ArrayList<>(extendedInstructions.size());
+
+        int size = extendedInstructions.size();
+
+        for (int i = 0; i < size; i++) {
+            Instruction inst = extendedInstructions.get(i);
+            int number = i + 1;
+
+            String type = inst.isBasic() ? "B" : "S";
+
+            String lbl = (inst.getLabel() != null && inst.getLabel().getLabelRepresentation() != null)
+                    ? inst.getLabel().getLabelRepresentation()
+                    : "";
+
+            String command = inst.toDisplayString();
+            int midCycles = inst.cycles();
+            String cycles = ((inst instanceof QuoteInstruction) || (inst instanceof JumpEqualFunctionInstruction))  ? String.valueOf(midCycles) + "+": String.valueOf(midCycles);
+
+            InstructionView curr = new InstructionView(
+                    number,
+                    type,
+                    lbl,
+                    command,
+                    cycles
+            );
+
+            instructionViews.add(curr);
+        }
+        return instructionViews;
+    }
+
+    @Override
+    public VariableAndLabelMenger getvlm() {
+        return vlm;
+    }
+
+    @Override
+    public int calculateMaxDegree() {
+        int max = 0;
+        for (Instruction inst : instructions) {
+            int level = inst.getMaxLevel();
+            if (level > max) {
+                max = level;
+            }
+        }
+        return max;
+    }
+
+    // expand Instructions to the given level (with the original instructions) fit fo run extend
+    @Override
+    public List<List<InstructionView>> expendToLevelForExtend(int level) {
+
+        vlm = new VariableAndLabelMenger(getAllVariablesNames(), getAllLabelsNames());
+        List<List<InstructionView>> result = new ArrayList<>();
+
+
+
+        for (Instruction root : instructions) {
+
+            List<List<Instruction>> paths = expandPaths(root, level, vlm);
+            for (List<Instruction> path : paths) {
+                int number = 1;
+
+                List<InstructionView> views = new ArrayList<>(path.size());
+                for (Instruction inst : path) {
+                    views.add(toView(inst, number));
+                    number++;
+                }
+                result.add(views);
+            }
+        }
+        extend(level);
+
+        return result;
 }
+
 
 
     // recursive method to expand paths
@@ -315,88 +371,27 @@ public class ProgramImpl implements Program {
         return out;
     }
 
-    // expand Instructions to the given level (with the original instructions) fit fo extend command
-    // notice: this method add to the original instruction the expanded ones
-    // return a list of (list of InstructionView) for display in table
     @Override
-    public List<List<InstructionView>> expendToLevelForRun(int level) {
-        VariableAndLabelMenger vlm = new VariableAndLabelMenger(variables, labels);
-        List<List<InstructionView>> result = new ArrayList<>();
-
-        int number = 1;
-        for (Instruction inst : instructions) {
-            List<Instruction> curExtendInstruction = new ArrayList<>(inst.extend(level, vlm));
-
-            List<InstructionView> views = new ArrayList<>(curExtendInstruction.size());
-            for (Instruction e : curExtendInstruction) {
-                views.add(toView(e, number));
-                number++;
-            }
-
-            result.add(views);
+    public List<List<String>> getInfo(int level) {
+        extend(level); // extend the program to the given level
+        List<List<String>> info = new ArrayList<>();
+        for (Instruction inst : extendedInstructions) {
+            List<String> currInfo = inst.getAllInfo();
+            info.add(currInfo);
         }
+        return info;
+    }
 
+    @Override
+    public List<Function> getFunctions() {
+        return functions;
+    }
+
+    public List<functionView> getAllFunctionViews() {
+        List<functionView> result = new ArrayList<>();
+        for (Function function : functions) {
+            result.add(function.toView());
+        }
         return result;
-    }
-
-    private static InstructionView toView(Instruction ins, int index) {
-        int number = index;
-        String type = ins.isBasic() ? "B" : "S";
-        String label = (ins.getLabel() == null)
-                ? ""
-                : ins.getLabel().getLabelRepresentation();
-        String command = ins.toDisplayString();
-        int cycles = ins.cycles();
-
-        return new InstructionView(number, type, label, command, cycles);
-    }
-
-    // convert instructions to InstructionView list for display in table
-    @Override
-    public List<InstructionView> getInstructionsPeek() {
-        List<InstructionView> instructionViews = new ArrayList<>(instructions.size());
-
-        int size = instructions.size();
-
-        for (int i = 0; i < size; i++) {
-            Instruction inst = instructions.get(i);
-
-            int number = i + 1;
-
-            String type = inst.isBasic() ? "B" : "S";
-
-            String lbl = (inst.getLabel() != null && inst.getLabel().getLabelRepresentation() != null)
-                    ? inst.getLabel().getLabelRepresentation()
-                    : "";
-
-            String command = inst.toDisplayString();
-            int cycles = inst.cycles();
-
-            InstructionView curr = new InstructionView(
-                    number,
-                    type,
-                    lbl,
-                    command,
-                    cycles
-            );
-
-            instructionViews.add(curr);
-        }
-        return instructionViews;
-    }
-
-
-    @Override
-    public int calculateMaxDegree() {
-        int max = 0;
-
-        for (Instruction inst : instructions) {
-            int level = inst.getMaxLevel();
-            if (level > max) {
-                max = level;
-            }
-
-        }
-        return max;
     }
 }

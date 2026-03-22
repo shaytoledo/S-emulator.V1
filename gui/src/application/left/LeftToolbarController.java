@@ -1,0 +1,228 @@
+package application.left;
+
+import application.main.MainLayoutController;
+import dto.InstructionView;
+import dto.ProgramSummary;
+import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.fxml.FXML;
+import javafx.scene.control.*;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.VBox;
+import logic.exception.LoadProgramException;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import static java.util.Collections.reverse;
+
+public class LeftToolbarController {
+
+    MainLayoutController mainLayoutController;
+
+    @FXML private TableColumn<InstructionView, String> colBS;
+    @FXML private TableColumn<InstructionView, String> colCycles;
+    @FXML private TableColumn<InstructionView, Integer> colNumber;
+    @FXML private TableColumn<InstructionView, String> colInstruction;
+    @FXML private TableColumn<InstructionView, String> colLabel;
+    @FXML public TableView<InstructionView> instructionsTable;
+    @FXML private TableColumn<InstructionView, String> colHistoryBS;
+    @FXML private TableColumn<InstructionView, String> colHistoryCycles;
+    @FXML private TableColumn<InstructionView, Integer> colHistoryNumber;
+    @FXML private TableColumn<InstructionView, String> colHistoryInstruction;
+    @FXML private TableColumn<InstructionView, String> colHistoryLabel;
+    @FXML private TableView<InstructionView> instructionsHistoryTable;
+    @FXML private VBox left;
+    @FXML private TextField SummaryLine;
+    @FXML private Label SelectedInstructionHistoryChain;
+
+    private Integer breakpointIndex = null;
+
+
+    public void setMainLayoutController(MainLayoutController mainLayoutController) {
+        this.mainLayoutController = mainLayoutController;
+    }
+
+    public void clearAll() {
+        instructionsTable.getItems().clear();
+        clearHistory();
+        SummaryLine.setText("");
+    }
+
+
+    // קרא לזה אחרי שאתה טוען את הטבלה (נגיד בסוף showProgram או ב-refreshRowStylesWithBreakpoint)
+    private void refreshRowStylesWithBreakpoint() {
+        colNumber.setCellFactory(col -> new TableCell<InstructionView, Integer>() {
+            @Override
+            protected void updateItem(Integer item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setGraphic(null);
+                    return;
+                }
+                setText(String.valueOf(item));
+
+                int idx = getIndex();
+                if (breakpointIndex != null && breakpointIndex == idx) {
+                    javafx.scene.shape.Circle circle = new javafx.scene.shape.Circle(5, javafx.scene.paint.Color.RED);
+                    setGraphic(circle);
+                    setContentDisplay(ContentDisplay.LEFT);
+                } else {
+                    setGraphic(null);
+                }
+            }
+        });
+
+        instructionsTable.refresh();
+    }
+
+    public void clearBreakpoint() {
+        breakpointIndex = null;
+        refreshRowStylesWithBreakpoint();
+    }
+
+    public Integer getBreakpointIndex() {
+        return breakpointIndex;
+    }
+
+    public void clearHistory() {
+        instructionsHistoryTable.getItems().clear();
+    }
+
+    public void showProgram(int level) {
+        try {
+            // Use the flat execution-ordered list so that row N always matches
+            // extendedInstructions[N] used by the executor.
+            // expandProgramToLevelForExtend is still called (it sets extendedInstructions)
+            // but we display the flat run-order list here.
+            mainLayoutController.engine.expandProgramToLevelForExtend(level); // build paths + set extendedInstructions
+            List<InstructionView> instructionViews =
+                    mainLayoutController.engine.expandProgramToLevelForRun(level);
+
+            // table columns
+            colNumber.setCellValueFactory(cell ->
+                    new ReadOnlyObjectWrapper<>(cell.getValue().number())); // use pre-assigned sequential number
+            colBS.setCellValueFactory(cell ->
+                    new ReadOnlyStringWrapper(String.valueOf(cell.getValue().type())));
+            colInstruction.setCellValueFactory(cell ->
+                    new ReadOnlyStringWrapper(cell.getValue().command()));
+            colCycles.setCellValueFactory(cell ->
+                    new ReadOnlyObjectWrapper<>(cell.getValue().cycles()));
+            colLabel.setCellValueFactory(cell ->
+                    new ReadOnlyStringWrapper(cell.getValue().label()));
+
+            instructionsTable.getItems().setAll(instructionViews);
+            summary(instructionViews);
+        } catch (LoadProgramException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+    public void showProgram() {
+        int level = mainLayoutController.getCurrentLevel();
+        showProgram(level);
+        breakpointIndex = null;
+        refreshRowStylesWithBreakpoint();
+
+    }
+
+    private void summary(List<InstructionView> loadedInstructions) {
+        long total = loadedInstructions.size();
+        long syntheticCount = loadedInstructions.stream()
+                .filter(iv -> String.valueOf(iv.type()).equalsIgnoreCase("S"))
+                .count();
+        long basicCount = loadedInstructions.stream()
+                .filter(iv -> String.valueOf(iv.type()).equalsIgnoreCase("B"))
+                .count();
+
+        SummaryLine.setText(
+                String.format("Total: %d | Synthetic: %d | Basic: %d", total, syntheticCount, basicCount)
+        );
+
+    }
+
+
+
+
+    @FXML
+    private void showHistoryChain(MouseEvent event) {
+
+        if (event.getClickCount() == 2) {
+            InstructionView sel = instructionsTable.getSelectionModel().getSelectedItem();
+            if (sel == null) return;
+            int idx = instructionsTable.getSelectionModel().getSelectedIndex();
+
+            breakpointIndex = idx;
+            refreshRowStylesWithBreakpoint();
+
+            mainLayoutController.getRight().setBreakpoint(idx);
+        }
+
+
+        if (event.getClickCount() == 1) {
+            InstructionView selected = instructionsTable.getSelectionModel().getSelectedItem();
+            if (selected != null) {
+                int rowIndex = instructionsTable.getSelectionModel().getSelectedIndex();
+
+                List<List<InstructionView>> extendInstructions =
+                        mainLayoutController.engine.expandProgramToLevelForExtend(
+                                mainLayoutController.getCurrentLevel()
+                        );
+
+                // logic to get the history chain of the selected instruction
+                List<InstructionView> chain = extendInstructions.get(rowIndex);
+                List<InstructionView> toShow = new ArrayList<>(chain);
+                reverse(toShow);
+
+                colHistoryNumber.setCellValueFactory(cell ->
+                        new ReadOnlyObjectWrapper<>(toShow.indexOf(cell.getValue()) + 1));
+                colHistoryBS.setCellValueFactory(cell ->
+                        new ReadOnlyStringWrapper(String.valueOf(cell.getValue().type())));
+                colHistoryInstruction.setCellValueFactory(cell ->
+                        new ReadOnlyStringWrapper(cell.getValue().command()));
+                colHistoryCycles.setCellValueFactory(cell ->
+                        new ReadOnlyObjectWrapper<>(cell.getValue().cycles()));
+                colHistoryLabel.setCellValueFactory(cell ->
+                        new ReadOnlyStringWrapper(cell.getValue().label()));
+                instructionsHistoryTable.getItems().setAll(toShow);
+            }
+        }
+    }
+
+    public void boldRows(Set<Integer> indices) {
+        instructionsTable.setRowFactory(tv -> new TableRow<InstructionView>() {
+            @Override
+            protected void updateItem(InstructionView item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setStyle("");
+                } else {
+                    if (indices.contains(getIndex())) {
+                        setStyle("-fx-background-color: palegoldenrod; -fx-font-weight: bold;");
+                    } else {
+                        setStyle("");
+                    }
+                }
+            }
+        });
+
+        if (!indices.isEmpty()) {
+            instructionsTable.scrollTo(indices.iterator().next());
+        }
+
+        instructionsTable.refresh();
+    }
+
+    // Clear all highlights from instructionsTable
+    public void clearHighlights() {
+        instructionsTable.setRowFactory(tv -> new TableRow<InstructionView>() {
+            @Override
+            protected void updateItem(InstructionView item, boolean empty) {
+                super.updateItem(item, empty);
+                setStyle(""); // reset to default
+            }
+        });
+        instructionsTable.refresh();
+    }
+}

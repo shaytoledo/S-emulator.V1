@@ -1,5 +1,6 @@
 package logic.execution;
 
+import core.program.Function;
 import logic.variable.Variable;
 import logic.variable.VariableImpl;
 import logic.variable.VariableType;
@@ -12,29 +13,67 @@ import static java.util.Collections.emptyList;
 
 public class ExecutionContextImpl implements ExecutionContext {
 
-    Map<String, Long> variableState;
-    //Map<Variable, Long> variableState;
+    Map<Variable, Long> variableState;
+    Map<String , Function> functions;
 
 
-    public ExecutionContextImpl(List<Long> inputs) {
+    public ExecutionContextImpl(List<Long> inputs, List<Function> functions) {
         // Initialize the variable state with the input values to the right variables by order
-        variableState = new HashMap<>();
+        variableState = new HashMap<Variable, Long>();
         if (inputs == null) {
             inputs = emptyList();
         }
         for (int i = 0; i < inputs.size(); i++) {
             Variable v = new VariableImpl(VariableType.INPUT, i + 1); // Assuming a constructor that takes a name
-            variableState.put(v.getRepresentation(), inputs.get(i));
+            variableState.put(v, inputs.get(i));
+        }
+
+        this.functions = new HashMap<>();
+        for (Function f : functions) {
+            this.functions.put(f.getName(), f);
         }
     }
 
-//    private static String keyOf(String v) {
-//        return v.toString().toLowerCase(Locale.ROOT);
-//    }
+    public ExecutionContextImpl(ExecutionContext other) {
+        // Deep copy variables map: new map + new Variable instances
+        this.variableState = new HashMap<>();
+        for (Map.Entry<Variable, Long> e : other.getVariablesState().entrySet()) {
+            Variable copiedVar = copyVariable(e.getKey());
+            Long copiedVal = e.getValue(); // Long is immutable
+            this.variableState.put(copiedVar, copiedVal);
+        }
 
+        // Deep copy functions map when possible
+        this.functions = new HashMap<>();
+        for (Map.Entry<String, Function> e : other.getFunctions().entrySet()) {
+            this.functions.put(e.getKey(), copyFunction(e.getValue()));
+        }
+    }
+
+    private static Variable copyVariable(Variable v) {
+        if (v instanceof VariableImpl) {
+            VariableImpl vi = (VariableImpl) v;
+            return new VariableImpl(vi.getType(), vi.getIndex());
+        }
+        // Fallback if Variable interface exposes these:
+        return new VariableImpl(v.getType(), v.getIndex());
+    }
+
+    private static Function copyFunction(Function f) {
+        try {
+            // Common patterns – uncomment/adjust to your Function API:
+            // if (f instanceof CloneableFunction) return ((CloneableFunction) f).deepCopy();
+            // return f.deepCopy();
+            // return f.copy();
+            // return (Function) f.clone();
+            return f; // fallback: shared reference if no deep-copy API exists
+        } catch (Exception ex) {
+            return f; // safe fallback
+        }
+    }
 
     @Override
-    public long getVariableValue(String v) {
+    public long getVariableValue(Variable v) {
         Long val = variableState.get(v);
         if (val == null) {
             variableState.put(v, 0L); // init-on-read
@@ -44,13 +83,18 @@ public class ExecutionContextImpl implements ExecutionContext {
     }
 
     @Override
-    public void updateVariable(String v, long value) {
+    public void updateVariable(Variable v, long value) {
         variableState.put(v, value);
     }
 
     @Override
-    public Map<String, Long> getVariablesState() {
+    public Map<Variable, Long> getVariablesState() {
         return variableState;
+    }
+
+    @Override
+    public  Map<String , Function> getFunctions() {
+        return functions;
     }
 }
 

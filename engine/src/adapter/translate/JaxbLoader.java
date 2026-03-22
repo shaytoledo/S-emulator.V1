@@ -1,7 +1,7 @@
 package adapter.translate;
 
-import jakarta.xml.bind.JAXBContext;
 import adapter.xml.generated.SProgram;
+import jakarta.xml.bind.JAXBContext;
 
 import java.nio.file.Path;
 

@@ -12,7 +12,9 @@ public enum InstructionData {
     CONSTANT_ASSIGNMENT("CONSTANT_ASSIGNMENT", 2),
     JUMP_ZERO("JUMP_ZERO", 2),
     JUMP_EQUAL_CONSTANT("JUMP_EQUAL_CONSTANT", 2),
-    JUMP_EQUAL_VARIABLE("JUMP_EQUAL_VARIABLE", 2)
+    JUMP_EQUAL_VARIABLE("JUMP_EQUAL_VARIABLE", 2),
+    QUOTE("QUOTE", 5),
+    JUMP_EQUAL_FUNCTION("JUMP_EQUAL_FUNCTION", 6)
     ;
 
     private final String name;
@@ -23,11 +25,6 @@ public enum InstructionData {
         this.cycles = cycles;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public int getCycles() {
-        return cycles;
-    }
+    public String getName() { return name; }
+    public int getCycles() { return cycles; }
 }

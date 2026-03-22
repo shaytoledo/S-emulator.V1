@@ -1,36 +1,33 @@
 package logic.instruction;
 
+import logic.instruction.basic.NoOpInstruction;
 import logic.label.FixedLabel;
 import logic.label.Label;
 import logic.variable.Variable;
+import logic.variable.VariableImpl;
 
 import java.util.List;
-import java.util.Map;
 
 public abstract class AbstractInstruction implements Instruction {
 
     private final InstructionData instructionData;
-    private final Label label;
-    private final Variable variable;
-    public final Map<String,String> argsMap;
+    private Label label;
+    private Variable variable;
     public boolean basic = false;
 
     public List<Instruction> myInstructions;
 
 
-    public AbstractInstruction(InstructionData instructionData, Variable variable, Map<String,String> argsMap ) {
-        this(instructionData, variable, FixedLabel.EMPTY, argsMap);
+    public AbstractInstruction(InstructionData instructionData, Variable variable ) {
+        this(instructionData, variable, FixedLabel.EMPTY);
     }
 
-    public AbstractInstruction(InstructionData instructionData, Variable variable, Label label,  Map<String,String> argsMap) {
+    public AbstractInstruction(InstructionData instructionData, Variable variable, Label label) {
         this.instructionData = instructionData;
         this.label = label;
         this.variable = variable;
-        this.argsMap = Map.copyOf(argsMap);
 
     }
-
-    public String arg(String key)    { return this.argsMap.get(key); }
 
     public void setBasic(boolean isBasic) {
         this.basic = isBasic;
@@ -60,4 +57,17 @@ public abstract class AbstractInstruction implements Instruction {
     public boolean isBasic() {
         return basic;
     }
+
+    public void setVariable(Variable variable) {
+        this.variable = variable;
+    }
+
+    public void setLabel(Label label) {
+        this.label = label;
+    }
+
+    public Instruction clone() {
+        return new NoOpInstruction(getVariable());
+    }
+
 }

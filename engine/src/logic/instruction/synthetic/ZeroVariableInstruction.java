@@ -1,5 +1,6 @@
 package logic.instruction.synthetic;
 
+import core.program.VariableAndLabelMenger;
 import logic.execution.ExecutionContext;
 import logic.instruction.AbstractInstruction;
 import logic.instruction.Instruction;
@@ -9,26 +10,33 @@ import logic.instruction.basic.JumpNotZeroInstruction;
 import logic.instruction.basic.NoOpInstruction;
 import logic.label.FixedLabel;
 import logic.label.Label;
-import core.program.VariableAndLabelMenger;
 import logic.variable.Variable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class ZeroVariableInstruction extends AbstractInstruction {
 
-    public ZeroVariableInstruction(Variable var, Map<String, String> argsMap) {
-        super(InstructionData.ZERO_VARIABLE, var, argsMap);
+    public ZeroVariableInstruction(Variable var) {
+        super(InstructionData.ZERO_VARIABLE, var);
     }
 
-    public ZeroVariableInstruction(Variable var, Label label, Map<String, String> argsMap) {
-        super(InstructionData.ZERO_VARIABLE, var, label, argsMap);
+    public ZeroVariableInstruction(Variable var, Label label) {
+        super(InstructionData.ZERO_VARIABLE, var, label);
     }
 
     @Override
-    public Label execute(ExecutionContext context) {
-        context.updateVariable(getVariable().getRepresentation(), 0L);
+    public Instruction clone() {
+        if(getLabel() == null) {
+            return new ZeroVariableInstruction(getVariable());
+        } else {
+            return new ZeroVariableInstruction(getVariable(), getLabel());
+        }
+    }
+
+    @Override
+    public Label execute(ExecutionContext context, VariableAndLabelMenger vlm) {
+        context.updateVariable(getVariable(), 0L);
         return FixedLabel.EMPTY;
     }
 
@@ -37,14 +45,36 @@ public class ZeroVariableInstruction extends AbstractInstruction {
         return getVariable().getRepresentation() + " <- 0";
     }
 
-    @Override
-    public Map<String, String> args() {
-        return argsMap;
-    }
-
+ 
     @Override
     public int getMaxLevel() {
         return 1;
+    }
+
+    @Override
+    public List<String> getAllInfo() {
+        List<String> list = new ArrayList<>();
+        if (getLabel() != null) {
+            list.add(getLabel().getLabelRepresentation());
+        }
+        if (getVariable() != null) {
+            list.add(getVariable().getRepresentation());
+        }
+        return list;
+    }
+
+    @Override
+    public List<Variable> getAllVariables() {
+        return List.of(getVariable());
+    }
+
+    @Override
+    public List<Label> getAllLabels() {
+        if (getLabel() == null) {
+            return List.of();
+        } else {
+            return List.of(getLabel());
+        }
     }
 
     @Override
@@ -53,18 +83,32 @@ public class ZeroVariableInstruction extends AbstractInstruction {
 
         switch (extensionLevel) {
             case 0:
-                return List.of(this);
+                return List.of(this.clone());
             default: {
                 Label label = vlm.newLabel();
-                Instruction instr1 = new NoOpInstruction(getVariable(), getLabel(), argsMap);
-                Instruction instr2 = new DecreaseInstruction(getVariable(), label, argsMap);
-                Instruction instr3 = new JumpNotZeroInstruction(getVariable(), label, argsMap);
+                Instruction instr1 = new NoOpInstruction(getVariable(), getLabel());
+                Instruction instr2 = new DecreaseInstruction(getVariable(), label);
+                Instruction instr3 = new JumpNotZeroInstruction(getVariable(), label);
                 myInstructions.add(instr1);
                 myInstructions.add(instr2);
                 myInstructions.add(instr3);
                 return myInstructions;
 
             }
+        }
+    }
+
+    @Override
+    public void replace(Variable oldVar, Variable newVar) {
+        if(getVariable().equals(oldVar)) {
+            setVariable(newVar);
+        }
+    }
+
+    @Override
+    public void replace(Label oldLabel, Label newLabel) {
+        if(getLabel() != null && getLabel().equals(oldLabel)) {
+            setLabel(newLabel);
         }
     }
 }

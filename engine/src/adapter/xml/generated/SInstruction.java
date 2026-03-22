@@ -1,7 +1,6 @@
 package adapter.xml.generated;
 
 import jakarta.xml.bind.annotation.*;
-
 import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)

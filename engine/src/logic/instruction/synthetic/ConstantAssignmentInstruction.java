@@ -1,5 +1,6 @@
 package logic.instruction.synthetic;
 
+import core.program.VariableAndLabelMenger;
 import logic.execution.ExecutionContext;
 import logic.instruction.AbstractInstruction;
 import logic.instruction.Instruction;
@@ -7,46 +8,73 @@ import logic.instruction.InstructionData;
 import logic.instruction.basic.IncreaseInstruction;
 import logic.label.FixedLabel;
 import logic.label.Label;
-import core.program.VariableAndLabelMenger;
 import logic.variable.Variable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class ConstantAssignmentInstruction extends AbstractInstruction {
 
     private final long constant;
 
-    public ConstantAssignmentInstruction(Variable target, long constant, Map<String,String> argsMap) {
-        super(InstructionData.CONSTANT_ASSIGNMENT, target, argsMap);
+    public ConstantAssignmentInstruction(Variable target, long constant) {
+        super(InstructionData.CONSTANT_ASSIGNMENT, target);
         this.constant = constant;
     }
 
-    public ConstantAssignmentInstruction(Variable target, long constant, Label label, Map<String,String> argsMap) {
-        super(InstructionData.CONSTANT_ASSIGNMENT, target, label, argsMap);
+    public ConstantAssignmentInstruction(Variable target, long constant, Label label) {
+        super(InstructionData.CONSTANT_ASSIGNMENT, target, label);
         this.constant = constant;
     }
 
     @Override
-    public Label execute(ExecutionContext context) {
-        context.updateVariable(getVariable().getRepresentation(), constant);
+    public Instruction clone() {
+        if(getLabel() == null) {
+            return new ConstantAssignmentInstruction(getVariable(), constant);
+        } else {
+            return new ConstantAssignmentInstruction(getVariable(), constant, getLabel());
+        }
+    }
+
+    @Override
+    public Label execute(ExecutionContext context, VariableAndLabelMenger vlm) {
+        context.updateVariable(getVariable(), constant);
         return FixedLabel.EMPTY;
     }
 
     @Override
     public String toDisplayString() {
-        return getVariable().getRepresentation() + " <- " + argsMap.getOrDefault("constantValue","?");
-    }
-
-    @Override
-    public Map<String, String> args() {
-        return argsMap;
+        return getVariable().getRepresentation() + " <- " + constant;
     }
 
     @Override
     public int getMaxLevel() {
         return 1;
+    }
+
+    public List<String> getAllInfo() {
+        List<String> list = new ArrayList<>();
+        if (getLabel() != null) {
+            list.add(getLabel().getLabelRepresentation());
+        }
+        if (getVariable() != null) {
+            list.add(getVariable().getRepresentation());
+        }
+        return list;
+    }
+
+    @Override
+    public List<Variable> getAllVariables() {
+        return List.of(getVariable());
+    }
+
+    @Override
+    public List<Label> getAllLabels() {
+        if (getLabel() == null) {
+            return List.of();
+        } else {
+            return List.of(getLabel());
+        }
     }
 
     @Override
@@ -55,12 +83,12 @@ public class ConstantAssignmentInstruction extends AbstractInstruction {
 
         switch (extensionLevel) {
             case 0:
-                return List.of(this);
+                return List.of(this.clone());
             case 1: {
                 Variable v = getVariable();
-                Instruction inst1 = new ZeroVariableInstruction(v,getLabel(), argsMap);
+                Instruction inst1 = new ZeroVariableInstruction(v,getLabel());
                 myInstructions.add(inst1);
-                Instruction instr2 = new IncreaseInstruction(v, argsMap);
+                Instruction instr2 = new IncreaseInstruction(v);
                 myInstructions.add(instr2);
 
                 return myInstructions;
@@ -69,13 +97,27 @@ public class ConstantAssignmentInstruction extends AbstractInstruction {
             default:
                 Variable v = getVariable();
 
-                Instruction inst1 = new ZeroVariableInstruction(v,getLabel(), argsMap);
+                Instruction inst1 = new ZeroVariableInstruction(v,getLabel());
                 List<Instruction> zeroExtend = inst1.extend(extensionLevel - 1, vlm);
                 myInstructions.addAll(zeroExtend);
 
-                Instruction instr2 = new IncreaseInstruction(v, argsMap);
+                Instruction instr2 = new IncreaseInstruction(v);
                 myInstructions.add(instr2);
                 return myInstructions;
+        }
+    }
+
+    @Override
+    public void replace(Variable oldVar, Variable newVar) {
+        if(getVariable().equals(oldVar)) {
+            setVariable(newVar);
+        }
+    }
+
+    @Override
+    public void replace(Label oldLabel, Label newLabel) {
+        if(getLabel() != null && getLabel().equals(oldLabel)) {
+            setLabel(newLabel);
         }
     }
 }

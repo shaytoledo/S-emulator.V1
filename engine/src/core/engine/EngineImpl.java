@@ -1,31 +1,140 @@
 package core.engine;
 
-import dto.*;
 import adapter.translate.JaxbLoader;
 import adapter.translate.ProgramTranslator;
+import core.program.Function;
+import core.program.Program;
+import core.program.ProgramImpl;
+import core.program.VariableAndLabelMenger;
+import dto.*;
+import javafx.util.Pair;
 import logic.exception.LoadProgramException;
 import logic.exception.NotXMLException;
 import logic.exception.ProgramFileNotFoundException;
 import logic.execution.ProgramExecutorImpl;
-import core.program.Program;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 
 // implementation of the Engine interface (methods of the engine)
 public class EngineImpl implements Engine {
 
-    private static Program cuurentProgram = null;
+    private Program currentProgram = null;
+    private List<Program> functions = new ArrayList<>();
+    private Path xmlPath;
+    ProgramExecutorImpl exe;
     private int runCounter = 0;
-    public List<RunSummary> summaries = new ArrayList<>();
+
+    public List<Program> loaded = new ArrayList<>();
+
+    @Override
+    public void loadFunc(String name) {
+
+        for (Program p : loaded) {
+            if (p.getName().equals(name)) {
+                currentProgram = p;
+                return;
+            }
+        }
+
+        for (Program func : functions) {
+            if (func.getName().equals(name)) {
+                if (func instanceof Function) {
+                    loaded.add(new Function((Function) func));
+                } else {
+                    loaded.add(new ProgramImpl((ProgramImpl) func) {
+                    });
+                }
+                currentProgram = loaded.getLast();
+                return;
+            }
+        }
+
+        loadProgram(xmlPath);
+    }
+
+    @Override
+    public VariablesAndLabels getProgramInfo(int level) {
+        currentProgram.expendToLevelForExtend(level);
+
+        // Fetch all variable names and labels as strings
+        List<String> allVars = currentProgram.getVariablesPeek();
+        List<String> labels = currentProgram.getLabelsPeek(); // If this is List<Label>, map to string below.
+
+        // Split and sort variables by prefix X/Y/Z (case-insensitive), ordered by numeric suffix
+        List<String> xVars = sortVarsByIndex(filterByPrefix(allVars, 'x'));
+        List<String> yVars = sortVarsByIndex(filterByPrefix(allVars, 'y'));
+        List<String> zVars = sortVarsByIndex(filterByPrefix(allVars, 'z'));
+
+        // If labels come as List<Label>, uncomment this line instead:
+        // List<String> labels = currentProgram.getLabelsPeek().stream().map(Label::toString).toList();
+
+        return new VariablesAndLabels(xVars, zVars, yVars, labels);
+    }
+
+    /* ---------- helpers ---------- */
+
+    private static List<String> filterByPrefix(List<String> names, char prefix) {
+        char p = Character.toLowerCase(prefix);
+        return names.stream()
+                .filter(s -> s != null && !s.isBlank())
+                .map(String::trim)
+                .filter(s -> !s.isEmpty() && Character.toLowerCase(s.charAt(0)) == p)
+                .distinct()
+                .toList();
+    }
+
+    private static List<String> sortVarsByIndex(List<String> vars) {
+        return vars.stream()
+                .sorted((a, b) -> Integer.compare(extractFirstNumber(a), extractFirstNumber(b)))
+                .toList();
+    }
+
+    private static int extractFirstNumber(String name) {
+        // Extract the first number inside the string (e.g., x12 -> 12). If none, place at end.
+        for (int i = 0; i < name.length(); i++) {
+            if (Character.isDigit(name.charAt(i))) {
+                int j = i;
+                while (j < name.length() && Character.isDigit(name.charAt(j))) j++;
+                try {
+                    return Integer.parseInt(name.substring(i, j));
+                } catch (NumberFormatException ignore) {
+                    return Integer.MAX_VALUE;
+                }
+            }
+        }
+        return Integer.MAX_VALUE;
+    }
+
+
+
+
+
+
+    private List<Function> getFuncs() {
+        List<Function> funcs = new ArrayList<>();
+        if (currentProgram != null) {
+            funcs = currentProgram.getFunctions();
+        }
+        return funcs;
+    }
+
+
+    @Override
+    public Program getCurrentProgram() {
+        return currentProgram;
+    }
+
 
 
     // Use EngineJaxbLoader to load the XML file and ProgramTranslator to translate it to internal representation
     @Override
     public LoadReport loadProgram(Path xmlPath) {
+        this.xmlPath = xmlPath;
         List<Exception> errors = new ArrayList<>();
         try {
             try {
@@ -45,6 +154,7 @@ public class EngineImpl implements Engine {
             }
 
             if (!errors.isEmpty()) {
+                this.xmlPath = xmlPath;
                 return new LoadReport(false, errors);
             }
 
@@ -53,16 +163,26 @@ public class EngineImpl implements Engine {
 
 
             //Translate the loaded SProgram to internal Program representation
-            var currentProgram = ProgramTranslator.translate(sprogram);
+            var translationResult = ProgramTranslator.translate(sprogram);
 
             // If there are errors during translation, return them in the LoadReport (errors that define in the specification document)
-            if (!currentProgram.errors.isEmpty()) {
+            if (!translationResult.errors.isEmpty()) {
                 // return the errors
-                return new LoadReport(false, currentProgram.errors);
+                return new LoadReport(false, translationResult.errors);
             }
 
-            summaries.clear();
-            EngineImpl.cuurentProgram = currentProgram.program;
+            this.currentProgram = translationResult.program;
+            loaded.add(translationResult.program);
+            //currentProgram.getsummaries().clear();
+
+
+            List<Program> funcss = new ArrayList<>();
+            for (Function f : getFuncs()) {
+                funcss.add(new Function(f));
+            }
+
+
+            this.functions = funcss;
             return new LoadReport(true, List.of());
 
         } catch (Exception e) {
@@ -72,59 +192,44 @@ public class EngineImpl implements Engine {
 
     @Override
     public ProgramSummary getProgramSummaryForShow() {
-
+        List<InstructionView> instructionViews = currentProgram
+                .instructionViewsAfterExtendRunShow(0);
         // there isn't valid load program
-        if (cuurentProgram == null) {
+        if (currentProgram == null) {
             throw new LoadProgramException("No program is loaded. Please load a file to display a program.");
         }
 
-        if (cuurentProgram != null) {
+        //note gets the extend info
+        if (currentProgram != null) {
             return new ProgramSummary(
-                    cuurentProgram.getName(),
-                    cuurentProgram.getVariablesPeek(),
-                    cuurentProgram.getLabelsPeek(),
-                    cuurentProgram.getInstructionsPeek()
+                    currentProgram.getName(),
+                    currentProgram.getXVariablesPeek(),
+                    currentProgram.getLabelsPeek(),
+                    currentProgram.getInstructionsPeek()
             );
         }
         return null;
     }
 
-    public static int sumCyclesExceptFirst(List<List<InstructionView>> extendInstructions) {
-        int total = 0;
-        for (List<InstructionView> chain : extendInstructions) {
-            int place = chain.size() - 1;
-            total += chain.get(place).cycles();
-
-        }
-        return total;
+    @Override
+    public void cancelRun() {
+        if (exe != null) exe.cancel();
     }
 
     @Override
-    public RunResult run(int level, List<Long> inputs, List<String> varsNames) {
-        ProgramExecutorImpl exe = new ProgramExecutorImpl(cuurentProgram); //, level, inputs);
+    public RunResult run(int level, List<Long> inputs) {
 
+        List<InstructionView> instructionViews = currentProgram
+                .instructionViewsAfterExtendRunShow(level);
+        exe = new ProgramExecutorImpl(currentProgram);
         long y = exe.run(inputs);
+        int cycles = exe.cycleCount;
 
-        //need to extend the program to the level
-        // calculate cycles from the extent program (not from execution)
-        List<List<InstructionView>> extendCommend = expandProgramToLevelForExtend(level);
-        int totalCycles = sumCyclesExceptFirst(extendCommend);
-
-        RunSummary summary = new RunSummary(
-                ++runCounter,
-                level,
-                inputs,
-                y,
-                totalCycles
-        );
-        summaries.add(summary);
+        RunSummary summary = new RunSummary(++runCounter, level, inputs, y, cycles);
+        currentProgram.getsummaries().add(summary);
 
         if (exe != null) {
-            var res = new RunResult(
-                    y,
-                    exe.variablesState(),
-                    totalCycles
-            );
+            var res = new RunResult(y, exe.variablesState(), cycles);
             return res;
         }
         return null;
@@ -132,25 +237,114 @@ public class EngineImpl implements Engine {
 
     @Override
     public List<RunSummary> getHistory() {
-        return summaries;
+        return currentProgram.getsummaries();
     }
 
     @Override
     public List<List<InstructionView>> expandProgramToLevelForExtend(int level) {
-        return cuurentProgram.expendToLevelForExtend(level);
+        return currentProgram.expendToLevelForExtend(level);
     }
 
     @Override
     public List<InstructionView> expandProgramToLevelForRun(int level) {
-        List<List<InstructionView>> allInstructions = cuurentProgram.expendToLevelForRun(level);
-        return allInstructions.stream().flatMap(List::stream).toList();
+        List<InstructionView> allInstructions = currentProgram.instructionViewsAfterExtendRunShow(level);
+        return allInstructions;
     }
 
     public int getMaxExpandLevel() {
-        if (cuurentProgram == null) {
+        if (currentProgram == null) {
             throw new LoadProgramException("No program is loaded. Please load a file to display a program.");
         }
 
-        return cuurentProgram.calculateMaxDegree()  ;
+        return currentProgram.calculateMaxDegree()  ;
     }
+
+    public VariableAndLabelMenger getVlm(){
+        return currentProgram.getvlm();
+    }
+
+    @Override
+    public List<List<String>> getInfoForEachInstruction(int level) {
+        return currentProgram.getInfo(level);
+    }
+
+    @Override
+    public  Pair<Map<String, Long>,Integer> startDebug(int level, List<Long> inputs) {
+        // expend the program to the specified level
+        List<InstructionView> instructionViews = currentProgram
+                .instructionViewsAfterExtendRunShow(level);
+
+        //create the executor
+        exe = new ProgramExecutorImpl(currentProgram);
+
+        // intialize all the variables iin context
+        exe.init(inputs);
+
+        // get the state of all variables
+        Map<String, Long> variablesState = exe.variablesState();
+        Pair<Map<String, Long>,Integer> info = new Pair<>(variablesState, exe.debugIndexCounter);
+        return info;
+    }
+
+    @Override
+    public Pair<Map<String, Long>,Integer> oneStepInDebug() {
+        //run one step
+        int index = exe.runOneStep();
+
+        if (index == -1) {
+            // program finished in one step
+            Pair<Map<String, Long>,Integer> info = new Pair<>(null, index);
+            return info;
+        }
+
+        int cycles = exe.cycleCount;
+
+        // get the state of all variables
+        Map<String, Long> variablesState = exe.variablesState();
+        Pair<Map<String, Long>,Integer> info = new Pair<>(variablesState, index);
+
+        return info;
+    }
+
+    @Override
+    public void endDebug() {
+        exe = null;
+    }
+
+    @Override
+    public Map<String, Long> resumeDebug() {
+        exe.resume();
+        return exe.variablesState();
+    }
+
+    @Override
+    public int getCycels() {
+        return exe.cycleCount;
+    }
+
+
+    @Override
+    public List<functionView> getAllFunctionViews() {
+        List<functionView> funcs = currentProgram.getAllFunctionViews();
+        return funcs;
+    }
+
+
+//    @Override
+//    public RunResult runFunc (int level, List<Long> inputs, Function funcName) {
+//        List<InstructionView> instructionViews = currentProgram
+//                .instructionViewsAfterExtendRunShow(level);
+//        exe = new ProgramExecutorImpl(currentProgram);
+//        long y = exe.runFunc(inputs, funcName);
+//        int cycles = exe.cycleCount;
+//
+//        RunSummary summary = new RunSummary(++runCounter, level, inputs, y, cycles);
+//        summaries.add(summary);
+//
+//        if (exe != null) {
+//            var res = new RunResult(y, exe.variablesState(), cycles);
+//            return res;
+//        }
+//        return null;
+//    }
 }

@@ -1,5 +1,6 @@
 package logic.instruction.synthetic;
 
+import core.program.VariableAndLabelMenger;
 import logic.execution.ExecutionContext;
 import logic.instruction.AbstractInstruction;
 import logic.instruction.Instruction;
@@ -8,30 +9,50 @@ import logic.instruction.basic.JumpNotZeroInstruction;
 import logic.instruction.basic.NoOpInstruction;
 import logic.label.FixedLabel;
 import logic.label.Label;
-import core.program.VariableAndLabelMenger;
 import logic.variable.Variable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class JumpZeroInstruction extends AbstractInstruction {
 
-    private final Label jnzLabel;
+    private Label jnzLabel;
 
-    public JumpZeroInstruction(Variable var, Label target, Map<String,String> argsMap) {
-        super(InstructionData.JUMP_ZERO, var, argsMap);
+    public JumpZeroInstruction(Variable var, Label target) {
+        super(InstructionData.JUMP_ZERO, var);
         this.jnzLabel = target;
     }
 
-    public JumpZeroInstruction(Variable var, Label target, Label lineLabel, Map<String,String> argsMap) {
-        super(InstructionData.JUMP_ZERO, var, lineLabel, argsMap);
+    public JumpZeroInstruction(Variable var, Label target, Label lineLabel) {
+        super(InstructionData.JUMP_ZERO, var, lineLabel);
         this.jnzLabel = target;
     }
 
     @Override
-    public Label execute(ExecutionContext context) {
-        long variableValue = context.getVariableValue(getVariable().getRepresentation());
+    public Instruction clone() {
+        if(getLabel() == null) {
+            return new JumpZeroInstruction(getVariable(), jnzLabel);
+        } else {
+            return new JumpZeroInstruction(getVariable(), jnzLabel, getLabel());
+        }
+    }
+
+    @Override
+    public List<String> getAllInfo() {
+        List<String> list = new ArrayList<>();
+        if (getLabel() != null) {
+            list.add(getLabel().getLabelRepresentation());
+        }
+        if (getVariable() != null) {
+            list.add(getVariable().getRepresentation());
+        }
+        list.add(jnzLabel.getLabelRepresentation());
+        return list;
+    }
+
+    @Override
+    public Label execute(ExecutionContext context, VariableAndLabelMenger vlm) {
+        long variableValue = context.getVariableValue(getVariable());
 
         if (variableValue == 0) {
             return jnzLabel;
@@ -45,8 +66,17 @@ public class JumpZeroInstruction extends AbstractInstruction {
     }
 
     @Override
-    public Map<String, String> args() {
-        return argsMap;
+    public List<Variable> getAllVariables() {
+        return List.of(getVariable());
+    }
+
+    @Override
+    public List<Label> getAllLabels() {
+        if (getLabel() == null) {
+            return List.of(jnzLabel);
+        } else {
+            return List.of(getLabel(), jnzLabel);
+        }
     }
 
     @Override
@@ -60,13 +90,13 @@ public class JumpZeroInstruction extends AbstractInstruction {
 
         switch (extensionLevel) {
             case 0:
-                return List.of(this);
+                return List.of(this.clone());
             case 1: {
                 Label label1 = vlm.newLabel();
 
-                Instruction instr1 = new JumpNotZeroInstruction(getVariable(),label1,getLabel() ,argsMap);
-                Instruction instr2 = new GoToInstruction(getVariable(), jnzLabel, argsMap);
-                Instruction instr3 = new NoOpInstruction(getVariable(), label1, argsMap);
+                Instruction instr1 = new JumpNotZeroInstruction(getVariable(),label1,getLabel());
+                Instruction instr2 = new GoToInstruction(getVariable(), jnzLabel);
+                Instruction instr3 = new NoOpInstruction(getVariable(), label1);
 
                 myInstructions.add(instr1);
                 myInstructions.add(instr2);
@@ -76,11 +106,11 @@ public class JumpZeroInstruction extends AbstractInstruction {
             default: {
                 Label label1 = vlm.newLabel();
 
-                Instruction instr1 = new JumpNotZeroInstruction(getVariable(),label1,getLabel() ,argsMap);
-                Instruction instr2 = new GoToInstruction(getVariable(), jnzLabel, argsMap);
+                Instruction instr1 = new JumpNotZeroInstruction(getVariable(),label1,getLabel());
+                Instruction instr2 = new GoToInstruction(getVariable(), jnzLabel);
                 List <Instruction> instr = instr2.extend(1, vlm);
 
-                Instruction instr3 = new NoOpInstruction(getVariable(), label1, argsMap);
+                Instruction instr3 = new NoOpInstruction(getVariable(), label1);
 
                 myInstructions.add(instr1);
                 myInstructions.addAll(instr);
@@ -89,6 +119,23 @@ public class JumpZeroInstruction extends AbstractInstruction {
 
                 return myInstructions;
             }
+        }
+    }
+
+    @Override
+    public void replace(Variable oldVar, Variable newVar) {
+        if(getVariable().equals(oldVar)) {
+            setVariable(newVar);
+        }
+    }
+
+    @Override
+    public void replace(Label oldLabel, Label newLabel) {
+        if(getLabel() != null && getLabel().equals(oldLabel)) {
+            setLabel(newLabel);
+        }
+        if(jnzLabel.equals(oldLabel)) {
+            jnzLabel = newLabel;
         }
     }
 }
