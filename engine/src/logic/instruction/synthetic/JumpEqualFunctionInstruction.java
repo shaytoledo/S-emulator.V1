@@ -31,6 +31,7 @@ public class JumpEqualFunctionInstruction extends AbstractInstruction {
     String functionArguments;
     Variable variable;
     int cycles = 0;
+    private int lastExecutionCycles = 0;
 
     public JumpEqualFunctionInstruction(String name, String functionArguments, Variable var, List<Function> funcs, Label lineLabel, Label jnzLabel) {
         super(InstructionData.JUMP_EQUAL_FUNCTION, var, lineLabel);
@@ -163,6 +164,11 @@ public class JumpEqualFunctionInstruction extends AbstractInstruction {
     }
 
     @Override
+    public int cycles() {
+        return lastExecutionCycles > 0 ? lastExecutionCycles : super.cycles();
+    }
+
+    @Override
     public int getMaxLevel() {
         // +3 because epilogue contains JumpEqualVariableInstruction (maxLevel=3)
         return arguments.getMaxLevel() + 3;
@@ -214,6 +220,7 @@ public class JumpEqualFunctionInstruction extends AbstractInstruction {
         if(getVariable().equals(oldVar)) {
             setVariable(newVar);
         }
+        arguments.replace(oldVar, newVar);
     }
 
     @Override
@@ -246,9 +253,10 @@ public class JumpEqualFunctionInstruction extends AbstractInstruction {
 
 
         // Evaluate the quoted function in a pure way (no side effects on the outer context).
-        // Evaluate the quoted function (child calls are pure now)
         long functionResult = arguments.evaluate(context, vlm, cycles);
-        // Store the function result into this instruction's target variable (often 'y').
+        // Capture actual runtime cycles for this execution
+        lastExecutionCycles = arguments.lastRunCycles;
+        // Jump if variable equals function result
         if(functionResult == context.getVariableValue(getVariable())) {
             return jnzLabel;
         }

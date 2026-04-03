@@ -28,6 +28,8 @@ public class EngineImpl implements Engine {
     private Path xmlPath;
     ProgramExecutorImpl exe;
     private int runCounter = 0;
+    private int lastDebugLevel = 0;
+    private List<Long> lastDebugInputs = new ArrayList<>();
 
     public List<Program> loaded = new ArrayList<>();
 
@@ -270,6 +272,9 @@ public class EngineImpl implements Engine {
 
     @Override
     public  Pair<Map<String, Long>,Integer> startDebug(int level, List<Long> inputs) {
+        this.lastDebugLevel = level;
+        this.lastDebugInputs = inputs == null ? new ArrayList<>() : new ArrayList<>(inputs);
+
         // expend the program to the specified level
         List<InstructionView> instructionViews = currentProgram
                 .instructionViewsAfterExtendRunShow(level);
@@ -291,15 +296,7 @@ public class EngineImpl implements Engine {
         //run one step
         int index = exe.runOneStep();
 
-        if (index == -1) {
-            // program finished in one step
-            Pair<Map<String, Long>,Integer> info = new Pair<>(null, index);
-            return info;
-        }
-
-        int cycles = exe.cycleCount;
-
-        // get the state of all variables
+        // get the state of all variables (even when finished, so callers see the final state)
         Map<String, Long> variablesState = exe.variablesState();
         Pair<Map<String, Long>,Integer> info = new Pair<>(variablesState, index);
 
@@ -314,7 +311,20 @@ public class EngineImpl implements Engine {
     @Override
     public Map<String, Long> resumeDebug() {
         exe.resume();
-        return exe.variablesState();
+        Map<String, Long> finalState = exe.variablesState();
+        long y = finalState.getOrDefault("y", 0L);
+        RunSummary summary = new RunSummary(++runCounter, lastDebugLevel, lastDebugInputs, y, exe.cycleCount);
+        currentProgram.getsummaries().add(summary);
+        return finalState;
+    }
+
+    @Override
+    public Map<String, Long> saveDebugRun() {
+        Map<String, Long> finalState = exe.variablesState();
+        long y = finalState.getOrDefault("y", 0L);
+        RunSummary summary = new RunSummary(++runCounter, lastDebugLevel, lastDebugInputs, y, exe.cycleCount);
+        currentProgram.getsummaries().add(summary);
+        return finalState;
     }
 
     @Override

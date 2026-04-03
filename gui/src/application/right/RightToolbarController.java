@@ -134,11 +134,11 @@ public class RightToolbarController {
         Pair<Map<String, Long>, Integer> state = mainLayoutController.engine.startDebug(level, in);
         Map<String, Long> lastState = (state.getKey() == null) ? Collections.emptyMap() : state.getKey();
 
-        // Step until finished, keep last state only
+        // Step until finished, keep last state only (including the final step's state)
         while (true) {
             Pair<Map<String, Long>, Integer> step = mainLayoutController.engine.oneStepInDebug();
+            if (step.getKey() != null) lastState = step.getKey();
             if (step.getValue() == -1) break;
-            lastState = step.getKey();
         }
         long cycles = mainLayoutController.engine.getCycels();
         mainLayoutController.engine.endDebug();
@@ -294,6 +294,8 @@ public class RightToolbarController {
         Pair<Map<String, Long>,Integer> variableState = mainLayoutController.engine.oneStepInDebug();
 
         if (variableState.getValue() == -1 ) {
+            // Save run to history before endDebug() nulls the executor
+            mainLayoutController.engine.saveDebugRun();
             endOfDebug();
             fillHistoryTable();
 

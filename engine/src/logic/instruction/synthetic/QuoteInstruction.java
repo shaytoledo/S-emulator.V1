@@ -34,6 +34,7 @@ public class QuoteInstruction extends AbstractInstruction {
     String functionArguments;
 
     int cycles = 0;
+    private int lastExecutionCycles = 0;
 
     public QuoteInstruction(String name, String functionArguments, Variable var, List<Function> funcs, Label lineLabel) {
         super(InstructionData.QUOTE, var, lineLabel);
@@ -171,6 +172,11 @@ public class QuoteInstruction extends AbstractInstruction {
     }
 
     @Override
+    public int cycles() {
+        return lastExecutionCycles > 0 ? lastExecutionCycles : super.cycles();
+    }
+
+    @Override
     public int getMaxLevel() {
         return arguments.getMaxLevel();
     }
@@ -233,6 +239,9 @@ public class QuoteInstruction extends AbstractInstruction {
         if (curr != null && curr.equals(oldVar)) {
             setVariable(newVar);
         }
+        for (Argument arg : argumentList) {
+            arg.replace(oldVar, newVar);
+        }
     }
 
 
@@ -265,8 +274,9 @@ public class QuoteInstruction extends AbstractInstruction {
 
 
         // Evaluate the quoted function in a pure way (no side effects on the outer context).
-        // Evaluate the quoted function (child calls are pure now)
         long functionResult = arguments.evaluate(context, vlm, cycles);
+        // Capture actual runtime cycles for this execution
+        lastExecutionCycles = arguments.lastRunCycles;
         // Store the function result into this instruction's target variable (often 'y').
         context.updateVariable(getVariable(), functionResult);
 

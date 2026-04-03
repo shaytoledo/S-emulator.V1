@@ -44,4 +44,11 @@ public class VariableArgument implements Argument {
         return List.of(me);
     }
 
+    @Override
+    public void replace(Variable oldVar, Variable newVar) {
+        if (me.equals(oldVar)) {
+            me = newVar;
+        }
+    }
+
 }

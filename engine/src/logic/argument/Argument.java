@@ -27,5 +27,7 @@ public interface Argument {
 
     List<Variable> getAllVariables();
 
+    // Replace a variable reference inside this argument (recursive)
+    default void replace(Variable oldVar, Variable newVar) {}
 
 }

@@ -57,7 +57,7 @@ public class ProgramImpl implements Program {
         for (Instruction instruction : instructions) {
             List<Variable> info = instruction.getAllVariables();
             for (Variable s : info) {
-                if (s != null && !varNames.contains(s) && s.getRepresentation().startsWith("x")) {
+                if (s != null && !varNames.contains(s)) {
                     varNames.add(s);
                 }
             }

@@ -30,6 +30,7 @@ public class FunctionArgument implements Argument {
     public List<Instruction> instructions;
 
     int cycles = 0;
+    public int lastRunCycles = 0;
     private Label exitLabel;
     private Variable newResultVar;
 
@@ -106,10 +107,14 @@ public class FunctionArgument implements Argument {
     public long evaluate(ExecutionContext context, VariableAndLabelMenger vlm, int cycles) {
         // Evaluate all child arguments in the current context to numeric values
         List<Long> values = new ArrayList<>(arguments.size());
+        int childCycles = 0;
         for (Argument arg : arguments) {
             ExecutionContextImpl argContext = new ExecutionContextImpl(context);
             long v = arg.evaluate(argContext, vlm, cycles);
             values.add(v);
+            if (arg instanceof FunctionArgument fa) {
+                childCycles += fa.lastRunCycles;
+            }
         }
 
         // Create a clean execution context for this function evaluation
@@ -117,7 +122,9 @@ public class FunctionArgument implements Argument {
 
         // Execute the function with the evaluated arguments
         FunctionExecutor currentExecutor = new FunctionExecutor(function, functions, functionContext);
-        return currentExecutor.run(values, cycles);
+        long result = currentExecutor.run(values, cycles);
+        this.lastRunCycles = currentExecutor.cycleCount + childCycles;
+        return result;
     }
 
     public List<Instruction> cloneBody() {
@@ -170,6 +177,13 @@ public class FunctionArgument implements Argument {
             vars.addAll(arg.getAllVariables());
         }
         return vars;
+    }
+
+    @Override
+    public void replace(Variable oldVar, Variable newVar) {
+        for (Argument arg : arguments) {
+            arg.replace(oldVar, newVar);
+        }
     }
 
     // Expand this function-argument into instructions.

@@ -26,6 +26,7 @@ public interface Engine {
     Pair<Map<String, Long>,Integer> oneStepInDebug();
     void endDebug();
     Map<String, Long> resumeDebug();
+    Map<String, Long> saveDebugRun();
     int getCycels();
     List<functionView> getAllFunctionViews();
     Program getCurrentProgram();
