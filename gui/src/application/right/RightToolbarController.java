@@ -11,7 +11,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.util.Pair;
+import dto.Pair;
 
 import java.util.*;
 import java.util.stream.Collectors;

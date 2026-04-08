@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<StackPane xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="application.client.login.LoginController"
+           style="-fx-background-color: #f0f2f5; -fx-font-family: 'Lucida Console';">
+
+    <VBox alignment="CENTER" spacing="12" maxWidth="380"
+          style="-fx-background-color: #ffffff; -fx-background-radius: 10;
+                 -fx-padding: 40 36 36 36;
+                 -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 16, 0, 0, 4);
+                 -fx-border-color: #dde1e7; -fx-border-radius: 10; -fx-border-width: 1;">
+
+        <Label text="S-Emulator"
+               style="-fx-font-size: 26; -fx-font-weight: bold; -fx-text-fill: #2c3e50;
+                      -fx-padding: 0 0 4 0;"/>
+        <Label text="Cloud Execution Service"
+               style="-fx-font-size: 12; -fx-text-fill: #7f8c8d; -fx-padding: 0 0 20 0;"/>
+
+        <Label text="Username" style="-fx-text-fill: #34495e; -fx-font-size: 12; -fx-font-weight: bold;"/>
+        <TextField fx:id="usernameField" promptText="Enter a unique username"
+                   prefHeight="36"
+                   style="-fx-background-color: #ffffff; -fx-text-fill: #2c3e50;
+                          -fx-prompt-text-fill: #bdc3c7; -fx-background-radius: 5;
+                          -fx-border-color: #bdc3c7; -fx-border-radius: 5;
+                          -fx-padding: 6 10; -fx-font-size: 13;"/>
+
+        <Button fx:id="loginButton" text="Sign In" onAction="#onLogin"
+                maxWidth="Infinity" prefHeight="38"
+                style="-fx-background-color: #3b82f6; -fx-text-fill: white;
+                       -fx-font-weight: bold; -fx-font-size: 13; -fx-background-radius: 5;
+                       -fx-cursor: hand;"/>
+
+        <Label fx:id="statusLabel" text="" wrapText="true" maxWidth="Infinity"
+               style="-fx-text-fill: #ef4444; -fx-font-size: 12;"/>
+    </VBox>
+</StackPane>

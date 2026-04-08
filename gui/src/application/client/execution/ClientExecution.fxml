@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="application.client.execution.ExecutionController"
+      style="-fx-background-color: #f0f2f5; -fx-font-family: 'Lucida Console';"
+      spacing="0">
+
+    <!-- Header -->
+    <HBox style="-fx-background-color: #2c3e50; -fx-padding: 0 16;"
+          minHeight="50" alignment="CENTER_LEFT" spacing="12">
+        <Button fx:id="backButton" text="&#8592; Dashboard" onAction="#onBack"
+                style="-fx-background-color: transparent; -fx-text-fill: #95a5a6;
+                       -fx-cursor: hand; -fx-font-size: 12; -fx-padding: 5 8;"/>
+        <Label text="|" style="-fx-text-fill: #7f8c8d;"/>
+        <Label fx:id="programNameLabel" text=""
+               style="-fx-font-size: 15; -fx-font-weight: bold; -fx-text-fill: white;"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Label fx:id="cyclesLabel" text="" style="-fx-text-fill: #95a5a6; -fx-font-size: 12;"/>
+        <Label text="|" style="-fx-text-fill: #7f8c8d;"/>
+        <Label fx:id="creditsLabel" text="Credits: —"
+               style="-fx-text-fill: #2ecc71; -fx-font-size: 13; -fx-font-weight: bold;"/>
+        <Label text="|" style="-fx-text-fill: #7f8c8d;"/>
+        <Label fx:id="usernameLabel" text=""
+               style="-fx-text-fill: #ecf0f1; -fx-font-size: 12;"/>
+    </HBox>
+
+    <!-- Settings bar -->
+    <HBox style="-fx-background-color: #ffffff; -fx-padding: 8 16;
+                 -fx-border-color: #dde1e7; -fx-border-width: 0 0 1 0;"
+          spacing="12" alignment="CENTER_LEFT">
+        <Label text="Architecture:" style="-fx-text-fill: #34495e; -fx-font-size: 12;"/>
+        <ComboBox fx:id="architectureCombo" prefWidth="80"
+                  style="-fx-background-color: #ffffff; -fx-border-color: #bdc3c7; -fx-border-radius: 4;"/>
+        <Label text="Level:" style="-fx-text-fill: #34495e; -fx-font-size: 12;"/>
+        <Spinner fx:id="levelSpinner" prefWidth="65" editable="true"
+                 style="-fx-background-color: #ffffff;">
+            <valueFactory>
+                <SpinnerValueFactory.IntegerSpinnerValueFactory min="0" max="10" initialValue="0"/>
+            </valueFactory>
+        </Spinner>
+        <Label fx:id="levelMaxLabel" text="/ 0" style="-fx-text-fill: #95a5a6; -fx-font-size: 12;"/>
+        <Label text="|" style="-fx-text-fill: #dde1e7;"/>
+        <Label fx:id="archCountI"   text="I: 0"   style="-fx-background-color: #ecf0f1; -fx-background-radius: 4; -fx-padding: 2 8; -fx-font-size: 11;"/>
+        <Label fx:id="archCountII"  text="II: 0"  style="-fx-background-color: #ecf0f1; -fx-background-radius: 4; -fx-padding: 2 8; -fx-font-size: 11;"/>
+        <Label fx:id="archCountIII" text="III: 0" style="-fx-background-color: #ecf0f1; -fx-background-radius: 4; -fx-padding: 2 8; -fx-font-size: 11;"/>
+        <Label fx:id="archCountIV"  text="IV: 0"  style="-fx-background-color: #ecf0f1; -fx-background-radius: 4; -fx-padding: 2 8; -fx-font-size: 11;"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Label fx:id="statusLabel" text="" style="-fx-text-fill: #7f8c8d; -fx-font-size: 11;"/>
+    </HBox>
+
+    <!-- Main split -->
+    <SplitPane VBox.vgrow="ALWAYS" dividerPositions="0.60"
+               style="-fx-background-color: #f0f2f5; -fx-padding: 8;">
+
+        <!-- Left: Instructions table -->
+        <VBox SplitPane.resizableWithParent="true"
+              style="-fx-background-color: #ffffff; -fx-background-radius: 8;
+                     -fx-border-color: #dde1e7; -fx-border-width: 1; -fx-border-radius: 8;
+                     -fx-padding: 12;">
+            <Label text="Instructions"
+                   style="-fx-text-fill: #2c3e50; -fx-font-weight: bold; -fx-font-size: 13; -fx-padding: 0 0 8 0;"/>
+            <TableView fx:id="instructionsTable" VBox.vgrow="ALWAYS"
+                       style="-fx-background-color: #ffffff;">
+                <columns>
+                    <TableColumn fx:id="colLineNum" text="#"       style="-fx-alignment: CENTER;"/>
+                    <TableColumn fx:id="colLabel"   text="Label"   style="-fx-alignment: CENTER;"/>
+                    <TableColumn fx:id="colCommand" text="Command" style="-fx-alignment: CENTER;"/>
+                    <TableColumn fx:id="colCycles"  text="Cycles"  style="-fx-alignment: CENTER;"/>
+                    <TableColumn fx:id="colArch"    text="Arch"    style="-fx-alignment: CENTER;"/>
+                </columns>
+                <placeholder><Label text="No instructions loaded" style="-fx-text-fill: #95a5a6;"/></placeholder>
+            </TableView>
+        </VBox>
+
+        <!-- Right: Controls + Inputs + Variables + History -->
+        <SplitPane orientation="VERTICAL" dividerPositions="0.52"
+                   SplitPane.resizableWithParent="true"
+                   style="-fx-background-color: #f0f2f5;">
+
+            <!-- Top right: Inputs + Controls -->
+            <VBox style="-fx-background-color: #ffffff; -fx-background-radius: 8;
+                         -fx-border-color: #dde1e7; -fx-border-width: 1; -fx-border-radius: 8;
+                         -fx-padding: 12;" spacing="10">
+
+                <!-- Inputs -->
+                <Label text="Inputs"
+                       style="-fx-text-fill: #2c3e50; -fx-font-weight: bold; -fx-font-size: 13;"/>
+                <TableView fx:id="inputTable" VBox.vgrow="ALWAYS"
+                           style="-fx-background-color: #ffffff;">
+                    <columns>
+                        <TableColumn fx:id="colInputVar" text="Variable" style="-fx-alignment: CENTER;"/>
+                        <TableColumn fx:id="colInputVal" text="Value"    style="-fx-alignment: CENTER;"/>
+                    </columns>
+                    <placeholder><Label text="No inputs" style="-fx-text-fill: #95a5a6; -fx-font-size: 11;"/></placeholder>
+                </TableView>
+
+                <!-- Controls -->
+                <HBox spacing="8" alignment="CENTER_LEFT">
+                    <Button fx:id="runButton"        text="&#9658;  Run"    onAction="#onRun"
+                            prefHeight="32"
+                            style="-fx-background-color: #22c55e; -fx-text-fill: white;
+                                   -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand; -fx-font-size: 12;"/>
+                    <Button fx:id="debugStartButton" text="&#9881;  Debug"  onAction="#onDebugStart"
+                            prefHeight="32"
+                            style="-fx-background-color: #3b82f6; -fx-text-fill: white;
+                                   -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand; -fx-font-size: 12;"/>
+                    <Button fx:id="stepButton"      text="Step"   onAction="#onStep"      disable="true"
+                            prefHeight="30"
+                            style="-fx-background-color: #f59e0b; -fx-text-fill: white;
+                                   -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand; -fx-font-size: 12;"/>
+                    <Button fx:id="resumeButton"    text="Resume" onAction="#onResume"    disable="true"
+                            prefHeight="30"
+                            style="-fx-background-color: #8b5cf6; -fx-text-fill: white;
+                                   -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand; -fx-font-size: 12;"/>
+                    <Button fx:id="stopDebugButton" text="Stop"   onAction="#onStopDebug" disable="true"
+                            prefHeight="30"
+                            style="-fx-background-color: #ef4444; -fx-text-fill: white;
+                                   -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand; -fx-font-size: 12;"/>
+                </HBox>
+            </VBox>
+
+            <!-- Bottom right: Variables + Run History -->
+            <SplitPane orientation="VERTICAL" dividerPositions="0.5"
+                       style="-fx-background-color: #f0f2f5;">
+
+                <!-- Variable State -->
+                <VBox style="-fx-background-color: #ffffff; -fx-background-radius: 8;
+                             -fx-border-color: #dde1e7; -fx-border-width: 1; -fx-border-radius: 8;
+                             -fx-padding: 12;">
+                    <Label text="Variable State"
+                           style="-fx-text-fill: #2c3e50; -fx-font-weight: bold; -fx-font-size: 13; -fx-padding: 0 0 8 0;"/>
+                    <TableView fx:id="variableTable" VBox.vgrow="ALWAYS" minHeight="60"
+                               style="-fx-background-color: #ffffff;">
+                        <columns>
+                            <TableColumn fx:id="colVarName"  text="Variable" style="-fx-alignment: CENTER;"/>
+                            <TableColumn fx:id="colVarValue" text="Value"    style="-fx-alignment: CENTER;"/>
+                        </columns>
+                        <placeholder><Label text="&#8212;" style="-fx-text-fill: #95a5a6;"/></placeholder>
+                    </TableView>
+                </VBox>
+
+                <!-- Run History -->
+                <VBox style="-fx-background-color: #ffffff; -fx-background-radius: 8;
+                             -fx-border-color: #dde1e7; -fx-border-width: 1; -fx-border-radius: 8;
+                             -fx-padding: 12;">
+                    <Label text="Run History"
+                           style="-fx-text-fill: #2c3e50; -fx-font-weight: bold; -fx-font-size: 13; -fx-padding: 0 0 8 0;"/>
+                    <TableView fx:id="historyTable" VBox.vgrow="ALWAYS" minHeight="60"
+                               style="-fx-background-color: #ffffff;">
+                        <columns>
+                            <TableColumn fx:id="colHistNum"    text="#"      style="-fx-alignment: CENTER;"/>
+                            <TableColumn fx:id="colHistArch2"  text="Arch"   style="-fx-alignment: CENTER;"/>
+                            <TableColumn fx:id="colHistLevel"  text="Lvl"    style="-fx-alignment: CENTER;"/>
+                            <TableColumn fx:id="colHistY"      text="y"      style="-fx-alignment: CENTER;"/>
+                            <TableColumn fx:id="colHistCycles" text="Cycles" style="-fx-alignment: CENTER;"/>
+                        </columns>
+                        <placeholder><Label text="No runs yet" style="-fx-text-fill: #95a5a6;"/></placeholder>
+                    </TableView>
+                </VBox>
+            </SplitPane>
+        </SplitPane>
+    </SplitPane>
+</VBox>

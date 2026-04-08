@@ -9,5 +9,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="module" module-name="engine" exported="" />
     <orderEntry type="library" exported="" name="javaFX" level="project" />
+    <orderEntry type="library" exported="" name="Gson" level="project" />
   </component>
 </module>

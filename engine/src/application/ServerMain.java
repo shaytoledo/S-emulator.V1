@@ -1,29 +1,13 @@
 package application;
 
-import com.sun.net.httpserver.HttpServer;
-
-import java.io.IOException;
-import java.net.InetSocketAddress;
-
+/**
+ * @deprecated Moved to the `server` module: server/src/application/ServerMain.java
+ * Use the RunServer run configuration which now points to the server module.
+ */
+@Deprecated
 public class ServerMain {
-
-    public static final int PORT = 8080;
-
-    public static void main(String[] args) throws IOException {
-        HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
-
-
-
-
-        // TODO: register servlet contexts here
-        // server.createContext("/api/programs", new ProgramsHandler());
-        // server.createContext("/api/run",      new RunHandler());
-        // server.createContext("/api/users",    new UsersHandler());
-
-        server.setExecutor(java.util.concurrent.Executors.newCachedThreadPool());
-        server.start();
-
-        System.out.println("S-Emulator Server started on port " + PORT);
-        System.out.println("Press Ctrl+C to stop.");
+    public static void main(String[] args) throws Exception {
+        throw new UnsupportedOperationException(
+            "This ServerMain is deprecated. Use the one in the 'server' module instead.");
     }
 }

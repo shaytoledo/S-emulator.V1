@@ -3,7 +3,7 @@ package core.engine;
 import core.program.Program;
 import core.program.VariableAndLabelMenger;
 import dto.*;
-import javafx.util.Pair;
+import dto.Pair;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -14,6 +14,7 @@ import java.util.Map;
 public interface Engine {
 
     LoadReport loadProgram(Path xmlPath);
+    LoadReport loadProgramFromContent(String xmlContent);
     ProgramSummary getProgramSummaryForShow();
     List<List<InstructionView>> expandProgramToLevelForExtend(int level);
     List<InstructionView> expandProgramToLevelForRun(int level);

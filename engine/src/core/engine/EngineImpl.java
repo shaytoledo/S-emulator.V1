@@ -7,7 +7,7 @@ import core.program.Program;
 import core.program.ProgramImpl;
 import core.program.VariableAndLabelMenger;
 import dto.*;
-import javafx.util.Pair;
+import dto.Pair;
 import logic.exception.LoadProgramException;
 import logic.exception.NotXMLException;
 import logic.exception.ProgramFileNotFoundException;
@@ -132,6 +132,28 @@ public class EngineImpl implements Engine {
     }
 
 
+
+    @Override
+    public LoadReport loadProgramFromContent(String xmlContent) {
+        List<Exception> errors = new ArrayList<>();
+        try {
+            var sprogram = JaxbLoader.loadFromContent(xmlContent);
+            var translationResult = ProgramTranslator.translate(sprogram);
+            if (!translationResult.errors.isEmpty()) {
+                return new LoadReport(false, translationResult.errors);
+            }
+            this.currentProgram = translationResult.program;
+            loaded.add(translationResult.program);
+            List<Program> funcss = new ArrayList<>();
+            for (Function f : getFuncs()) {
+                funcss.add(new Function(f));
+            }
+            this.functions = funcss;
+            return new LoadReport(true, List.of());
+        } catch (Exception e) {
+            return new LoadReport(false, List.of(e));
+        }
+    }
 
     // Use EngineJaxbLoader to load the XML file and ProgramTranslator to translate it to internal representation
     @Override

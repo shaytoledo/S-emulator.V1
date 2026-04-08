@@ -1,6 +1,8 @@
 package application.top;
 
 import application.main.MainLayoutController;
+import application.remote.ServerConfig;
+import application.remote.ServerEngineProxy;
 import core.program.VariableAndLabelMenger;
 import dto.InstructionView;
 import dto.LoadReport;
@@ -15,6 +17,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -30,6 +33,9 @@ import static javafx.util.Duration.seconds;
 public class TopToolbarController {
 
     MainLayoutController mainLayoutController;
+
+    // Won't be used
+    @FXML private Button serverModeButton;
 
     // Won't be used
     @FXML private Label CurrentFromMaximumDegree;
@@ -427,6 +433,60 @@ public class TopToolbarController {
 
 
 
+
+    @FXML
+    void connectToServerListener(ActionEvent event) {
+        // Show a small dialog to enter host:port
+        Dialog<String> dialog = new Dialog<>();
+        dialog.setTitle("Connect to Server");
+        dialog.setHeaderText("Enter server address");
+
+        ButtonType connectButton = new ButtonType("Connect", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(connectButton, ButtonType.CANCEL);
+
+        TextField hostField = new TextField("localhost");
+        TextField portField = new TextField("8080");
+        TextField timeoutField = new TextField("10000");
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.add(new Label("Host:"),    0, 0); grid.add(hostField,    1, 0);
+        grid.add(new Label("Port:"),    0, 1); grid.add(portField,    1, 1);
+        grid.add(new Label("Timeout (ms):"), 0, 2); grid.add(timeoutField, 1, 2);
+        dialog.getDialogPane().setContent(grid);
+
+        dialog.setResultConverter(btn -> {
+            if (btn == connectButton) {
+                return hostField.getText() + ":" + portField.getText() + ":" + timeoutField.getText();
+            }
+            return null;
+        });
+
+        Optional<String> result = dialog.showAndWait();
+        result.ifPresent(addr -> {
+            String[] parts = addr.split(":");
+            ServerConfig config = new ServerConfig();
+            config.host = parts[0];
+            config.port = Integer.parseInt(parts[1]);
+            config.defaultTimeoutMs = Long.parseLong(parts[2]);
+
+            try {
+                ServerEngineProxy proxy = new ServerEngineProxy(config);
+                proxy.connect();
+                mainLayoutController.engine = proxy;
+                serverModeButton.setText("Server: " + config.host + ":" + config.port);
+                serverModeButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
+                statusLabel.setText("Connected");
+            } catch (Exception e) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Connection Failed");
+                alert.setHeaderText("Could not connect to server");
+                alert.setContentText(e.getMessage());
+                alert.showAndWait();
+            }
+        });
+    }
 
 /// This part is not working now, need to be fixed later
 
